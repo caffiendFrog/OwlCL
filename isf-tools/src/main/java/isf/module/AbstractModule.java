@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -11,6 +12,7 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,16 +27,11 @@ public abstract class AbstractModule implements Module {
 
 	private static Logger log = LoggerFactory.getLogger(AbstractModule.class);
 
-	public OWLOntologyManager getManager() {
-		return man;
-	}
-
 	public AbstractModule(String moduleName, OWLOntologyManager manager, File directory,
 			File outputDirectory) {
 
-		if (moduleName == null || manager == null || directory == null || outputDirectory == null) {
-			throw new IllegalStateException(
-					"Module name, manager, directory, or output cannot be null.");
+		if (moduleName == null || directory == null || outputDirectory == null) {
+			throw new IllegalStateException("Module name, directory, or output cannot be null.");
 		}
 		this.name = moduleName;
 		this.man = manager;
@@ -45,6 +42,19 @@ public abstract class AbstractModule implements Module {
 		this.outputDirectory = outputDirectory;
 		this.outputDirectory.mkdirs();
 
+	}
+
+	public OWLOntologyManager getManager() {
+		if (man == null) {
+			man = OWLManager.createOWLOntologyManager();
+			AutoIRIMapper mapper = new AutoIRIMapper(directory, true);
+			man.addIRIMapper(mapper);
+		}
+		return man;
+	}
+
+	public void setManager(OWLOntologyManager manager) {
+		this.man = manager;
 	}
 
 	@Override

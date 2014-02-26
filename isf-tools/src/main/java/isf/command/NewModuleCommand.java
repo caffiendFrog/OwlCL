@@ -124,9 +124,10 @@ public class NewModuleCommand extends AbstractCommand {
 	public boolean legacy = false;
 	public boolean legacySet;
 
-	@Parameter(names = "-legacy",
-			description = "If this option is set, template OWL files will be created "
-					+ "to work with legacy OWL files.")
+	@Parameter(
+			names = "-legacy",
+			description = "If this option is set, legacy mode will be used to execute or "
+					+ "skip legacy related actions even if they are specified in the *action options.")
 	public void setLegacy(boolean legacy) {
 		this.legacy = legacy;
 		this.legacySet = true;
@@ -136,22 +137,15 @@ public class NewModuleCommand extends AbstractCommand {
 		return legacy;
 	}
 
-	public NewModuleCommand(Main main) {
-		super(main);
-	}
-
 	// ================================================================================
 	// Implementation
 	// ================================================================================
 
-	@Override
-	protected List<String> getDefaultActions() {
-		List<String> actions = new ArrayList<String>();
-		actions.add(Action.create.name());
-		return actions;
-	}
-
 	SimpleModule module = null;
+
+	public NewModuleCommand(Main main) {
+		super(main);
+	}
 
 	@Override
 	public void run() {
@@ -169,6 +163,13 @@ public class NewModuleCommand extends AbstractCommand {
 			}
 		}
 
+	}
+
+	@Override
+	protected List<String> getDefaultActions() {
+		List<String> actions = new ArrayList<String>();
+		actions.add(Action.create.name());
+		return actions;
 	}
 
 	public enum Action {

@@ -250,7 +250,6 @@ public class SimpleModule extends AbstractModule {
 		} else {
 			throw new IllegalStateException(
 					"Attempting to load a non-existing SimpleModule named: " + getName());
-
 		}
 	}
 
@@ -280,7 +279,6 @@ public class SimpleModule extends AbstractModule {
 			Set<OWLAxiom> axioms = ISFUtil.getAxioms(legacyOntology, true);
 			getManager().addAxioms(ontology, axioms);
 			logger.info("Added legacy axioms for " + getName() + ", axiom count: " + axioms.size());
-			// TODO do the debug logging
 		}
 	}
 
