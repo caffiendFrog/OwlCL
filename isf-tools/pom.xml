@@ -34,7 +34,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>isf.cli.Main</mainClass>
+              <mainClass>isf.command.cli.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
