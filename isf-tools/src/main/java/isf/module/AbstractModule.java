@@ -11,6 +11,8 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractModule implements Module {
 
@@ -21,6 +23,8 @@ public abstract class AbstractModule implements Module {
 	private Set<Module> imports = new HashSet<Module>();
 	private OWLOntologyManager man;
 
+	private static Logger log = LoggerFactory.getLogger(AbstractModule.class);
+
 	public OWLOntologyManager getManager() {
 		return man;
 	}
@@ -28,8 +32,9 @@ public abstract class AbstractModule implements Module {
 	public AbstractModule(String moduleName, OWLOntologyManager manager, File directory,
 			File outputDirectory) {
 
-		if (moduleName == null) {
-			throw new IllegalStateException("Module name cannot be null.");
+		if (moduleName == null || manager == null || directory == null || outputDirectory == null) {
+			throw new IllegalStateException(
+					"Module name, manager, directory, or output cannot be null.");
 		}
 		this.name = moduleName;
 		this.man = manager;
@@ -41,7 +46,6 @@ public abstract class AbstractModule implements Module {
 		this.outputDirectory.mkdirs();
 
 	}
-
 
 	@Override
 	public String getName() {
@@ -64,7 +68,6 @@ public abstract class AbstractModule implements Module {
 	protected void saveOntology(OWLOntology ontology) throws OWLOntologyStorageException {
 		man.saveOntology(ontology);
 	}
-
 
 	@Override
 	public abstract void generateModule() throws Exception;
@@ -181,7 +184,9 @@ public abstract class AbstractModule implements Module {
 		} catch (OWLOntologyCreationException e) {
 			throw new IllegalStateException("Failed to create new ontology for: " + iri, e);
 		}
-		man.setOntologyDocumentIRI(ontology, IRI.create(getOntologyFile(directory, iri).toURI()));
+		File ontologyDoc = getOntologyFile(directory, iri);
+		man.setOntologyDocumentIRI(ontology, IRI.create(ontologyDoc.toURI()));
+		log.debug("Created ontology " + iri + " with document " + ontologyDoc);
 		return ontology;
 	}
 
@@ -194,5 +199,5 @@ public abstract class AbstractModule implements Module {
 	public OWLDataFactory getDataFactory() {
 		return man.getOWLDataFactory();
 	}
-	
+
 }

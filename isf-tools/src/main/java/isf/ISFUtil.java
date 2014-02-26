@@ -57,6 +57,7 @@ import ch.qos.logback.core.FileAppender;
  * @author Shahim Essaid
  * 
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ISFUtil {
 
 	// ================================================================================
@@ -124,68 +125,6 @@ public class ISFUtil {
 			+ "isf-module-iri";
 	public static final String MODULE_SOURCE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
 			+ "isf-module-source";
-
-	// ================================================================================
-	// Logging setup
-	// ================================================================================
-
-	@SuppressWarnings("unused")
-	private static boolean ___________LOGGING________________;
-
-	private static LoggerContext context = null;
-	private static LogLevel level = LogLevel.info;
-
-	// logging setup
-	static {
-
-		SimpleDateFormat df = new SimpleDateFormat("yyMMdd_hhmmss");
-		String date = df.format(new Date());
-		context = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-		FileAppender appender = new FileAppender<Object>();
-		appender.setFile(new File(System.getProperty("user.home"), date + "-log.txt")
-				.getAbsolutePath());
-		appender.setContext(context);
-
-		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-		encoder.setContext(context);
-		encoder.setPattern("%r %c %level - %msg%n");
-		encoder.start();
-
-		appender.setEncoder(encoder);
-		appender.start();
-
-		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).detachAppender("console");
-		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).addAppender(appender);
-
-		setLoggingLevel(level.name());
-	}
-
-	private static Logger logger = LoggerFactory.getLogger("ISFUtil");
-
-	public static void setLoggingLevel(String level) {
-		switch (LogLevel.valueOf(level)) {
-		case warn:
-			ISFUtil.level = LogLevel.warn;
-			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.WARN);
-			break;
-		case info:
-			ISFUtil.level = LogLevel.info;
-			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.INFO);
-			break;
-		case debug:
-			ISFUtil.level = LogLevel.debug;
-			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.DEBUG);
-			break;
-		default:
-			break;
-
-		}
-	}
-
-	public static String getLoggingLevel() {
-		return level.name();
-	}
 
 	// ================================================================================
 	// ISF trunk directory
@@ -278,7 +217,8 @@ public class ISFUtil {
 							"Failed to create generated directory from properties file.", e);
 				}
 			} else {
-				generatedDirectory = new File(System.getProperty("user.home"), "isf-generated");
+				generatedDirectory = new File(System.getProperty("user.home") + "/isf.tools",
+						"generated");
 			}
 			if (datedGenerated) {
 				if (datedString == null) {
@@ -289,6 +229,68 @@ public class ISFUtil {
 			}
 		}
 		return generatedDirectory;
+	}
+
+	// ================================================================================
+	// Logging setup
+	// ================================================================================
+
+	@SuppressWarnings("unused")
+	private static boolean ___________LOGGING________________;
+
+	private static LoggerContext context = null;
+	private static LogLevel level = LogLevel.info;
+
+	// logging setup
+	static {
+
+		SimpleDateFormat df = new SimpleDateFormat("yyMMdd_HHmmss");
+		String date = df.format(new Date());
+		context = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+		FileAppender appender = new FileAppender<Object>();
+		appender.setFile(new File(getGeneratedDirectory().getAbsolutePath() + "/log", date
+				+ "-log.txt").getAbsolutePath());
+		appender.setContext(context);
+
+		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+		encoder.setContext(context);
+		encoder.setPattern("%r %c %level - %msg%n");
+		encoder.start();
+
+		appender.setEncoder(encoder);
+		appender.start();
+
+		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).detachAppender("console");
+		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).addAppender(appender);
+
+		setLoggingLevel(level.name());
+	}
+
+	private static Logger logger = LoggerFactory.getLogger("ISFUtil");
+
+	public static void setLoggingLevel(String level) {
+		switch (LogLevel.valueOf(level)) {
+		case warn:
+			ISFUtil.level = LogLevel.warn;
+			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.WARN);
+			break;
+		case info:
+			ISFUtil.level = LogLevel.info;
+			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.INFO);
+			break;
+		case debug:
+			ISFUtil.level = LogLevel.debug;
+			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.DEBUG);
+			break;
+		default:
+			break;
+
+		}
+	}
+
+	public static String getLoggingLevel() {
+		return level.name();
 	}
 
 	// ================================================================================
@@ -804,6 +806,7 @@ public class ISFUtil {
 	// ================================================================================
 	// load native libraries
 
+	@SuppressWarnings("unused")
 	private static boolean ___________FACTPP_NATIVE________________;
 
 	static {

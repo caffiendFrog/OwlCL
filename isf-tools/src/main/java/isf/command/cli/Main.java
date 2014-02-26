@@ -7,6 +7,9 @@ import isf.command.GenerateModuleCommand;
 
 import java.io.File;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -20,6 +23,8 @@ public class Main {
 		ISFUtil.setLoggingLevel("info");
 	}
 
+	Logger log = LoggerFactory.getLogger(Main.class);
+	
 	@Parameter(
 			names = "-trunk",
 			validateWith = CreateDirectoryValidator.class,
@@ -101,6 +106,7 @@ public class Main {
 		}
 
 		String command = jc.getParsedCommand();
+		System.out.println(command);
 		if (command.equalsIgnoreCase("newModule")) {
 			newModule.run();
 		} else if (command.equalsIgnoreCase("module")) {

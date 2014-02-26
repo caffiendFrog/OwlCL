@@ -4,6 +4,7 @@ import isf.ISFUtil;
 import isf.module.internal.SimpleModuleBuilder;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -155,8 +156,7 @@ public class SimpleModule extends AbstractModule {
 		OWLOntology ontology = getManager().getOntology(annotationIri);
 		if (ontology == null) {
 			try {
-				getManager().loadOntology(annotationIri);
-				return true;
+				ontology = getManager().loadOntology(annotationIri);
 			} catch (OntologyIRIMappingNotFoundException e) {
 				return false;
 			} catch (OWLOntologyCreationException e) {
@@ -164,12 +164,14 @@ public class SimpleModule extends AbstractModule {
 						"Error while checking or the existence of a SimpleModule with IRI "
 								+ annotationIri + " and directory: " + getDirectory(), e);
 			}
-		} else {
-			return true;
 		}
+		logger.debug("Found module annotation ontoloyg for " + annotationIri + " located at "
+				+ getManager().getOntologyDocumentIRI(ontology));
+
+		return true;
 	}
 
-	public void create(IRI generatedFinalIri, Set<IRI> sourceIris, boolean legacy) {
+	public void create(IRI generatedFinalIri, Collection<IRI> sourceIris, boolean legacy) {
 		if (!exists()) {
 
 			// annotation ontology
