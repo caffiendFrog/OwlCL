@@ -95,11 +95,15 @@ public class GenerateModuleCommand extends AbstractCommand {
 
 	public GenerateModuleCommand(Main main) {
 		super(main);
+
+		outputDirectory = new File(main.getOutputDirectory(), "module/" + moduleName);
 	}
+
+	public File outputDirectory;
 
 	public void init() {
 		module = new SimpleModule(moduleName, ISFUtil.getIsfManagerSingleton(), directory,
-				new File(ISFUtil.getGeneratedDirectory(), "module/" + moduleName));
+				outputDirectory);
 	}
 
 	@Override
@@ -151,7 +155,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 		load {
 			@Override
 			public void execute(GenerateModuleCommand command) {
-				command.module.load(command.legacy);
+				command.module.load();
 
 			}
 		},

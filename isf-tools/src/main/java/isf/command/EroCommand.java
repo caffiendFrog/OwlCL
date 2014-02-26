@@ -6,6 +6,7 @@ import isf.command.cli.Main;
 import isf.module.Module;
 import isf.module.ModuleNames;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,11 +40,18 @@ public class EroCommand extends AbstractCommand {
 
 	Module topModule = null;
 	OWLOntology isfOntology = null;
-	OWLOntologyManager man = ISFUtil.getIsfManagerSingleton();
+	OWLOntologyManager man = null;
 	OWLReasoner reasoner = null;
+	File outputDirectory = null;
 
 	public EroCommand(Main main) {
 		super(main);
+
+	}
+
+	private void init() {
+		man = ISFUtil.getIsfManagerSingleton();
+		outputDirectory = new File(super.main.getOutputDirectory(), "ero-release");
 
 		try {
 			isfOntology = ISFUtil.setupAndLoadIsfOntology(man);
@@ -54,89 +62,104 @@ public class EroCommand extends AbstractCommand {
 
 		GenerateModuleCommand eaglei = new GenerateModuleCommand(super.main);
 		eaglei.setModuleName(ModuleNames.EAGLEI);
+		eaglei.outputDirectory = outputDirectory;
 		eaglei.init();
 		eaglei.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtended = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtended.setModuleName(ModuleNames.EAGLEI_EXTENDED);
+		eagleiExtended.outputDirectory = outputDirectory;
+		eagleiExtended.init();
+		eagleiExtended.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedGo = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedGo.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO);
+		eagleiExtendedGo.outputDirectory = outputDirectory;
+		eagleiExtendedGo.init();
+		eagleiExtendedGo.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedMesh = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedMesh.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH);
+		eagleiExtendedMesh.outputDirectory = outputDirectory;
+		eagleiExtendedMesh.init();
+		eagleiExtendedMesh.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedMp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedMp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP);
+		eagleiExtendedMp.outputDirectory = outputDirectory;
+		eagleiExtendedMp.init();
+		eagleiExtendedMp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedPato = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedPato.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO);
+		eagleiExtendedPato.outputDirectory = outputDirectory;
+		eagleiExtendedPato.init();
+		eagleiExtendedPato.module.setReasoner(reasoner);
 
-		GenerateModuleCommand eagleiExtendedUberson = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		GenerateModuleCommand eagleiExtendedUberon = new GenerateModuleCommand(super.main);
+		eagleiExtendedUberon.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON);
+		eagleiExtendedUberon.outputDirectory = outputDirectory;
+		eagleiExtendedUberon.init();
+		eagleiExtendedUberon.module.setReasoner(reasoner);
 
 		eagleiExtended.module.addImport(eaglei.module);
 		eagleiExtended.module.addImport(eagleiExtendedGo.module);
 		eagleiExtended.module.addImport(eagleiExtendedMesh.module);
 		eagleiExtended.module.addImport(eagleiExtendedMp.module);
 		eagleiExtended.module.addImport(eagleiExtendedPato.module);
-		eagleiExtended.module.addImport(eagleiExtendedUberson.module);
+		eagleiExtended.module.addImport(eagleiExtendedUberon.module);
 		eagleiExtended.module.addImport(eagleiExtendedGo.module);
 
 		GenerateModuleCommand eagleiApp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_APP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
-		eaglei.module.addImport(eaglei.module);
+		eagleiApp.setModuleName(ModuleNames.EAGLEI_APP);
+		eagleiApp.outputDirectory = outputDirectory;
+		eagleiApp.init();
+		eagleiApp.module.setReasoner(reasoner);
+		eagleiApp.module.addImport(eaglei.module);
 
 		GenerateModuleCommand eagleiAppDef = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_APP_DEF);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiAppDef.setModuleName(ModuleNames.EAGLEI_APP_DEF);
+		eagleiAppDef.outputDirectory = outputDirectory;
+		eagleiAppDef.init();
+		eagleiAppDef.module.setReasoner(reasoner);
 
-		eaglei.module.addImport(eagleiAppDef.module);
+		eagleiApp.module.addImport(eagleiAppDef.module);
 
 		GenerateModuleCommand eagleiExtendedApp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_APP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_APP);
+		eagleiExtendedApp.outputDirectory = outputDirectory;
+		eagleiExtendedApp.init();
+		eagleiExtendedApp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedGoApp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO_APP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedGoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO_APP);
+		eagleiExtendedGoApp.outputDirectory = outputDirectory;
+		eagleiExtendedGoApp.init();
+		eagleiExtendedGoApp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedMeshApp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH_APP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedMeshApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH_APP);
+		eagleiExtendedMeshApp.outputDirectory = outputDirectory;
+		eagleiExtendedMeshApp.init();
+		eagleiExtendedMeshApp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedMpApp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP_APP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedMpApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP_APP);
+		eagleiExtendedMpApp.outputDirectory = outputDirectory;
+		eagleiExtendedMpApp.init();
+		eagleiExtendedMpApp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedPatoApp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO_APP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedPatoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO_APP);
+		eagleiExtendedPatoApp.outputDirectory = outputDirectory;
+		eagleiExtendedPatoApp.init();
+		eagleiExtendedPatoApp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedUberonApp = new GenerateModuleCommand(super.main);
-		eaglei.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON_APP);
-		eaglei.init();
-		eaglei.module.setReasoner(reasoner);
+		eagleiExtendedUberonApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON_APP);
+		eagleiExtendedUberonApp.outputDirectory = outputDirectory;
+		eagleiExtendedUberonApp.init();
+		eagleiExtendedUberonApp.module.setReasoner(reasoner);
 
 		eagleiExtendedApp.module.addImport(eagleiExtended.module);
 		eagleiExtendedApp.module.addImport(eagleiApp.module);
@@ -151,6 +174,7 @@ public class EroCommand extends AbstractCommand {
 
 	@Override
 	public void run() {
+		init();
 		for (String action : getAllActions()) {
 			switch (Action.valueOf(action.toLowerCase())) {
 			case generate:

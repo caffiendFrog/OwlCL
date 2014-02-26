@@ -86,6 +86,8 @@ public class SimpleModule extends AbstractModule {
 
 	private HashSet<OWLOntology> legacyOntologies;
 
+	private boolean loaded;
+
 	/**
 	 * @param moduleName
 	 * @param moduleTrunkRelativePath
@@ -238,15 +240,23 @@ public class SimpleModule extends AbstractModule {
 		}
 	}
 
-	public void load(boolean legacy) {
+	public void load() {
+		if (this.loaded) {
+			return;
+		}
 		if (exists()) {
 			annotationOntology = ISFUtil.getOrLoadOntology(annotationIri, getManager());
 			includeOntology = ISFUtil.getOrLoadOntology(includeIri, getManager());
 			excludeOntology = ISFUtil.getOrLoadOntology(excludeIri, getManager());
-			if (legacy) {
+
+			try {
 				legacyOntology = ISFUtil.getOrLoadOntology(legacyIri, getManager());
 				legacyRemovedOntology = ISFUtil.getOrLoadOntology(legacyRemovedIri, getManager());
+			} catch (Exception e) {
+				logger.warn("Faild to load legacy ontologies, assuming not applicable for module: "
+						+ getName(), e);
 			}
+
 		} else {
 			throw new IllegalStateException(
 					"Attempting to load a non-existing SimpleModule named: " + getName());
@@ -262,6 +272,7 @@ public class SimpleModule extends AbstractModule {
 	@Override
 	public void generateModule() throws Exception {
 		logger.info("Generating module: " + getName());
+		load();
 		builder.run();
 
 	}
