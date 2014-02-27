@@ -110,45 +110,19 @@ public class GenerateModuleCommand extends AbstractCommand {
 	public void run() {
 
 		for (String action : getAllActions()) {
-			switch (Action.valueOf(action)) {
-			case generate:
-				generate.execute(this);
-				break;
-			case addLegacy:
-				if (legacy) {
-					addLegacy.execute(this);
-				}
-				break;
-			case cleanLegacy:
-				if (legacy) {
-					cleanLegacy.execute(this);
-				}
-				break;
-			case saveLegacy:
-				if (legacy) {
-					saveLegacy.execute(this);
-				}
-				break;
-			case save:
-				save.execute(this);
-				break;
-			case load:
-				load.execute(this);
-				break;
-			}
+			Action.valueOf(action).execute(this);
 		}
 	}
 
 	@Override
-	protected List<String> getDefaultActions() {
-		List<String> actions = new ArrayList<String>();
-		actions.add(Action.load.name());
-		actions.add(Action.generate.name());
-		actions.add(Action.cleanLegacy.name());
-		actions.add(Action.addLegacy.name());
-		actions.add(Action.saveLegacy.name());
-		actions.add(Action.save.name());
-		return actions;
+	protected List<String> getDefaultActions(List<String> actionsList) {
+		actionsList.add(Action.load.name());
+		actionsList.add(Action.generate.name());
+		actionsList.add(Action.cleanLegacy.name());
+		actionsList.add(Action.addLegacy.name());
+		actionsList.add(Action.saveLegacy.name());
+		actionsList.add(Action.save.name());
+		return actionsList;
 	}
 
 	enum Action {

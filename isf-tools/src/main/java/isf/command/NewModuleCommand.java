@@ -153,23 +153,14 @@ public class NewModuleCommand extends AbstractCommand {
 				new File(ISFUtil.getGeneratedDirectory(), "module/" + moduleName));
 
 		for (String action : getAllActions()) {
-			switch (Action.valueOf(action)) {
-			case create:
-				create.execute(this);
-				break;
-			default:
-				break;
-
-			}
+			Action.valueOf(action).execute(this);
 		}
-
 	}
 
 	@Override
-	protected List<String> getDefaultActions() {
-		List<String> actions = new ArrayList<String>();
-		actions.add(Action.create.name());
-		return actions;
+	protected List<String> getDefaultActions(List<String> actionsList) {
+		actionsList.add(Action.create.name());
+		return actionsList;
 	}
 
 	public enum Action {

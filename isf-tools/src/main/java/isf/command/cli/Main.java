@@ -1,9 +1,11 @@
 package isf.command.cli;
 
 import isf.ISFUtil;
+import isf.command.CatalogCommand;
 import isf.command.NewModuleCommand;
 import isf.command.EroCommand;
 import isf.command.GenerateModuleCommand;
+import isf.command.ValidateIriCommand;
 
 import java.io.File;
 
@@ -24,7 +26,7 @@ public class Main {
 	}
 
 	Logger log = LoggerFactory.getLogger(Main.class);
-	
+
 	@Parameter(
 			names = "-trunk",
 			validateWith = CreateDirectoryValidator.class,
@@ -52,7 +54,7 @@ public class Main {
 	}
 
 	@Parameter(names = "-datedOutput", description = "Whether or not to create dated_time "
-			+ "sub directories in the output directory.")
+			+ "sub directories in the output directory.", arity = 1)
 	public void setDatedOutput(boolean datedOutput) {
 		ISFUtil.datedGenerated = datedOutput;
 		ISFUtil.setGeneratedDirectory(null);
@@ -91,6 +93,12 @@ public class Main {
 		GenerateModuleCommand module = new GenerateModuleCommand(main);
 		jc.addCommand("module", module);
 
+		CatalogCommand catalog = new CatalogCommand(main);
+		jc.addCommand("catalog", catalog);
+		
+		ValidateIriCommand iri = new ValidateIriCommand(main);
+		jc.addCommand("iri", iri);
+
 		if (args.length == 0) {
 			System.out.println(PROGRAM_DESC);
 			jc.usage();
@@ -113,6 +121,10 @@ public class Main {
 			module.run();
 		} else if (command.equalsIgnoreCase("ero")) {
 			ero.run();
+		} else if (command.equalsIgnoreCase("catalog")) {
+			catalog.run();
+		}else if (command.equalsIgnoreCase("iri")) {
+			iri.run();
 		}
 
 	}

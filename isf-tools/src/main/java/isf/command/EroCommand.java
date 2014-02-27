@@ -7,10 +7,8 @@ import isf.module.Module;
 import isf.module.ModuleNames;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -176,45 +174,18 @@ public class EroCommand extends AbstractCommand {
 	public void run() {
 		init();
 		for (String action : getAllActions()) {
-			switch (Action.valueOf(action.toLowerCase())) {
-			case generate:
-				generate.execute(this);
-				break;
-			case cleanlegacy:
-				if (cleanLegacy) {
-					cleanlegacy.execute(this);
-				}
-				break;
-			case addlegacy:
-				if (addLegacy) {
-					addlegacy.execute(this);
-				}
-				break;
-			case save:
-				save.execute(this);
-				break;
-			case savelegacy:
-				if (cleanLegacy) {
-					savelegacy.execute(this);
-				}
-				break;
-
-			default:
-				break;
-			}
+			Action.valueOf(action.toLowerCase()).execute(this);
 		}
-
 	}
 
 	@Override
-	protected List<String> getDefaultActions() {
-		List<String> actions = new ArrayList<String>();
-		actions.add(generate.name());
-		actions.add(addlegacy.name());
-		actions.add(cleanlegacy.name());
-		actions.add(savelegacy.name());
-		actions.add(save.name());
-		return actions;
+	protected List<String> getDefaultActions(List<String> actionsList) {
+		actionsList.add(generate.name());
+		actionsList.add(addlegacy.name());
+		actionsList.add(cleanlegacy.name());
+		actionsList.add(savelegacy.name());
+		actionsList.add(save.name());
+		return actionsList;
 	}
 
 	enum Action {

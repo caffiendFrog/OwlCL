@@ -17,6 +17,7 @@ import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
@@ -88,6 +89,8 @@ public class SimpleModule extends AbstractModule {
 
 	private boolean loaded;
 
+	private OWLAnnotationProperty sourceOntologyProperty;
+
 	/**
 	 * @param moduleName
 	 * @param moduleTrunkRelativePath
@@ -122,6 +125,8 @@ public class SimpleModule extends AbstractModule {
 		legacyRemovedIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
 				+ ISFUtil.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
 
+		sourceOntologyProperty = getDataFactory().getOWLAnnotationProperty(
+				IRI.create(ISFUtil.MODULE_SOURCE_ANNOTATION_IRI));
 		this.changeListener = new OWLOntologyChangeListener() {
 
 			@Override
@@ -278,9 +283,12 @@ public class SimpleModule extends AbstractModule {
 	}
 
 	public Set<OWLOntology> getSources() {
-		Set<OWLOntology> sources = new HashSet<OWLOntology>(annotationOntology.getImports());
-		sources.remove(includeOntology);
-		sources.remove(excludeOntology);
+		Set<OWLOntology> sources = new HashSet<OWLOntology>();
+		for (String value : ISFUtil.getOntologyAnnotationLiteralValues(sourceOntologyProperty,
+				annotationOntology, false)) {
+			IRI sourceIri = IRI.create(value);
+			sources.add(getManager().getOntology(sourceIri));
+		}
 		return sources;
 	}
 

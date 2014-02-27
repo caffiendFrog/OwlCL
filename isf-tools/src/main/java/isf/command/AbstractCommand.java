@@ -15,7 +15,7 @@ public abstract class AbstractCommand {
 		this.main = main;
 	}
 
-	public List<String> actions = getDefaultActions();
+	public List<String> actions = getDefaultActions(new ArrayList<String>());
 
 	public List<String> getActions() {
 		return actions;
@@ -47,7 +47,7 @@ public abstract class AbstractCommand {
 	 * 
 	 * @return
 	 */
-	protected abstract List<String> getDefaultActions();
+	protected abstract List<String> getDefaultActions(List<String> actionsList);
 
 	public abstract void run();
 

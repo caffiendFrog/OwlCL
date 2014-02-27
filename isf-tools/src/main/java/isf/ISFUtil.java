@@ -23,6 +23,7 @@ import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationSubject;
@@ -33,6 +34,7 @@ import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLEntityVisitor;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
@@ -97,8 +99,6 @@ public class ISFUtil {
 			+ "isf-full-dev-reasoned.owl");
 
 	public static final String ISF_MAPPING_SUFFIX = "-mapping.owl";
-	public static final IRI ISF_IRI_MAPPES_TO_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-iri-mappes-to");
 
 	public static final IRI ISF_SKOS_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX + "isf-skos.owl");
 
@@ -109,22 +109,24 @@ public class ISFUtil {
 	public static final String MODULE_LEGACY_IRI_SUFFIX = "-module-legacy.owl";
 	public static final String MODULE_LEGACY_REMOVED_IRI_SUFFIX = "-module-legacy-removed.owl";
 
+	public static final IRI ISF_IRI_MAPPES_TO_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX
+			+ "isftools-iri-mappes-to");
 	public static final String INCLUDE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-module-include";
+			+ "isftools-module-include";
 	public static final String INCLUDE_SUBS_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-module-include-subs";
+			+ "isftools-module-include-subs";
 	public static final String INCLUDE_INSTANCES_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-module-include-instances";
+			+ "isftools-module-include-instances";
 
 	public static final String EXCLUDE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-module-exclude";
+			+ "isftools-module-exclude";
 
 	public static final String EXCLUDE_SUBS_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-module-exclude-subs";
+			+ "isftools-module-exclude-subs";
 	public static final String MODULE_FINAL_IRI_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-module-iri";
+			+ "isftools-module-iri";
 	public static final String MODULE_SOURCE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-module-source";
+			+ "isftools-module-source";
 
 	// ================================================================================
 	// ISF trunk directory
@@ -235,6 +237,10 @@ public class ISFUtil {
 	// Logging setup
 	// ================================================================================
 
+	public enum LogLevel {
+		warn, info, debug, trace;
+	}
+
 	@SuppressWarnings("unused")
 	private static boolean ___________LOGGING________________;
 
@@ -282,6 +288,9 @@ public class ISFUtil {
 		case debug:
 			ISFUtil.level = LogLevel.debug;
 			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.DEBUG);
+			break;
+		case trace:
+			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.TRACE);
 			break;
 		default:
 			break;
@@ -365,6 +374,26 @@ public class ISFUtil {
 
 	@SuppressWarnings("unused")
 	private static boolean ___________OWL_HELPERS________________;
+
+	public static Set<String> getOntologyAnnotationLiteralValues(OWLAnnotationProperty property,
+			OWLOntology ontology, boolean recursive) {
+		Set<String> values = new HashSet<String>();
+		Set<OWLOntology> ontologies = null;
+		if (recursive) {
+			ontologies = ontology.getImportsClosure();
+		} else {
+			ontologies = Collections.singleton(ontology);
+		}
+		for (OWLOntology o : ontologies) {
+			for (OWLAnnotation a : o.getAnnotations()) {
+				if (a.getProperty().equals(property)) {
+					values.add(((OWLLiteral) a.getValue()).getLiteral());
+				}
+			}
+		}
+
+		return values;
+	}
 
 	public static OWLOntology getOrLoadOntology(IRI iri, OWLOntologyManager man) {
 		OWLOntology o = man.getOntology(iri);
@@ -889,10 +918,6 @@ public class ISFUtil {
 
 		}
 
-	}
-
-	public enum LogLevel {
-		warn, info, debug;
 	}
 
 }
