@@ -1,13 +1,11 @@
 package isf.command;
 
-import static isf.command.GenerateModuleCommand.Action.*;
 import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.Main;
 import isf.module.SimpleModule;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
@@ -104,6 +102,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 	public void init() {
 		module = new SimpleModule(moduleName, ISFUtil.getIsfManagerSingleton(), directory,
 				outputDirectory);
+		module.load();
 	}
 
 	@Override
@@ -115,7 +114,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getDefaultActions(List<String> actionsList) {
+	protected List<String> getCommandActions(List<String> actionsList) {
 		actionsList.add(Action.load.name());
 		actionsList.add(Action.generate.name());
 		actionsList.add(Action.cleanLegacy.name());
@@ -162,7 +161,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 			@Override
 			public void execute(GenerateModuleCommand command) {
 				try {
-					command.module.saveGeneratedModule();
+					command.module.saveModule();
 				} catch (OWLOntologyStorageException e) {
 					throw new RuntimeException("Error caught while saving module in command.", e);
 				}

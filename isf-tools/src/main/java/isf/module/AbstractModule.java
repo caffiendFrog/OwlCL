@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -23,18 +24,19 @@ public abstract class AbstractModule implements Module {
 	private File directory;
 	private File outputDirectory;
 	private Set<Module> imports = new HashSet<Module>();
-	private OWLOntologyManager man;
+	private OWLOntologyManager genManager;
+	private OWLOntologyManager defineManager;
 
 	private static Logger log = LoggerFactory.getLogger(AbstractModule.class);
 
-	public AbstractModule(String moduleName, OWLOntologyManager manager, File directory,
+	public AbstractModule(String moduleName, OWLOntologyManager definingManager, File directory,
 			File outputDirectory) {
 
 		if (moduleName == null || directory == null || outputDirectory == null) {
 			throw new IllegalStateException("Module name, directory, or output cannot be null.");
 		}
 		this.name = moduleName;
-		this.man = manager;
+		this.defineManager = definingManager;
 
 		this.directory = directory;
 		this.directory.mkdirs();
@@ -44,17 +46,29 @@ public abstract class AbstractModule implements Module {
 
 	}
 
-	public OWLOntologyManager getManager() {
-		if (man == null) {
-			man = OWLManager.createOWLOntologyManager();
-			AutoIRIMapper mapper = new AutoIRIMapper(directory, true);
-			man.addIRIMapper(mapper);
+	// public OWLOntologyManager getManager() {
+	// if (man == null) {
+	// man = OWLManager.createOWLOntologyManager();
+	// AutoIRIMapper mapper = new AutoIRIMapper(directory, true);
+	// man.addIRIMapper(mapper);
+	// }
+	// return man;
+	// }
+
+	public OWLOntologyManager getGeneratedManager() {
+		if (genManager == null) {
+			genManager = OWLManager.createOWLOntologyManager();
+
 		}
-		return man;
+		return genManager;
 	}
 
-	public void setManager(OWLOntologyManager manager) {
-		this.man = manager;
+	public OWLOntologyManager getDefiningManager() {
+		if (defineManager == null) {
+			defineManager = OWLManager.createOWLOntologyManager();
+
+		}
+		return defineManager;
 	}
 
 	@Override
@@ -75,18 +89,14 @@ public abstract class AbstractModule implements Module {
 		this.reasoner = reasoner;
 	}
 
-	protected void saveOntology(OWLOntology ontology) throws OWLOntologyStorageException {
-		man.saveOntology(ontology);
-	}
-
 	@Override
 	public abstract void generateModule() throws Exception;
 
 	@Override
-	public abstract void saveGeneratedModule() throws OWLOntologyStorageException;
+	public abstract void saveModule() throws OWLOntologyStorageException;
 
 	@Override
-	public void saveGeneratedModuleTransitive() throws OWLOntologyStorageException {
+	public void saveModuleTransitive() throws OWLOntologyStorageException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -187,10 +197,14 @@ public abstract class AbstractModule implements Module {
 		return false;
 	}
 
-	OWLOntology createOntology(IRI iri, File directory) {
+	OWLOntology createOntology(IRI iri, File directory, OWLOntologyManager man) {
 		OWLOntology ontology = null;
+		RDFXMLOntologyFormat of = new RDFXMLOntologyFormat();
+		of.setAddMissingTypes(true);
+
 		try {
 			ontology = man.createOntology(iri);
+			man.setOntologyFormat(ontology, of);
 		} catch (OWLOntologyCreationException e) {
 			throw new IllegalStateException("Failed to create new ontology for: " + iri, e);
 		}
@@ -207,7 +221,7 @@ public abstract class AbstractModule implements Module {
 	}
 
 	public OWLDataFactory getDataFactory() {
-		return man.getOWLDataFactory();
+		return OWLManager.getOWLDataFactory();
 	}
 
 }

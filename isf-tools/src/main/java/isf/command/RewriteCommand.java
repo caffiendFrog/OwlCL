@@ -1,0 +1,119 @@
+package isf.command;
+
+import isf.command.cli.CanonicalFileConverter;
+import isf.command.cli.Main;
+import isf.util.OntologyFilesUtil;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyFormat;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
+
+@Parameters(commandNames = "rewrite", commandDescription = "Rewrites the OWL files.")
+public class RewriteCommand extends AbstractCommand {
+
+	// ================================================================================
+	// Format
+	// ================================================================================
+	public String format = "rdfxml";
+	public boolean formatSet;
+
+	@Parameter(names = "-format", description = "Which formats, valid options include \"rdfxml\" "
+			+ "")
+	public void setFormat(String format) {
+		this.format = format;
+		this.formatSet = true;
+	}
+
+	public String getFormat() {
+		return format;
+	}
+
+	// ================================================================================
+	// Files
+	// ================================================================================
+
+	@Parameter(names = "-files", description = "Files or directories to search for files "
+			+ "to rewrite", converter = CanonicalFileConverter.class)
+	public List<File> files;
+	public boolean filesSet;
+
+	// ================================================================================
+	// Implementation
+	// ================================================================================
+	public RewriteCommand(Main main) {
+		super(main);
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	protected List<String> getCommandActions(List<String> actionsList) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void run() {
+		OntologyFilesUtil ofu = new OntologyFilesUtil(files);
+		HashMap<File, Exception> exceptions = new HashMap<File, Exception>();
+		Set<Entry<File, IRI>> entries = ofu.getLocalOntologyFiles(true, exceptions).entrySet();
+		for (Entry<File, Exception> exception : exceptions.entrySet())
+		{
+			System.out.println(exception.getKey() + " --> " + exception.getValue().getMessage());
+		}
+
+		for (Entry<File, IRI> entry : entries)
+		{
+			if (entry.getValue() == null)
+				continue;
+			if(entry.getKey().getPath().endsWith("catalog-v001.xml")){
+				
+				System.out.println("catalog:");
+				System.out.println(entry.getValue());
+			}
+			OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+			man.clearIRIMappers();
+			man.setSilentMissingImportsHandling(true);
+			OWLOntology ontology = null;
+			try
+			{
+				ontology = man.loadOntologyFromOntologyDocument(entry.getKey());
+			} catch (OWLOntologyCreationException e)
+			{
+				throw new RuntimeException(
+						"Format: error loading ontology file: " + entry.getKey(), e);
+			}
+
+			OWLOntologyFormat ontologyFormat = null;
+			if (format.equals("rdfxml"))
+			{
+				RDFXMLOntologyFormat rdfformat = new RDFXMLOntologyFormat();
+				rdfformat.setAddMissingTypes(true);
+				ontologyFormat = rdfformat;
+			}
+
+			try
+			{
+				man.saveOntology(ontology, ontologyFormat);
+			} catch (OWLOntologyStorageException e)
+			{
+				throw new RuntimeException("Format: error saving ontology file: " + entry.getKey(),
+						e);
+			}
+		}
+
+	}
+}

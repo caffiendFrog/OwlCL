@@ -76,11 +76,7 @@
       <artifactId>owlapi-apibinding</artifactId>
       <version>3.4.9</version>
     </dependency>
-    <dependency>
-      <groupId>fact-plus-plus</groupId>
-      <artifactId>fact-plus-plus</artifactId>
-      <version>1.6.2</version>
-    </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -100,6 +96,12 @@
       <groupId>edu.stanford.protege</groupId>
       <artifactId>org.protege.xmlcatalog</artifactId>
       <version>1.0.3</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>owlapi-distribution</artifactId>
+          <groupId>net.sourceforge.owlapi</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -110,6 +112,11 @@
       <groupId>com.beust</groupId>
       <artifactId>jcommander</artifactId>
       <version>1.36-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>fact-plus-plus</groupId>
+      <artifactId>fact-plus-plus</artifactId>
+      <version>1.6.2</version>
     </dependency>
   </dependencies>
 </project>

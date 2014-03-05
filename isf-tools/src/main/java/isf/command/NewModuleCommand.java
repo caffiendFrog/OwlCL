@@ -158,7 +158,7 @@ public class NewModuleCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getDefaultActions(List<String> actionsList) {
+	protected List<String> getCommandActions(List<String> actionsList) {
 		actionsList.add(Action.create.name());
 		return actionsList;
 	}

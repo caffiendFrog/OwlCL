@@ -8,9 +8,9 @@ public interface Module {
 
 	Object getName();
 
-	void saveGeneratedModule() throws OWLOntologyStorageException;
+	void saveModule() throws OWLOntologyStorageException;
 
-	void saveGeneratedModuleTransitive() throws OWLOntologyStorageException;
+	void saveModuleTransitive() throws OWLOntologyStorageException;
 
 	IRI getIri();
 

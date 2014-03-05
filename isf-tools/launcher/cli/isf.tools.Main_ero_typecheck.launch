@@ -9,7 +9,7 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="isf.command.cli.Main"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-comm &quot;manal legacy stuff&quot; ero"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-comm &#10;&quot;ero typecheck&quot;&#10;-localOwlFiles&#10;/srv/pass-through/git/googlecode/isf-svn/trunk/src/ontology&#10;typecheck&#10;-files&#10;/srv/pass-through/git/googlecode/isf-svn/trunk/src/ontology"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="isf-tools"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

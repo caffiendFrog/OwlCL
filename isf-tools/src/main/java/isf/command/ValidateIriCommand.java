@@ -61,7 +61,7 @@ public class ValidateIriCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getDefaultActions(List<String> actionsList) {
+	protected List<String> getCommandActions(List<String> actionsList) {
 		actionsList.add(Action.duplicates.name());
 		actionsList.add(Action.autoload.name());
 		actionsList.add(Action.resolve.name());
@@ -101,13 +101,14 @@ public class ValidateIriCommand extends AbstractCommand {
 						IRI iri = man.loadOntologyFromOntologyDocument(file).getOntologyID()
 								.getOntologyIRI();
 
-						if (command.iriToDocMap.put(iri, file.getAbsolutePath()) != null) {
+						if (command.iriToDocMap.keySet().contains(iri)) {
 							System.err.println(counter + "\tFound duplicate IRI of: " + iri
 									+ "\n in file: " + file.getAbsolutePath());
 							System.err.println("\tPrevious file with same IRI was: "
 									+ command.iriToDocMap.get(iri));
 							command.problemsFound = true;
 						} else {
+							command.iriToDocMap.put(iri, file.getAbsolutePath());
 							System.out.print(counter + " - Found IRI: " + iri);
 							System.out.println("\t In file: " + file.getAbsolutePath());
 						}

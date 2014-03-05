@@ -31,7 +31,6 @@ public class SimpleModuleBuilder {
 
 	public void run() throws Exception {
 
-
 		if (module.getReasoner().getUnsatisfiableClasses().getEntities().size() > 0) {
 			System.out.println("Unsatisfieds: "
 					+ module.getReasoner().getUnsatisfiableClasses().getEntities());
@@ -62,6 +61,18 @@ public class SimpleModuleBuilder {
 		System.out.println("Typing all entities: ");
 		typeAllEntities();
 
+		addOntologyAnnotations();
+
+	}
+
+	private void addOntologyAnnotations() {
+		for (OWLAnnotation a : module.getAnnotationOntology().getAnnotations()) {
+			if (!a.getProperty().getIRI().toString().contains("isftools-")) {
+				AddOntologyAnnotation aa = new AddOntologyAnnotation(module.getOntology(), a);
+				module.getGeneratedManager().applyChange(aa);
+			}
+		}
+
 	}
 
 	public void addIncludes() {
@@ -69,14 +80,14 @@ public class SimpleModuleBuilder {
 
 		for (OWLEntity e : entities) {
 			addAxiom(module.getDataFactory().getOWLDeclarationAxiom(e));
-			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSources(), true));
+			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSourceOntology(), true));
 		}
-		
 
 	}
 
 	public void addIncludeSubs() {
-		Set<OWLEntity> entities = ISFUtil.getIncludeSubsEntities(module.getAnnotationOntology(), true);
+		Set<OWLEntity> entities = ISFUtil.getIncludeSubsEntities(module.getAnnotationOntology(),
+				true);
 		// System.out.println("Found sub annotations for: " + entities);
 		Set<OWLEntity> closureEntities = new HashSet<OWLEntity>();
 
@@ -85,7 +96,7 @@ public class SimpleModuleBuilder {
 		}
 		for (OWLEntity e : closureEntities) {
 			addAxiom(df.getOWLDeclarationAxiom(e));
-			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSources(), true));
+			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSourceOntology(), true));
 		}
 	}
 
@@ -94,7 +105,7 @@ public class SimpleModuleBuilder {
 
 		for (OWLEntity e : entities) {
 			addAxiom(df.getOWLDeclarationAxiom(e));
-			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSources(), true));
+			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSourceOntology(), true));
 		}
 
 	}
@@ -103,7 +114,7 @@ public class SimpleModuleBuilder {
 		Set<OWLEntity> entities = ISFUtil.getExcludeEntities(module.getAnnotationOntology(), true);
 		for (OWLEntity entity : entities) {
 			removeAxiom(df.getOWLDeclarationAxiom(entity));
-			removeAxioms(ISFUtil.getDefiningAxioms(entity, module.getSources(), true));
+			removeAxioms(ISFUtil.getDefiningAxioms(entity, module.getSourceOntology(), true));
 
 			if (entity instanceof OWLClass) {
 				OWLClass c = (OWLClass) entity;
@@ -128,7 +139,8 @@ public class SimpleModuleBuilder {
 	}
 
 	public void removeExcludeSubs() {
-		Set<OWLEntity> entities = ISFUtil.getExcludeSubsEntities(module.getAnnotationOntology(), true);
+		Set<OWLEntity> entities = ISFUtil.getExcludeSubsEntities(module.getAnnotationOntology(),
+				true);
 		// System.out.println("Excluding class: " + entities);
 		Set<OWLEntity> entityiesClosure = new HashSet<OWLEntity>();
 		for (OWLEntity entity : entities) {
@@ -137,7 +149,7 @@ public class SimpleModuleBuilder {
 		// System.out.println("Excluding class closure: " + entityiesClosure);
 		for (OWLEntity entity : entityiesClosure) {
 			removeAxiom(df.getOWLDeclarationAxiom(entity));
-			removeAxioms(ISFUtil.getDefiningAxioms(entity, module.getSources(), true));
+			removeAxioms(ISFUtil.getDefiningAxioms(entity, module.getSourceOntology(), true));
 		}
 
 	}
@@ -147,13 +159,8 @@ public class SimpleModuleBuilder {
 		// addAxioms(moduleOntologyInclude.getAxioms());
 		Set<OWLAxiom> axioms = module.getIncludeOntology().getAxioms();
 		axioms.removeAll(module.getExcludeOntology().getAxioms());
-		module.getManager().addAxioms(module.getOntology(), axioms);
+		module.getGeneratedManager().addAxioms(module.getOntology(), axioms);
 
-		// add any ontology annotations from the annotation ontology
-		for (OWLAnnotation a : module.getAnnotationOntology().getAnnotations()) {
-			AddOntologyAnnotation oa = new AddOntologyAnnotation(module.getOntology(), a);
-			module.getManager().applyChange(oa);
-		}
 	}
 
 	public void addClosureToBfo() {
@@ -161,8 +168,8 @@ public class SimpleModuleBuilder {
 			Set<OWLEntity> supers = ISFUtil.getSupers(entity, true, module.getReasoner());
 			for (final OWLEntity supr : supers) {
 				if (!supr.getIRI().toString().contains("BFO_")) {
-					Set<OWLAxiom> axioms = ISFUtil.getDefiningAxioms(supr,
-							module.getSources(), true);
+					Set<OWLAxiom> axioms = ISFUtil.getDefiningAxioms(supr, module.getSourceOntology(),
+							true);
 					for (OWLAxiom axiom : axioms) {
 						axiom.accept(new OWLAxiomVisitorAdapter() {
 							@Override
@@ -199,7 +206,7 @@ public class SimpleModuleBuilder {
 				i.remove();
 				annotatedEntities.add(entity);
 				Set<OWLAnnotationAssertionAxiom> axioms = ISFUtil.getSubjectAnnotationAxioms(
-						module.getSources(), true, entity.getIRI());
+						module.getSourceOntology(), true, entity.getIRI());
 				addAxioms(axioms);
 				for (OWLAnnotationAssertionAxiom a : axioms) {
 					Set<OWLEntity> signature = a.getSignature();
@@ -240,7 +247,7 @@ public class SimpleModuleBuilder {
 		// includes.
 				&& !removedAxioms.contains(axiom) && !module.getOntology().containsAxiom(axiom)) {
 			// System.out.println("\t" + axiom.toString());
-			module.getManager().addAxiom(module.getOntology(), axiom);
+			module.getGeneratedManager().addAxiom(module.getOntology(), axiom);
 		}
 	}
 
@@ -253,7 +260,7 @@ public class SimpleModuleBuilder {
 	Set<OWLAxiom> removedAxioms = new HashSet<OWLAxiom>();
 
 	private void removeAxiom(OWLAxiom axiom) {
-		module.getManager().removeAxiom(module.getOntology(), axiom);
+		module.getGeneratedManager().removeAxiom(module.getOntology(), axiom);
 		removedAxioms.add(axiom);
 	}
 }

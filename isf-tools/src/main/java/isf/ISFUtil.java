@@ -53,7 +53,10 @@ import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.core.filter.Filter;
+import ch.qos.logback.core.spi.FilterReply;
 
 /**
  * @author Shahim Essaid
@@ -125,8 +128,74 @@ public class ISFUtil {
 			+ "isftools-module-exclude-subs";
 	public static final String MODULE_FINAL_IRI_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
 			+ "isftools-module-iri";
+	public static final String MODULE_FILE_NAME_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
+			+ "isftools-module-file-name";
 	public static final String MODULE_SOURCE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
 			+ "isftools-module-source";
+
+	// ================================================================================
+	// Initialization, must call. Done this way to delay the logging setup until
+	// the final directories are determined from the commandline options or some
+	// other client.
+	// ================================================================================
+
+	public static void init() {
+		//
+
+		//
+		SimpleDateFormat df = new SimpleDateFormat("yyMMdd_HHmmss");
+		String date = df.format(new Date());
+		context = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+		FileAppender appender = new FileAppender<Object>();
+		appender.setFile(new File(getGeneratedDirectory().getAbsolutePath() + "/log", date
+				+ "-log.txt").getAbsolutePath());
+		appender.setContext(context);
+
+		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+		encoder.setContext(context);
+		encoder.setPattern("%r %c %level - %msg%n");
+		encoder.start();
+
+		appender.setEncoder(encoder);
+		appender.start();
+
+		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).getAppender("console")
+				.addFilter(new Filter<ILoggingEvent>() {
+
+					@Override
+					public FilterReply decide(ILoggingEvent event) {
+						if (event.getLevel().isGreaterOrEqual(Level.WARN))
+						{
+							return FilterReply.ACCEPT;
+						}
+						return FilterReply.DENY;
+					}
+				});
+		;
+		// context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).detachAppender("console");
+		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).addAppender(appender);
+
+		setLoggingLevel(level.name());
+
+	}
+
+	private static Properties isfProperties = new Properties();
+	static
+	{
+		File isfPropertiesFile = new File(System.getProperty("user.home"), "isf.properties");
+		if (isfPropertiesFile.isFile())
+		{
+			try
+			{
+				isfProperties.load(new FileReader(isfPropertiesFile));
+			} catch (IOException e)
+			{
+				throw new RuntimeException(
+						"Error while loading isf.properties file from home directory.", e);
+			}
+		}
+	}
 
 	// ================================================================================
 	// ISF trunk directory
@@ -134,52 +203,46 @@ public class ISFUtil {
 	@SuppressWarnings("unused")
 	private static boolean ___________DIRECTORIES________________;
 
-	private static Properties isfProperties = new Properties();
-	static {
-		File isfPropertiesFile = new File(System.getProperty("user.home"), "isf.properties");
-		if (isfPropertiesFile.isFile()) {
-			try {
-				isfProperties.load(new FileReader(isfPropertiesFile));
-			} catch (IOException e) {
-				throw new RuntimeException(
-						"Error while loading isf.properties file from home directory.", e);
-			}
-		}
-	}
-
 	public static File ISF_TRUNK_DIR = null;
 
-	static {
-		String isfTrunk = System.getProperty(ISF_TRUNK_PROPERTY);
-
-		if (isfTrunk == null) {
-			isfTrunk = System.getenv(ISF_TRUNK_PROPERTY.toUpperCase().replace(".", "_"));
-		}
-
-		if (isfTrunk == null) {
-			isfTrunk = isfProperties.getProperty(ISF_TRUNK_PROPERTY);
-		}
-
-		if (isfTrunk != null) {
-			File isfTrunkDir;
-			try {
-				isfTrunkDir = new File(isfTrunk).getCanonicalFile();
-			} catch (IOException e) {
-				throw new IllegalStateException("Error determining ISF trunk directory", e);
-			}
-			if (checkValidTrunkLocation(isfTrunkDir)) {
-				ISF_TRUNK_DIR = isfTrunkDir;
-			} else {
-				throw new IllegalStateException(
-						"The ISF trunk location does not appear to be valid. Location: "
-								+ isfTrunkDir.getAbsolutePath());
-			}
-		}
-	}
-
 	public static File getTrunkDirectory() {
-		if (ISF_TRUNK_DIR == null) {
-			throw new IllegalStateException("Failed to find location of ISF trunk");
+		if (ISF_TRUNK_DIR == null)
+		{
+			String isfTrunk = System.getProperty(ISF_TRUNK_PROPERTY);
+
+			if (isfTrunk == null)
+			{
+				isfTrunk = System.getenv(ISF_TRUNK_PROPERTY.toUpperCase().replace(".", "_"));
+			}
+
+			if (isfTrunk == null)
+			{
+				isfTrunk = isfProperties.getProperty(ISF_TRUNK_PROPERTY);
+			}
+
+			if (isfTrunk != null)
+			{
+				File isfTrunkDir;
+				try
+				{
+					isfTrunkDir = new File(isfTrunk).getCanonicalFile();
+				} catch (IOException e)
+				{
+					throw new IllegalStateException("Error determining ISF trunk directory", e);
+				}
+				if (checkValidTrunkLocation(isfTrunkDir))
+				{
+					ISF_TRUNK_DIR = isfTrunkDir;
+				} else
+				{
+					throw new IllegalStateException(
+							"The ISF trunk location does not appear to be valid. Location: "
+									+ isfTrunkDir.getAbsolutePath());
+				}
+			} else
+			{
+				throw new RuntimeException("Failed to find ISF trunk directory.");
+			}
 		}
 		return ISF_TRUNK_DIR;
 	}
@@ -189,7 +252,8 @@ public class ISFUtil {
 	}
 
 	private static boolean checkValidTrunkLocation(File trunkDir) {
-		if (trunkDir != null && trunkDir.isDirectory()) {
+		if (trunkDir != null && trunkDir.isDirectory())
+		{
 			File tools = new File(trunkDir, "src/ontology/isf-dev.owl");
 			return tools.exists();
 		}
@@ -201,6 +265,7 @@ public class ISFUtil {
 	}
 
 	public static boolean datedGenerated = true;
+	public static String suffixString = "";
 	private static String datedString = null;
 	private static File generatedDirectory = null;
 
@@ -209,25 +274,37 @@ public class ISFUtil {
 	}
 
 	public static File getGeneratedDirectory() {
-		if (generatedDirectory == null) {
+		if (generatedDirectory == null)
+		{
 			String directory = isfProperties.getProperty(ISF_GENERATED_DIRECTORY_PROPERTY);
-			if (directory != null) {
-				try {
+			if (directory != null)
+			{
+				try
+				{
 					generatedDirectory = new File(directory).getCanonicalFile();
-				} catch (IOException e) {
+				} catch (IOException e)
+				{
 					throw new RuntimeException(
 							"Failed to create generated directory from properties file.", e);
 				}
-			} else {
+			} else
+			{
 				generatedDirectory = new File(System.getProperty("user.home") + "/isf.tools",
 						"generated");
 			}
-			if (datedGenerated) {
-				if (datedString == null) {
-					SimpleDateFormat df = new SimpleDateFormat("yyMMdd-hhmmss");
+			if (datedGenerated)
+			{
+				if (datedString == null)
+				{
+					SimpleDateFormat df = new SimpleDateFormat("yyMMdd-HHmmss");
 					datedString = df.format(new Date());
 				}
-				generatedDirectory = new File(generatedDirectory, datedString);
+				generatedDirectory = new File(generatedDirectory.getAbsolutePath(), datedString
+						+ "_" + suffixString);
+			} else
+			{
+				generatedDirectory = new File(generatedDirectory.getAbsolutePath() + "_"
+						+ suffixString);
 			}
 		}
 		return generatedDirectory;
@@ -247,36 +324,11 @@ public class ISFUtil {
 	private static LoggerContext context = null;
 	private static LogLevel level = LogLevel.info;
 
-	// logging setup
-	static {
-
-		SimpleDateFormat df = new SimpleDateFormat("yyMMdd_HHmmss");
-		String date = df.format(new Date());
-		context = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-		FileAppender appender = new FileAppender<Object>();
-		appender.setFile(new File(getGeneratedDirectory().getAbsolutePath() + "/log", date
-				+ "-log.txt").getAbsolutePath());
-		appender.setContext(context);
-
-		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-		encoder.setContext(context);
-		encoder.setPattern("%r %c %level - %msg%n");
-		encoder.start();
-
-		appender.setEncoder(encoder);
-		appender.start();
-
-		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).detachAppender("console");
-		context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).addAppender(appender);
-
-		setLoggingLevel(level.name());
-	}
-
 	private static Logger logger = LoggerFactory.getLogger("ISFUtil");
 
 	public static void setLoggingLevel(String level) {
-		switch (LogLevel.valueOf(level)) {
+		switch (LogLevel.valueOf(level))
+		{
 		case warn:
 			ISFUtil.level = LogLevel.warn;
 			context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).setLevel(Level.WARN);
@@ -331,7 +383,8 @@ public class ISFUtil {
 		setupManagerMapper(man);
 		logger.info("Loading ISF");
 		man.loadOntology(ISF_DEV_IRI);
-		for (OWLOntology o : man.getOntologies()) {
+		for (OWLOntology o : man.getOntologies())
+		{
 			logger.debug("\t Loaded ontology " + o.getOntologyID().getOntologyIRI() + " from "
 					+ man.getOntologyDocumentIRI(o));
 		}
@@ -361,7 +414,8 @@ public class ISFUtil {
 	 * @return
 	 */
 	public static OWLOntologyManager getIsfManagerSingleton() {
-		if (isfManager == null) {
+		if (isfManager == null)
+		{
 			isfManager = OWLManager.createOWLOntologyManager();
 			setupManagerMapper(isfManager);
 		}
@@ -379,14 +433,19 @@ public class ISFUtil {
 			OWLOntology ontology, boolean recursive) {
 		Set<String> values = new HashSet<String>();
 		Set<OWLOntology> ontologies = null;
-		if (recursive) {
+		if (recursive)
+		{
 			ontologies = ontology.getImportsClosure();
-		} else {
+		} else
+		{
 			ontologies = Collections.singleton(ontology);
 		}
-		for (OWLOntology o : ontologies) {
-			for (OWLAnnotation a : o.getAnnotations()) {
-				if (a.getProperty().equals(property)) {
+		for (OWLOntology o : ontologies)
+		{
+			for (OWLAnnotation a : o.getAnnotations())
+			{
+				if (a.getProperty().equals(property))
+				{
 					values.add(((OWLLiteral) a.getValue()).getLiteral());
 				}
 			}
@@ -397,10 +456,13 @@ public class ISFUtil {
 
 	public static OWLOntology getOrLoadOntology(IRI iri, OWLOntologyManager man) {
 		OWLOntology o = man.getOntology(iri);
-		if (o == null) {
-			try {
+		if (o == null)
+		{
+			try
+			{
 				o = man.loadOntology(iri);
-			} catch (OWLOntologyCreationException e) {
+			} catch (OWLOntologyCreationException e)
+			{
 				throw new RuntimeException("Failed to getOrLoad ontology: " + iri, e);
 			}
 		}
@@ -478,8 +540,10 @@ public class ISFUtil {
 			Set<OWLAnnotationAssertionAxiom> axioms) {
 		Set<OWLEntity> entities = new HashSet<OWLEntity>();
 		IRI subject;
-		for (OWLAnnotationAssertionAxiom a : axioms) {
-			if (a.getSubject() instanceof IRI) {
+		for (OWLAnnotationAssertionAxiom a : axioms)
+		{
+			if (a.getSubject() instanceof IRI)
+			{
 				subject = (IRI) a.getSubject();
 				entities.addAll(ontology.getEntitiesInSignature(subject, includeImports));
 			}
@@ -491,14 +555,19 @@ public class ISFUtil {
 			OWLOntology ontology, OWLAnnotationProperty property, boolean includeImports) {
 		Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<OWLAnnotationAssertionAxiom>();
 		Set<OWLOntology> ontologies;
-		if (includeImports) {
+		if (includeImports)
+		{
 			ontologies = ontology.getImportsClosure();
-		} else {
+		} else
+		{
 			ontologies = Collections.singleton(ontology);
 		}
-		for (OWLOntology o : ontologies) {
-			for (OWLAnnotationAssertionAxiom aaa : o.getAxioms(AxiomType.ANNOTATION_ASSERTION)) {
-				if (aaa.getProperty().getIRI().equals(property.getIRI())) {
+		for (OWLOntology o : ontologies)
+		{
+			for (OWLAnnotationAssertionAxiom aaa : o.getAxioms(AxiomType.ANNOTATION_ASSERTION))
+			{
+				if (aaa.getProperty().getIRI().equals(property.getIRI()))
+				{
 					axioms.add(aaa);
 				}
 			}
@@ -543,8 +612,10 @@ public class ISFUtil {
 				entities.add(property);
 				Set<OWLObjectPropertyExpression> opes = pr.getSubObjectProperties(property,
 						!closure).getFlattened();
-				for (OWLObjectPropertyExpression ope : opes) {
-					if (ope instanceof OWLObjectProperty) {
+				for (OWLObjectPropertyExpression ope : opes)
+				{
+					if (ope instanceof OWLObjectProperty)
+					{
 						entities.add((OWLObjectProperty) ope);
 					}
 				}
@@ -608,16 +679,21 @@ public class ISFUtil {
 
 				// <http://eagle-i.org/ont/app/1.0/has_measurement_scale> had
 				// error: Role expression expected in getSupRoles()
-				try {
+				try
+				{
 					opes = pr.getSuperObjectProperties(property, closure).getFlattened();
-				} catch (ReasonerInternalException e) {
+				} catch (ReasonerInternalException e)
+				{
 					System.err.println(property + " had error: " + e.getMessage());
 				}
-				if (opes == null) {
+				if (opes == null)
+				{
 					return;
 				}
-				for (OWLObjectPropertyExpression ope : opes) {
-					if (ope instanceof OWLObjectProperty) {
+				for (OWLObjectPropertyExpression ope : opes)
+				{
+					if (ope instanceof OWLObjectProperty)
+					{
 						entities.add((OWLObjectProperty) ope);
 					}
 				}
@@ -638,7 +714,8 @@ public class ISFUtil {
 	public static Set<OWLAnnotationAssertionAxiom> getSubjectAnnotationAxioms(
 			Set<OWLOntology> ontologies, boolean includeImports, OWLAnnotationSubject subject) {
 		Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<OWLAnnotationAssertionAxiom>();
-		for (OWLOntology o : ontologies) {
+		for (OWLOntology o : ontologies)
+		{
 			axioms.addAll(getSubjectAnnotationAxioms(o, includeImports, subject));
 		}
 		return axioms;
@@ -648,12 +725,15 @@ public class ISFUtil {
 			boolean includeImports, OWLAnnotationSubject subject) {
 		Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<OWLAnnotationAssertionAxiom>();
 		Set<OWLOntology> ontologies;
-		if (includeImports) {
+		if (includeImports)
+		{
 			ontologies = ontology.getImportsClosure();
-		} else {
+		} else
+		{
 			ontologies = Collections.singleton(ontology);
 		}
-		for (OWLOntology o : ontologies) {
+		for (OWLOntology o : ontologies)
+		{
 			axioms.addAll(o.getAnnotationAssertionAxioms(subject));
 		}
 		return axioms;
@@ -663,7 +743,8 @@ public class ISFUtil {
 	public static Set<OWLAxiom> getDefiningAxioms(final OWLEntity entity,
 			Set<OWLOntology> ontologies, boolean includeImports) {
 		Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
-		for (OWLOntology o : ontologies) {
+		for (OWLOntology o : ontologies)
+		{
 			axioms.addAll(getDefiningAxioms(entity, o, includeImports));
 		}
 		return axioms;
@@ -673,13 +754,16 @@ public class ISFUtil {
 			boolean includeImports) {
 		final Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
 		Set<OWLOntology> ontologies;
-		if (includeImports) {
+		if (includeImports)
+		{
 			ontologies = ontology.getImportsClosure();
-		} else {
+		} else
+		{
 			ontologies = Collections.singleton(ontology);
 		}
 
-		for (final OWLOntology o : ontologies) {
+		for (final OWLOntology o : ontologies)
+		{
 			entity.accept(new OWLEntityVisitor() {
 
 				@Override
@@ -726,10 +810,13 @@ public class ISFUtil {
 	public static Set<LabelInfo> getLabels(IRI iri, Set<OWLOntology> ontologies) {
 		Set<LabelInfo> infos = new HashSet<ISFUtil.LabelInfo>();
 
-		for (OWLOntology ontology : ontologies) {
+		for (OWLOntology ontology : ontologies)
+		{
 			Set<OWLAnnotationAssertionAxiom> axioms = ontology.getAnnotationAssertionAxioms(iri);
-			for (OWLAnnotationAssertionAxiom axiom : axioms) {
-				if (axiom.getProperty().getIRI().equals(OWLRDFVocabulary.RDFS_LABEL.getIRI())) {
+			for (OWLAnnotationAssertionAxiom axiom : axioms)
+			{
+				if (axiom.getProperty().getIRI().equals(OWLRDFVocabulary.RDFS_LABEL.getIRI()))
+				{
 					infos.add(new LabelInfo(ontology, axiom));
 				}
 			}
@@ -755,6 +842,7 @@ public class ISFUtil {
 	}
 
 	public static class LabelInfo {
+
 		public final OWLAnnotationAssertionAxiom axiom;
 		public final OWLOntology ontology;
 
@@ -773,8 +861,10 @@ public class ISFUtil {
 
 	public static Set<OWLAxiom> getAxioms(OWLOntology ontology, boolean recursive) {
 		Set<OWLAxiom> axioms = new HashSet<OWLAxiom>(ontology.getAxioms());
-		if (recursive) {
-			for (OWLOntology o : ontology.getImports()) {
+		if (recursive)
+		{
+			for (OWLOntology o : ontology.getImports())
+			{
 				axioms.addAll(o.getAxioms());
 			}
 		}
@@ -790,15 +880,19 @@ public class ISFUtil {
 		OWLAnnotationProperty p = getIsfManagerSingleton().getOWLDataFactory()
 				.getOWLAnnotationProperty(ISF_IRI_MAPPES_TO_IRI);
 		for (OWLAnnotationAssertionAxiom aaa : getAnnotationAssertionAxioms(mappingOntology, p,
-				true)) {
-			if (aaa.getProperty().getIRI().equals(ISF_IRI_MAPPES_TO_IRI)) {
+				true))
+		{
+			if (aaa.getProperty().getIRI().equals(ISF_IRI_MAPPES_TO_IRI))
+			{
 				IRI subjectIri = (IRI) aaa.getSubject();
 				IRI objectIri = (IRI) aaa.getValue();
 
-				if (leftToRight) {
+				if (leftToRight)
+				{
 					duplicateCheck(subjectIri, objectIri, mappingName, mappings);
 					mappings.put(subjectIri, objectIri);
-				} else {
+				} else
+				{
 					duplicateCheck(objectIri, subjectIri, mappingName, mappings);
 					mappings.put(objectIri, subjectIri);
 				}
@@ -807,22 +901,26 @@ public class ISFUtil {
 
 		// apply transitive mappings
 		Map<IRI, IRI> finalMappings = new HashMap<IRI, IRI>();
-		for (IRI from : mappings.keySet()) {
+		for (IRI from : mappings.keySet())
+		{
 			finalMappings.put(from, getTransitiveMapping(from, mappings));
 		}
 		return finalMappings;
 	}
 
 	private static IRI getTransitiveMapping(IRI from, Map<IRI, IRI> mappings) {
-		if (mappings.get(from) == null) {
+		if (mappings.get(from) == null)
+		{
 			return from;
-		} else {
+		} else
+		{
 			return getTransitiveMapping(mappings.get(from), mappings);
 		}
 	}
 
 	private static void duplicateCheck(IRI from, IRI to, String mappingName, Map<IRI, IRI> mappings) {
-		if (mappings.containsKey(from) && !mappings.get(from).equals(to)) {
+		if (mappings.containsKey(from) && !mappings.get(from).equals(to))
+		{
 			throw new IllegalStateException("Mapping " + mappingName
 					+ " contains multiple mappings for IRI " + from + ". Found a mapping to " + to
 					+ " while there was an existing mapping to " + mappings.get(from));
@@ -838,47 +936,59 @@ public class ISFUtil {
 	@SuppressWarnings("unused")
 	private static boolean ___________FACTPP_NATIVE________________;
 
-	static {
+	static
+	{
 		String osName = System.getProperty("os.name");
 		String osArch = System.getProperty("os.arch");
 		String libName = null;
 		String libPath = null;
 
-		if (osName.toLowerCase().startsWith("windows")) {
-			if (osArch.contains("64")) {
+		if (osName.toLowerCase().startsWith("windows"))
+		{
+			if (osArch.contains("64"))
+			{
 				libName = "FaCTPlusPlusJNI.dll";
 				libPath = "/fact162/win64/";
-			} else {
+			} else
+			{
 				libName = "FaCTPlusPlusJNI.dll";
 				libPath = "/fact162/win32/";
 			}
-		} else if (osName.toLowerCase().startsWith("linux")) {
-			if (osArch.contains("64")) {
+		} else if (osName.toLowerCase().startsWith("linux"))
+		{
+			if (osArch.contains("64"))
+			{
 				libName = "libFaCTPlusPlusJNI.so";
 				libPath = "/fact162/linux64/";
-			} else {
+			} else
+			{
 				libName = "libFaCTPlusPlusJNI.so";
 				libPath = "/fact162/linux32/";
 			}
-		} else if (osName.toLowerCase().contains("mac")) {
-			if (osArch.contains("64")) {
+		} else if (osName.toLowerCase().contains("mac"))
+		{
+			if (osArch.contains("64"))
+			{
 				libName = "libFaCTPlusPlusJNI.jnilib";
 				libPath = "/fact162/os64/";
-			} else {
+			} else
+			{
 				libName = "libFaCTPlusPlusJNI.jnilib";
 				libPath = "/fact162/os32/";
 			}
 		}
 		FileOutputStream fos = null;
 		InputStream fis = null;
-		try {
+		try
+		{
 			final Path libDir = Files.createTempDirectory("factpp-");
 			libDir.toFile().deleteOnExit();
 			fos = new FileOutputStream(new File(libDir.toFile(), libName));
 			fis = ISFUtil.class.getResourceAsStream(libPath + libName);
 			byte[] buffer = new byte[1024];
 			int bytesRead = 0;
-			while ((bytesRead = fis.read(buffer)) != -1) {
+			while ((bytesRead = fis.read(buffer)) != -1)
+			{
 				fos.write(buffer, 0, bytesRead);
 			}
 			System.setProperty("java.library.path", libDir.toFile().getAbsolutePath());
@@ -886,12 +996,14 @@ public class ISFUtil {
 			fieldSysPath.setAccessible(true);
 			fieldSysPath.set(null, null);
 			Runtime.getRuntime().addShutdownHook(new Thread() {
+
 				public void run() {
 					delete(libDir.toFile());
 				}
 
 				void delete(File f) {
-					if (f.isDirectory()) {
+					if (f.isDirectory())
+					{
 						for (File c : f.listFiles())
 							delete(c);
 					}
@@ -900,19 +1012,27 @@ public class ISFUtil {
 				}
 			});
 		} catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException
-				| IllegalAccessException e) {
+				| IllegalAccessException e)
+		{
 			throw new RuntimeException("ISFUtil: failed to copy native library.", e);
-		} finally {
-			if (fos != null) {
-				try {
+		} finally
+		{
+			if (fos != null)
+			{
+				try
+				{
 					fos.close();
-				} catch (IOException e) {
+				} catch (IOException e)
+				{
 				}
 			}
-			if (fis != null) {
-				try {
+			if (fis != null)
+			{
+				try
+				{
 					fis.close();
-				} catch (IOException e) {
+				} catch (IOException e)
+				{
 				}
 			}
 

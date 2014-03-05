@@ -9,7 +9,7 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="isf.command.cli.Main"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-comm &quot;manal legacy stuff&quot; ero"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-comm&#10;&quot;ero compare&quot; &#10;compare&#10;-lfiles&#10;/srv/pass-through/git/googlecode/eaglei-latest-new/src/ontology&#10;-lIri&#10;http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl&#10;-rfiles&#10;/srv/pass-through/git/googlecode/eaglei-latest-original/src/ontology&#10;-rIri&#10;http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="isf-tools"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

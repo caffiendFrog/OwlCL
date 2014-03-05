@@ -51,52 +51,54 @@ public class EroCommand extends AbstractCommand {
 		man = ISFUtil.getIsfManagerSingleton();
 		outputDirectory = new File(super.main.getOutputDirectory(), "ero-release");
 
-		try {
+		try
+		{
 			isfOntology = ISFUtil.setupAndLoadIsfOntology(man);
-		} catch (OWLOntologyCreationException e) {
+		} catch (OWLOntologyCreationException e)
+		{
 			throw new IllegalStateException("Failed to load ISF ontology due to: ", e);
 		}
 		reasoner = ISFUtil.getDefaultReasoner(isfOntology);
 
 		GenerateModuleCommand eaglei = new GenerateModuleCommand(super.main);
 		eaglei.setModuleName(ModuleNames.EAGLEI);
-		eaglei.outputDirectory = outputDirectory;
+		eaglei.outputDirectory = new File(outputDirectory, "core");
 		eaglei.init();
 		eaglei.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtended = new GenerateModuleCommand(super.main);
 		eagleiExtended.setModuleName(ModuleNames.EAGLEI_EXTENDED);
-		eagleiExtended.outputDirectory = outputDirectory;
+		eagleiExtended.outputDirectory = new File(outputDirectory, "core");
 		eagleiExtended.init();
 		eagleiExtended.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedGo = new GenerateModuleCommand(super.main);
 		eagleiExtendedGo.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO);
-		eagleiExtendedGo.outputDirectory = outputDirectory;
+		eagleiExtendedGo.outputDirectory = new File(outputDirectory, "imports");
 		eagleiExtendedGo.init();
 		eagleiExtendedGo.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedMesh = new GenerateModuleCommand(super.main);
 		eagleiExtendedMesh.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH);
-		eagleiExtendedMesh.outputDirectory = outputDirectory;
+		eagleiExtendedMesh.outputDirectory = new File(outputDirectory, "imports");
 		eagleiExtendedMesh.init();
 		eagleiExtendedMesh.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedMp = new GenerateModuleCommand(super.main);
 		eagleiExtendedMp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP);
-		eagleiExtendedMp.outputDirectory = outputDirectory;
+		eagleiExtendedMp.outputDirectory = new File(outputDirectory, "imports");
 		eagleiExtendedMp.init();
 		eagleiExtendedMp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedPato = new GenerateModuleCommand(super.main);
 		eagleiExtendedPato.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO);
-		eagleiExtendedPato.outputDirectory = outputDirectory;
+		eagleiExtendedPato.outputDirectory = new File(outputDirectory, "imports");
 		eagleiExtendedPato.init();
 		eagleiExtendedPato.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedUberon = new GenerateModuleCommand(super.main);
 		eagleiExtendedUberon.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON);
-		eagleiExtendedUberon.outputDirectory = outputDirectory;
+		eagleiExtendedUberon.outputDirectory = new File(outputDirectory, "imports");
 		eagleiExtendedUberon.init();
 		eagleiExtendedUberon.module.setReasoner(reasoner);
 
@@ -110,14 +112,14 @@ public class EroCommand extends AbstractCommand {
 
 		GenerateModuleCommand eagleiApp = new GenerateModuleCommand(super.main);
 		eagleiApp.setModuleName(ModuleNames.EAGLEI_APP);
-		eagleiApp.outputDirectory = outputDirectory;
+		eagleiApp.outputDirectory = new File(outputDirectory, "application-specific-files");
 		eagleiApp.init();
 		eagleiApp.module.setReasoner(reasoner);
 		eagleiApp.module.addImport(eaglei.module);
 
 		GenerateModuleCommand eagleiAppDef = new GenerateModuleCommand(super.main);
 		eagleiAppDef.setModuleName(ModuleNames.EAGLEI_APP_DEF);
-		eagleiAppDef.outputDirectory = outputDirectory;
+		eagleiAppDef.outputDirectory = new File(outputDirectory, "application-specific-files");
 		eagleiAppDef.init();
 		eagleiAppDef.module.setReasoner(reasoner);
 
@@ -125,39 +127,54 @@ public class EroCommand extends AbstractCommand {
 
 		GenerateModuleCommand eagleiExtendedApp = new GenerateModuleCommand(super.main);
 		eagleiExtendedApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_APP);
-		eagleiExtendedApp.outputDirectory = outputDirectory;
+		eagleiExtendedApp.outputDirectory = new File(outputDirectory, "application-specific-files");
 		eagleiExtendedApp.init();
 		eagleiExtendedApp.module.setReasoner(reasoner);
 
 		GenerateModuleCommand eagleiExtendedGoApp = new GenerateModuleCommand(super.main);
 		eagleiExtendedGoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO_APP);
-		eagleiExtendedGoApp.outputDirectory = outputDirectory;
+		eagleiExtendedGoApp.outputDirectory = new File(outputDirectory,
+				"application-specific-files");
 		eagleiExtendedGoApp.init();
 		eagleiExtendedGoApp.module.setReasoner(reasoner);
+		eagleiExtendedGoApp.module.addImport(eagleiExtendedGo.module);
+		eagleiExtendedGoApp.module.addImport(eagleiAppDef.module);
 
 		GenerateModuleCommand eagleiExtendedMeshApp = new GenerateModuleCommand(super.main);
 		eagleiExtendedMeshApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH_APP);
-		eagleiExtendedMeshApp.outputDirectory = outputDirectory;
+		eagleiExtendedMeshApp.outputDirectory = new File(outputDirectory,
+				"application-specific-files");
 		eagleiExtendedMeshApp.init();
 		eagleiExtendedMeshApp.module.setReasoner(reasoner);
+		eagleiExtendedMeshApp.module.addImport(eagleiExtendedMesh.module);
+		eagleiExtendedMeshApp.module.addImport(eagleiAppDef.module);
 
 		GenerateModuleCommand eagleiExtendedMpApp = new GenerateModuleCommand(super.main);
 		eagleiExtendedMpApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP_APP);
-		eagleiExtendedMpApp.outputDirectory = outputDirectory;
+		eagleiExtendedMpApp.outputDirectory = new File(outputDirectory,
+				"application-specific-files");
 		eagleiExtendedMpApp.init();
 		eagleiExtendedMpApp.module.setReasoner(reasoner);
+		eagleiExtendedMpApp.module.addImport(eagleiExtendedMp.module);
+		eagleiExtendedMpApp.module.addImport(eagleiAppDef.module);
 
 		GenerateModuleCommand eagleiExtendedPatoApp = new GenerateModuleCommand(super.main);
 		eagleiExtendedPatoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO_APP);
-		eagleiExtendedPatoApp.outputDirectory = outputDirectory;
+		eagleiExtendedPatoApp.outputDirectory = new File(outputDirectory,
+				"application-specific-files");
 		eagleiExtendedPatoApp.init();
 		eagleiExtendedPatoApp.module.setReasoner(reasoner);
+		eagleiExtendedPatoApp.module.addImport(eagleiExtendedPato.module);
+		eagleiExtendedPatoApp.module.addImport(eagleiAppDef.module);
 
 		GenerateModuleCommand eagleiExtendedUberonApp = new GenerateModuleCommand(super.main);
 		eagleiExtendedUberonApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON_APP);
-		eagleiExtendedUberonApp.outputDirectory = outputDirectory;
+		eagleiExtendedUberonApp.outputDirectory = new File(outputDirectory,
+				"application-specific-files");
 		eagleiExtendedUberonApp.init();
 		eagleiExtendedUberonApp.module.setReasoner(reasoner);
+		eagleiExtendedUberonApp.module.addImport(eagleiExtendedUberon.module);
+		eagleiExtendedUberonApp.module.addImport(eagleiAppDef.module);
 
 		eagleiExtendedApp.module.addImport(eagleiExtended.module);
 		eagleiExtendedApp.module.addImport(eagleiApp.module);
@@ -173,39 +190,46 @@ public class EroCommand extends AbstractCommand {
 	@Override
 	public void run() {
 		init();
-		for (String action : getAllActions()) {
+		for (String action : getAllActions())
+		{
 			Action.valueOf(action.toLowerCase()).execute(this);
 		}
 	}
 
 	@Override
-	protected List<String> getDefaultActions(List<String> actionsList) {
+	protected List<String> getCommandActions(List<String> actionsList) {
 		actionsList.add(generate.name());
 		actionsList.add(addlegacy.name());
-		actionsList.add(cleanlegacy.name());
-		actionsList.add(savelegacy.name());
+		// actionsList.add(cleanlegacy.name());
+		// actionsList.add(savelegacy.name());
 		actionsList.add(save.name());
+		actionsList.add(catalog.name());
 		return actionsList;
 	}
 
 	enum Action {
 		generate {
+
 			@Override
 			public void execute(EroCommand command) {
-				try {
+				try
+				{
 					command.topModule.generateModuleTransitive();
-				} catch (Exception e) {
+				} catch (Exception e)
+				{
 					throw new RuntimeException("Error generating ero module in command", e);
 				}
 			}
 		},
 		addlegacy {
+
 			@Override
 			public void execute(EroCommand command) {
 				command.topModule.addLegacyOntologiesTransitive();
 			}
 		},
 		cleanlegacy {
+
 			@Override
 			public void execute(EroCommand command) {
 				command.topModule.cleanLegacyOntologiesTransitive();
@@ -213,23 +237,39 @@ public class EroCommand extends AbstractCommand {
 			}
 		},
 		savelegacy {
+
 			@Override
 			public void execute(EroCommand command) {
-				try {
+				try
+				{
 					command.topModule.saveLegacyOntologiesTransitive();
-				} catch (OWLOntologyStorageException e) {
+				} catch (OWLOntologyStorageException e)
+				{
 					throw new RuntimeException("Error saving legacy ontologies in ero command.", e);
 				}
 			}
 		},
 		save {
+
 			@Override
 			public void execute(EroCommand command) {
-				try {
-					command.topModule.saveGeneratedModuleTransitive();
-				} catch (OWLOntologyStorageException e) {
+				try
+				{
+					command.topModule.saveModuleTransitive();
+				} catch (OWLOntologyStorageException e)
+				{
 					throw new RuntimeException("Error saving ero module in command.", e);
 				}
+			}
+		},
+		catalog {
+
+			@Override
+			public void execute(EroCommand command) {
+				// TODO Auto-generated method stub
+				CatalogCommand catalog = new CatalogCommand(command.main);
+				catalog.setDirectory(command.outputDirectory.getAbsolutePath());
+				catalog.run();
 			}
 		};
 

@@ -4,6 +4,8 @@ import isf.ISFUtil;
 import isf.module.internal.SimpleModuleBuilder;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +30,7 @@ import org.semanticweb.owlapi.model.OWLOntologyChangeListener;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.RemoveImport;
+import org.semanticweb.owlapi.model.SetOntologyID;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,11 +87,11 @@ public class SimpleModule extends AbstractModule {
 
 	private OWLOntology legacyRemovedOntology;
 
-	private HashSet<OWLOntology> legacyOntologies;
-
 	private boolean loaded;
 
-	private OWLAnnotationProperty sourceOntologyProperty;
+	private String customFileName;
+
+	private OWLOntology mergedSource;
 
 	/**
 	 * @param moduleName
@@ -125,8 +127,6 @@ public class SimpleModule extends AbstractModule {
 		legacyRemovedIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
 				+ ISFUtil.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
 
-		sourceOntologyProperty = getDataFactory().getOWLAnnotationProperty(
-				IRI.create(ISFUtil.MODULE_SOURCE_ANNOTATION_IRI));
 		this.changeListener = new OWLOntologyChangeListener() {
 
 			@Override
@@ -154,16 +154,16 @@ public class SimpleModule extends AbstractModule {
 			}
 		};
 
-		getManager().addOntologyChangeListener(changeListener);
-		ontology = createOntology(moduleIri, getOutputDirectory());
+		getDefiningManager().addOntologyChangeListener(changeListener);
+		ontology = createOntology(moduleIri, getOutputDirectory(), getGeneratedManager());
 
 	}
 
 	public boolean exists() {
-		OWLOntology ontology = getManager().getOntology(annotationIri);
+		OWLOntology ontology = getDefiningManager().getOntology(annotationIri);
 		if (ontology == null) {
 			try {
-				ontology = getManager().loadOntology(annotationIri);
+				ontology = getDefiningManager().loadOntology(annotationIri);
 			} catch (OntologyIRIMappingNotFoundException e) {
 				return false;
 			} catch (OWLOntologyCreationException e) {
@@ -173,7 +173,7 @@ public class SimpleModule extends AbstractModule {
 			}
 		}
 		logger.debug("Found module annotation ontoloyg for " + annotationIri + " located at "
-				+ getManager().getOntologyDocumentIRI(ontology));
+				+ getDefiningManager().getOntologyDocumentIRI(ontology));
 
 		return true;
 	}
@@ -182,27 +182,27 @@ public class SimpleModule extends AbstractModule {
 		if (!exists()) {
 
 			// annotation ontology
-			annotationOntology = createOntology(annotationIri, getDirectory());
+			annotationOntology = createOntology(annotationIri, getDirectory(), getDefiningManager());
 			// add the exclude import
 			AddImport ai = new AddImport(annotationOntology, getDataFactory()
 					.getOWLImportsDeclaration(excludeIri));
-			getManager().applyChange(ai);
+			getDefiningManager().applyChange(ai);
 			// add the include import
 			ai = new AddImport(annotationOntology, getDataFactory().getOWLImportsDeclaration(
 					includeIri));
-			getManager().applyChange(ai);
+			getDefiningManager().applyChange(ai);
 			// add the source imports
 			for (IRI iri : sourceIris) {
 				ai = new AddImport(annotationOntology, getDataFactory().getOWLImportsDeclaration(
 						iri));
-				getManager().applyChange(ai);
+				getDefiningManager().applyChange(ai);
 				// save the sources as ontology annotations
 				OWLLiteral source = getDataFactory().getOWLLiteral(iri.toString());
 				OWLAnnotation a = getDataFactory().getOWLAnnotation(
 						getDataFactory().getOWLAnnotationProperty(
 								IRI.create(ISFUtil.MODULE_SOURCE_ANNOTATION_IRI)), source);
 				AddOntologyAnnotation aoa = new AddOntologyAnnotation(annotationOntology, a);
-				getManager().applyChange(aoa);
+				getDefiningManager().applyChange(aoa);
 			}
 			// add the final IRI annotation
 			OWLLiteral finalIriLiteral = getDataFactory().getOWLLiteral(
@@ -211,28 +211,30 @@ public class SimpleModule extends AbstractModule {
 					getDataFactory().getOWLAnnotationProperty(
 							IRI.create(ISFUtil.MODULE_FINAL_IRI_ANNOTATION_IRI)), finalIriLiteral);
 			AddOntologyAnnotation aoa = new AddOntologyAnnotation(annotationOntology, a);
-			getManager().applyChange(aoa);
+			getDefiningManager().applyChange(aoa);
 
 			// the include ontology
-			includeOntology = createOntology(includeIri, getDirectory());
+			includeOntology = createOntology(includeIri, getDirectory(), getDefiningManager());
 			// the exclude ontology
-			excludeOntology = createOntology(excludeIri, getDirectory());
+			excludeOntology = createOntology(excludeIri, getDirectory(), getDefiningManager());
 
 			try {
-				saveOntology(annotationOntology);
-				saveOntology(includeOntology);
-				saveOntology(excludeOntology);
+				annotationOntology.getOWLOntologyManager().saveOntology(annotationOntology);
+				includeOntology.getOWLOntologyManager().saveOntology(includeOntology);
+				excludeOntology.getOWLOntologyManager().saveOntology(excludeOntology);
 			} catch (OWLOntologyStorageException e) {
 				throw new RuntimeException(
 						"Failed to save ontologies for newly created SimpleModule", e);
 			}
 
 			if (legacy) {
-				legacyOntology = createOntology(legacyIri, getDirectory());
-				legacyRemovedOntology = createOntology(legacyRemovedIri, getDirectory());
+				legacyOntology = createOntology(legacyIri, getDirectory(), getDefiningManager());
+				legacyRemovedOntology = createOntology(legacyRemovedIri, getDirectory(),
+						getDefiningManager());
 				try {
-					saveOntology(legacyOntology);
-					saveOntology(legacyRemovedOntology);
+					legacyOntology.getOWLOntologyManager().saveOntology(legacyOntology);
+					legacyRemovedOntology.getOWLOntologyManager().saveOntology(
+							legacyRemovedOntology);
 				} catch (OWLOntologyStorageException e) {
 					throw new RuntimeException(
 							"Failed to save legacy ontologies for newly created SimpleModule", e);
@@ -250,16 +252,49 @@ public class SimpleModule extends AbstractModule {
 			return;
 		}
 		if (exists()) {
-			annotationOntology = ISFUtil.getOrLoadOntology(annotationIri, getManager());
-			includeOntology = ISFUtil.getOrLoadOntology(includeIri, getManager());
-			excludeOntology = ISFUtil.getOrLoadOntology(excludeIri, getManager());
+			annotationOntology = ISFUtil.getOrLoadOntology(annotationIri, getDefiningManager());
+			includeOntology = ISFUtil.getOrLoadOntology(includeIri, getDefiningManager());
+			excludeOntology = ISFUtil.getOrLoadOntology(excludeIri, getDefiningManager());
+
+			for (OWLAnnotation a : annotationOntology.getAnnotations()) {
+				if (a.getProperty().getIRI().toString()
+						.equals(ISFUtil.MODULE_FINAL_IRI_ANNOTATION_IRI)) {
+					moduleIri = IRI.create(((OWLLiteral) a.getValue()).getLiteral());
+					SetOntologyID setid = new SetOntologyID(ontology, moduleIri);
+					getGeneratedManager().applyChange(setid);
+				}
+				if (a.getProperty().getIRI().toString()
+						.equals(ISFUtil.MODULE_FILE_NAME_ANNOTATION_IRI)) {
+					customFileName = ((OWLLiteral) a.getValue()).getLiteral();
+				}
+				try {
+					mergedSource = getDefiningManager().createOntology();
+				} catch (OWLOntologyCreationException e) {
+					throw new RuntimeException(
+							"Failed to create merged source ontology while loading module: "
+									+ getName(), e);
+				}
+				if (a.getProperty().getIRI().toString()
+						.equals(ISFUtil.MODULE_SOURCE_ANNOTATION_IRI)) {
+					String sourceIri = ((OWLLiteral) a.getValue()).getLiteral();
+
+					OWLImportsDeclaration id = getDataFactory().getOWLImportsDeclaration(
+							IRI.create(sourceIri));
+					AddImport i = new AddImport(mergedSource, id);
+					logger.info("Adding source import for module: " + getName() + " imported "
+							+ sourceIri);
+					getDefiningManager().applyChange(i);
+				}
+			}
 
 			try {
-				legacyOntology = ISFUtil.getOrLoadOntology(legacyIri, getManager());
-				legacyRemovedOntology = ISFUtil.getOrLoadOntology(legacyRemovedIri, getManager());
+				legacyOntology = ISFUtil.getOrLoadOntology(legacyIri, getDefiningManager());
+				legacyRemovedOntology = ISFUtil.getOrLoadOntology(legacyRemovedIri,
+						getDefiningManager());
 			} catch (Exception e) {
 				logger.warn("Faild to load legacy ontologies, assuming not applicable for module: "
 						+ getName(), e);
+				System.err.println();
 			}
 
 		} else {
@@ -282,21 +317,15 @@ public class SimpleModule extends AbstractModule {
 
 	}
 
-	public Set<OWLOntology> getSources() {
-		Set<OWLOntology> sources = new HashSet<OWLOntology>();
-		for (String value : ISFUtil.getOntologyAnnotationLiteralValues(sourceOntologyProperty,
-				annotationOntology, false)) {
-			IRI sourceIri = IRI.create(value);
-			sources.add(getManager().getOntology(sourceIri));
-		}
-		return sources;
+	public OWLOntology getSourceOntology() {
+		return mergedSource;
 	}
 
 	@Override
 	public void addLegacyOntologies() {
 		if (legacyOntology != null) {
 			Set<OWLAxiom> axioms = ISFUtil.getAxioms(legacyOntology, true);
-			getManager().addAxioms(ontology, axioms);
+			getGeneratedManager().addAxioms(ontology, axioms);
 			logger.info("Added legacy axioms for " + getName() + ", axiom count: " + axioms.size());
 		}
 	}
@@ -315,12 +344,12 @@ public class SimpleModule extends AbstractModule {
 		if (legacyOntology != null) {
 			for (OWLOntology o : legacyOntology.getImportsClosure()) {
 				Set<OWLAxiom> axioms = ontology.getAxioms();
-				List<OWLOntologyChange> changes = getManager().removeAxioms(o, axioms);
+				List<OWLOntologyChange> changes = getDefiningManager().removeAxioms(o, axioms);
 				logger.info("Cleaned legacy ontology: " + o.getOntologyID() + ", change count: "
 						+ changes.size());
 
 				for (OWLOntologyChange change : changes) {
-					getManager().addAxiom(legacyRemovedOntology, change.getAxiom());
+					getDefiningManager().addAxiom(legacyRemovedOntology, change.getAxiom());
 				}
 			}
 		}
@@ -345,40 +374,37 @@ public class SimpleModule extends AbstractModule {
 	}
 
 	@Override
-	public void addImport(Module module) {
-		OWLImportsDeclaration id = getDataFactory().getOWLImportsDeclaration(module.getIri());
-		AddImport i = new AddImport(getOntology(), id);
-		logger.info("Adding module import for module: " + module.getName() + " imported into: "
-				+ getName());
-		getManager().applyChange(i);
-		super.addImport(module);
-	}
-
-	@Override
-	public void removeImport(Module module) {
-
-		OWLImportsDeclaration id = getDataFactory().getOWLImportsDeclaration(module.getIri());
-		RemoveImport i = new RemoveImport(getOntology(), id);
-		logger.info("Removing module import for module: " + module.getName()
-				+ " was imported into: " + getName());
-		getManager().applyChange(i);
-		super.removeImport(module);
-	}
-
-	@Override
-	public void saveGeneratedModule() throws OWLOntologyStorageException {
+	public void saveModule() throws OWLOntologyStorageException {
 		logger.info("Saving module: " + getName() + " into ontology: " + ontology.getOntologyID());
-		saveOntology(ontology);
+		for (Module module : getImports()) {
+			OWLImportsDeclaration id = getDataFactory().getOWLImportsDeclaration(module.getIri());
+			AddImport i = new AddImport(getOntology(), id);
+			logger.info("Adding module import for module: " + module.getName() + " imported into: "
+					+ getName());
+			getGeneratedManager().applyChange(i);
+		}
+
+		if (customFileName == null) {
+			getGeneratedManager().saveOntology(ontology);
+		} else {
+			try {
+				getGeneratedManager().saveOntology(ontology,
+						new FileOutputStream(new File(getOutputDirectory(), customFileName)));
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException("Failed to save module " + getName()
+						+ " with custom file name " + customFileName, e);
+			}
+		}
 
 	}
 
 	@Override
-	public void saveGeneratedModuleTransitive() throws OWLOntologyStorageException {
+	public void saveModuleTransitive() throws OWLOntologyStorageException {
 		logger.info("Saving module " + getName() + " transitively");
 		for (Module module : getImports()) {
-			module.saveGeneratedModuleTransitive();
+			module.saveModuleTransitive();
 		}
-		saveGeneratedModule();
+		saveModule();
 
 	}
 
@@ -387,17 +413,17 @@ public class SimpleModule extends AbstractModule {
 		if (changedOntologies.remove(annotationOntology)) {
 			logger.info("Saving annotation ontology for module: " + getName() + " into ontology: "
 					+ annotationOntology.getOntologyID());
-			saveOntology(annotationOntology);
+			annotationOntology.getOWLOntologyManager().saveOntology(annotationOntology);
 		}
 		if (changedOntologies.remove(includeOntology)) {
 			logger.info("Saving include ontology for module: " + getName() + " into ontology: "
 					+ annotationOntology.getOntologyID());
-			saveOntology(includeOntology);
+			includeOntology.getOWLOntologyManager().saveOntology(includeOntology);
 		}
 		if (changedOntologies.remove(excludeOntology)) {
 			logger.info("Saving exclude ontology for module: " + getName() + " into ontology: "
 					+ annotationOntology.getOntologyID());
-			saveOntology(excludeOntology);
+			excludeOntology.getOWLOntologyManager().saveOntology(excludeOntology);
 		}
 	}
 
@@ -412,11 +438,11 @@ public class SimpleModule extends AbstractModule {
 
 	@Override
 	public void saveLegacyOntologies() throws OWLOntologyStorageException {
-		for (OWLOntology o : legacyOntologies) {
+		for (OWLOntology o : legacyOntology.getImports()) {
 			if (changedOntologies.remove(o)) {
 				logger.info("Module: " + getName() + " is saving legacy ontology: "
 						+ o.getOntologyID());
-				saveOntology(o);
+				o.getOWLOntologyManager().saveOntology(o);
 			}
 		}
 	}
