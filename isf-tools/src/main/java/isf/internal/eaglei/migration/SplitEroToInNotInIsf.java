@@ -1,6 +1,6 @@
 package isf.internal.eaglei.migration;
 
-import isf.ISFUtil;
+import isf.ISF;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,7 +68,7 @@ public class SplitEroToInNotInIsf {
 
 		// Load the ISF/ERO ontologies
 
-		OWLOntology isfOntology = isfManager.loadOntology(ISFUtil.ISF_DEV_IRI);
+		OWLOntology isfOntology = isfManager.loadOntology(ISF.ISF_DEV_IRI);
 		// OWLOntology eroOntology = eroManager.loadOntology(IRI
 		// .create("http://purl.obolibrary.org/obo/ero.owl"));
 		OWLOntology eroOntology = eroManager.loadOntology(IRI

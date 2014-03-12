@@ -1,6 +1,7 @@
 package isf.command;
 
 import static isf.command.NewModuleCommand.Action.create;
+import isf.ISF;
 import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
@@ -70,7 +71,7 @@ public class NewModuleCommand extends AbstractCommand {
 
 	private List<IRI> getDefaultSources() {
 		List<IRI> iris = new ArrayList<IRI>();
-		iris.add(ISFUtil.ISF_DEV_IRI);
+		iris.add(ISF.ISF_DEV_IRI);
 		return iris;
 	}
 

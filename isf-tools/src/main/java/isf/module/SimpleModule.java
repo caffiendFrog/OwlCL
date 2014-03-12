@@ -1,5 +1,6 @@
 package isf.module;
 
+import isf.ISF;
 import isf.ISFUtil;
 import isf.module.internal.SimpleModuleBuilder;
 
@@ -114,18 +115,18 @@ public class SimpleModule extends AbstractModule {
 		super(moduleName, mananger, directory, outputDirectory);
 		this.builder = new SimpleModuleBuilder(this);
 
-		annotationIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
-				+ ISFUtil.ANNOTATION_IRI_SUFFIX);
-		moduleIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
-				+ ISFUtil.MODULE_IRI_SUFFIX);
-		includeIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
-				+ ISFUtil.MODULE_INCLUDE_IRI_SUFFIX);
-		excludeIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
-				+ ISFUtil.MODULE_EXCLUDE_IRI_SUFFIX);
-		legacyIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
-				+ ISFUtil.MODULE_LEGACY_IRI_SUFFIX);
-		legacyRemovedIri = IRI.create(ISFUtil.ISF_ONTOLOGY_IRI_PREFIX + getName()
-				+ ISFUtil.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
+		annotationIri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + getName()
+				+ ISF.ANNOTATION_IRI_SUFFIX);
+		moduleIri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + getName()
+				+ ISF.MODULE_IRI_SUFFIX);
+		includeIri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + getName()
+				+ ISF.MODULE_INCLUDE_IRI_SUFFIX);
+		excludeIri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + getName()
+				+ ISF.MODULE_EXCLUDE_IRI_SUFFIX);
+		legacyIri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + getName()
+				+ ISF.MODULE_LEGACY_IRI_SUFFIX);
+		legacyRemovedIri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + getName()
+				+ ISF.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
 
 		this.changeListener = new OWLOntologyChangeListener() {
 
@@ -200,7 +201,7 @@ public class SimpleModule extends AbstractModule {
 				OWLLiteral source = getDataFactory().getOWLLiteral(iri.toString());
 				OWLAnnotation a = getDataFactory().getOWLAnnotation(
 						getDataFactory().getOWLAnnotationProperty(
-								IRI.create(ISFUtil.MODULE_SOURCE_ANNOTATION_IRI)), source);
+								IRI.create(ISF.MODULE_SOURCE_ANNOTATION_IRI)), source);
 				AddOntologyAnnotation aoa = new AddOntologyAnnotation(annotationOntology, a);
 				getDefiningManager().applyChange(aoa);
 			}
@@ -209,7 +210,7 @@ public class SimpleModule extends AbstractModule {
 					generatedFinalIri.toString());
 			OWLAnnotation a = getDataFactory().getOWLAnnotation(
 					getDataFactory().getOWLAnnotationProperty(
-							IRI.create(ISFUtil.MODULE_FINAL_IRI_ANNOTATION_IRI)), finalIriLiteral);
+							IRI.create(ISF.MODULE_FINAL_IRI_ANNOTATION_IRI)), finalIriLiteral);
 			AddOntologyAnnotation aoa = new AddOntologyAnnotation(annotationOntology, a);
 			getDefiningManager().applyChange(aoa);
 
@@ -258,13 +259,13 @@ public class SimpleModule extends AbstractModule {
 
 			for (OWLAnnotation a : annotationOntology.getAnnotations()) {
 				if (a.getProperty().getIRI().toString()
-						.equals(ISFUtil.MODULE_FINAL_IRI_ANNOTATION_IRI)) {
+						.equals(ISF.MODULE_FINAL_IRI_ANNOTATION_IRI)) {
 					moduleIri = IRI.create(((OWLLiteral) a.getValue()).getLiteral());
 					SetOntologyID setid = new SetOntologyID(ontology, moduleIri);
 					getGeneratedManager().applyChange(setid);
 				}
 				if (a.getProperty().getIRI().toString()
-						.equals(ISFUtil.MODULE_FILE_NAME_ANNOTATION_IRI)) {
+						.equals(ISF.MODULE_FILE_NAME_ANNOTATION_IRI)) {
 					customFileName = ((OWLLiteral) a.getValue()).getLiteral();
 				}
 				try {
@@ -275,7 +276,7 @@ public class SimpleModule extends AbstractModule {
 									+ getName(), e);
 				}
 				if (a.getProperty().getIRI().toString()
-						.equals(ISFUtil.MODULE_SOURCE_ANNOTATION_IRI)) {
+						.equals(ISF.MODULE_SOURCE_ANNOTATION_IRI)) {
 					String sourceIri = ((OWLLiteral) a.getValue()).getLiteral();
 
 					OWLImportsDeclaration id = getDataFactory().getOWLImportsDeclaration(

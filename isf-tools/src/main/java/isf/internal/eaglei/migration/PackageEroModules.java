@@ -1,5 +1,6 @@
 package isf.internal.eaglei.migration;
 
+import isf.ISF;
 import isf.ISFUtil;
 
 import java.io.File;
@@ -86,7 +87,7 @@ public class PackageEroModules {
 		man.clearIRIMappers();
 		man.addIRIMapper(mapper);
 
-		OWLOntology isfOntology = man.loadOntology(ISFUtil.ISF_DEV_IRI);
+		OWLOntology isfOntology = man.loadOntology(ISF.ISF_DEV_IRI);
 
 		OWLOntology notInIsfOntology = man.loadOntology(IRI
 				.create("http://purl.obolibrary.org/obo/arg/eaglei-module-include-not-in-isf.owl"));

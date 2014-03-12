@@ -66,74 +66,6 @@ import ch.qos.logback.core.spi.FilterReply;
 public class ISFUtil {
 
 	// ================================================================================
-	// Constants
-	// ================================================================================
-
-	@SuppressWarnings("unused")
-	private static boolean ___________CONSTANTS________________;
-	/**
-	 * The system property that points to the trunk/master (not the parent of
-	 * trunk in Google Code SVN) checkout of the ISF repository
-	 */
-	public static final String ISF_TRUNK_PROPERTY = "isf.trunk";
-	public static final String ISF_GENERATED_DIRECTORY_PROPERTY = "isf.generated";
-
-	public static final String ISF_ONTOLOGY_IRI_PREFIX = "http://purl.obolibrary.org/obo/arg/";
-
-	// public static final IRI ISF_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX +
-	// "isf.owl");
-	// public static final IRI ISF_REASONED_IRI =
-	// IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-	// + "isf-reasoned.owl");
-
-	public static final IRI ISF_DEV_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX + "isf-dev.owl");
-	public static final IRI ISF_DEV_REASONED_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-dev-reasoned.owl");
-
-	// public static final IRI ISF_FULL_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-	// + "isf-full.owl");
-	// public static final IRI ISF_FULL_REASONED_IRI =
-	// IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-	// + "isf-full-reasoned.owl");
-
-	public static final IRI ISF_FULL_DEV_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-full-dev.owl");
-	public static final IRI ISF_FULL_DEV_REASONED_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-			+ "isf-full-dev-reasoned.owl");
-
-	public static final String ISF_MAPPING_SUFFIX = "-mapping.owl";
-
-	public static final IRI ISF_SKOS_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX + "isf-skos.owl");
-
-	public static final String ANNOTATION_IRI_SUFFIX = "-module-annotation.owl";
-	public static final String MODULE_IRI_SUFFIX = "-module.owl";
-	public static final String MODULE_INCLUDE_IRI_SUFFIX = "-module-include.owl";
-	public static final String MODULE_EXCLUDE_IRI_SUFFIX = "-module-exclude.owl";
-	public static final String MODULE_LEGACY_IRI_SUFFIX = "-module-legacy.owl";
-	public static final String MODULE_LEGACY_REMOVED_IRI_SUFFIX = "-module-legacy-removed.owl";
-
-	public static final IRI ISF_IRI_MAPPES_TO_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-iri-mappes-to");
-	public static final String INCLUDE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-include";
-	public static final String INCLUDE_SUBS_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-include-subs";
-	public static final String INCLUDE_INSTANCES_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-include-instances";
-
-	public static final String EXCLUDE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-exclude";
-
-	public static final String EXCLUDE_SUBS_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-exclude-subs";
-	public static final String MODULE_FINAL_IRI_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-iri";
-	public static final String MODULE_FILE_NAME_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-file-name";
-	public static final String MODULE_SOURCE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-source";
-
-	// ================================================================================
 	// Initialization, must call. Done this way to delay the logging setup until
 	// the final directories are determined from the commandline options or some
 	// other client.
@@ -208,16 +140,16 @@ public class ISFUtil {
 	public static File getTrunkDirectory() {
 		if (ISF_TRUNK_DIR == null)
 		{
-			String isfTrunk = System.getProperty(ISF_TRUNK_PROPERTY);
+			String isfTrunk = System.getProperty(ISF.ISF_TRUNK_PROPERTY);
 
 			if (isfTrunk == null)
 			{
-				isfTrunk = System.getenv(ISF_TRUNK_PROPERTY.toUpperCase().replace(".", "_"));
+				isfTrunk = System.getenv(ISF.ISF_TRUNK_PROPERTY.toUpperCase().replace(".", "_"));
 			}
 
 			if (isfTrunk == null)
 			{
-				isfTrunk = isfProperties.getProperty(ISF_TRUNK_PROPERTY);
+				isfTrunk = isfProperties.getProperty(ISF.ISF_TRUNK_PROPERTY);
 			}
 
 			if (isfTrunk != null)
@@ -276,7 +208,7 @@ public class ISFUtil {
 	public static File getGeneratedDirectory() {
 		if (generatedDirectory == null)
 		{
-			String directory = isfProperties.getProperty(ISF_GENERATED_DIRECTORY_PROPERTY);
+			String directory = isfProperties.getProperty(ISF.ISF_GENERATED_DIRECTORY_PROPERTY);
 			if (directory != null)
 			{
 				try
@@ -382,14 +314,14 @@ public class ISFUtil {
 			throws OWLOntologyCreationException {
 		setupManagerMapper(man);
 		logger.info("Loading ISF");
-		man.loadOntology(ISF_DEV_IRI);
+		man.loadOntology(ISF.ISF_DEV_IRI);
 		for (OWLOntology o : man.getOntologies())
 		{
 			logger.debug("\t Loaded ontology " + o.getOntologyID().getOntologyIRI() + " from "
 					+ man.getOntologyDocumentIRI(o));
 		}
 
-		return man.getOntology(ISF_DEV_IRI);
+		return man.getOntology(ISF.ISF_DEV_IRI);
 	}
 
 	public static OWLReasoner getDefaultReasoner(OWLOntology ontology) {
@@ -399,8 +331,8 @@ public class ISFUtil {
 	public static OWLOntology setupAndLoadIsfFullOntology(OWLOntologyManager man)
 			throws OWLOntologyCreationException {
 		setupManagerMapper(man);
-		man.loadOntology(ISF_FULL_DEV_IRI);
-		return man.getOntology(ISF_FULL_DEV_IRI);
+		man.loadOntology(ISF.ISF_FULL_DEV_IRI);
+		return man.getOntology(ISF.ISF_FULL_DEV_IRI);
 	}
 
 	private static OWLOntologyManager isfManager;
@@ -472,15 +404,17 @@ public class ISFUtil {
 	public static Set<OWLAnnotationAssertionAxiom> getIncludeAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
-		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(INCLUDE_ANNOTATION_IRI)), includeImports);
+		return ISFUtil
+				.getAnnotationAssertionAxioms(ontology,
+						df.getOWLAnnotationProperty(IRI.create(ISF.INCLUDE_ANNOTATION_IRI)),
+						includeImports);
 	}
 
 	public static Set<OWLAnnotationAssertionAxiom> getIncludeInstancesAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
 		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(INCLUDE_INSTANCES_ANNOTATION_IRI)),
+				df.getOWLAnnotationProperty(IRI.create(ISF.INCLUDE_INSTANCES_ANNOTATION_IRI)),
 				includeImports);
 	}
 
@@ -488,22 +422,24 @@ public class ISFUtil {
 			boolean includeImports) {
 
 		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(INCLUDE_SUBS_ANNOTATION_IRI)),
+				df.getOWLAnnotationProperty(IRI.create(ISF.INCLUDE_SUBS_ANNOTATION_IRI)),
 				includeImports);
 	}
 
 	public static Set<OWLAnnotationAssertionAxiom> getExcludeAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
-		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(EXCLUDE_ANNOTATION_IRI)), includeImports);
+		return ISFUtil
+				.getAnnotationAssertionAxioms(ontology,
+						df.getOWLAnnotationProperty(IRI.create(ISF.EXCLUDE_ANNOTATION_IRI)),
+						includeImports);
 	}
 
 	public static Set<OWLAnnotationAssertionAxiom> getExcludeSubsAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
 		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(EXCLUDE_SUBS_ANNOTATION_IRI)),
+				df.getOWLAnnotationProperty(IRI.create(ISF.EXCLUDE_SUBS_ANNOTATION_IRI)),
 				includeImports);
 	}
 
@@ -875,14 +811,14 @@ public class ISFUtil {
 			throws OWLOntologyCreationException {
 		Map<IRI, IRI> mappings = new HashMap<IRI, IRI>();
 		OWLOntology mappingOntology = getIsfManagerSingleton().loadOntology(
-				IRI.create(ISF_ONTOLOGY_IRI_PREFIX + mappingName + ISF_MAPPING_SUFFIX));
+				IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + mappingName + ISF.ISF_MAPPING_SUFFIX));
 
 		OWLAnnotationProperty p = getIsfManagerSingleton().getOWLDataFactory()
-				.getOWLAnnotationProperty(ISF_IRI_MAPPES_TO_IRI);
+				.getOWLAnnotationProperty(ISF.ISF_IRI_MAPPES_TO_IRI);
 		for (OWLAnnotationAssertionAxiom aaa : getAnnotationAssertionAxioms(mappingOntology, p,
 				true))
 		{
-			if (aaa.getProperty().getIRI().equals(ISF_IRI_MAPPES_TO_IRI))
+			if (aaa.getProperty().getIRI().equals(ISF.ISF_IRI_MAPPES_TO_IRI))
 			{
 				IRI subjectIri = (IRI) aaa.getSubject();
 				IRI objectIri = (IRI) aaa.getValue();
