@@ -1,14 +1,21 @@
 package isf.command;
 
+import isf.command.cli.Main;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.beust.jcommander.Parameter;
 
-import isf.command.cli.Main;
-
 public abstract class AbstractCommand {
+
+	protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	public Main main;
 
@@ -16,11 +23,7 @@ public abstract class AbstractCommand {
 		this.main = main;
 	}
 
-	public List<String> actions = getCommandActions(new ArrayList<String>());
-
-	public List<String> getActions() {
-		return actions;
-	}
+	public List<String> actions = getCommandDefaultActions();
 
 	@Parameter(names = "-actions",
 			description = "The exact sub-actions to execute the command. If this is "
@@ -29,6 +32,16 @@ public abstract class AbstractCommand {
 					+ "options and each command should document this.")
 	public void setActions(List<String> actions) {
 		this.actions = actions;
+	}
+
+	public List<String> getActions() {
+		return actions;
+	}
+
+	private List<String> getCommandDefaultActions() {
+		List<String> actions = new ArrayList<String>();
+		addCommandActions(actions);
+		return actions;
 	}
 
 	@Parameter(names = "-preActions",
@@ -48,19 +61,19 @@ public abstract class AbstractCommand {
 	 * 
 	 * @return
 	 */
-	protected abstract List<String> getCommandActions(List<String> actionsList);
+	protected abstract void addCommandActions(List<String> actionsList);
 
 	public abstract void run();
 
 	protected List<String> getAllActions() {
 		List<String> allActions = new ArrayList<String>();
 		allActions.addAll(preActions);
-		allActions.addAll(getCommandActions(new ArrayList<String>()));
+		addCommandActions(allActions);
 		allActions.addAll(postActions);
 		return allActions;
 	}
 
-	public PrintWriter pw = new PrintWriter(System.out);
+	// public PrintWriter pw = new PrintWriter(System.out);
 
 	protected int indent;
 
@@ -68,37 +81,88 @@ public abstract class AbstractCommand {
 		return new String(new char[indent]).replace('\0', ' ') + string;
 	}
 
-	protected void warn(String message, Exception e) {
-		pw.println(indent("Warn: " + message));
-		if (e != null)
-		{
-			++indent;
-			pw.print(indent("E: " + e.getClass().getSimpleName() + " -> " + e.getMessage()));
-			--indent;
+	// protected void warn(String message, Exception e) {
+	// pw.println(indent("Warn: " + message));
+	// if (e != null)
+	// {
+	// ++indent;
+	// pw.print(indent("E: " + e.getClass().getSimpleName() + " -> " +
+	// e.getMessage()));
+	// --indent;
+	// }
+	// pw.flush();
+	// }
+	//
+	// protected void info(String message) {
+	// pw.println(indent(message));
+	// pw.flush();
+	// }
+	//
+	// protected void infoDetail(String message) {
+	// pw.println(indent(message));
+	// pw.flush();
+	// }
+	//
+	// protected void debug(String message, Exception e) {
+	// pw.println(indent("Debug: " + message));
+	// if (e != null)
+	// {
+	// ++indent;
+	// pw.print("E: " + e.getClass().getSimpleName() + " -> " + e.getMessage());
+	// --indent;
+	// }
+	// pw.flush();
+	//
+	// }
+
+	public class Report {
+
+		PrintWriter pw;
+
+		public Report(String relativeFilePath) throws FileNotFoundException {
+			pw = new PrintWriter(new File(AbstractCommand.this.main.getOutputDirectory(),
+					relativeFilePath));
 		}
-		pw.flush();
-	}
 
-	protected void info(String message) {
-		pw.println(indent(message));
-		pw.flush();
-	}
-
-	protected void infoDetail(String message) {
-		pw.println(indent(message));
-		pw.flush();
-	}
-
-	protected void debug(String message, Exception e) {
-		pw.println(indent("Debug: " + message));
-		if (e != null)
-		{
-			++indent;
-			pw.print("E: " + e.getClass().getSimpleName() + " -> " + e.getMessage());
-			--indent;
+		void error(String value) {
+			AbstractCommand.this.logger.error(value);
+			pw.append(value);
+			doConsole(value);
 		}
-		pw.flush();
 
+		void warn(String value) {
+			AbstractCommand.this.logger.warn(value);
+			pw.append(value);
+			doConsole(value);
+		}
+
+		void info(String value) {
+			AbstractCommand.this.logger.info(value);
+			pw.append(value);
+			doConsole(value);
+
+		}
+
+		void detail(String value) {
+			AbstractCommand.this.logger.debug(value);
+			if (AbstractCommand.this.main.detailedReport)
+			{
+				pw.append(value);
+			}
+			doConsole(value);
+		}
+
+		void finish() {
+			pw.close();
+			doConsole("\n=====  Finished report!  ======");
+		}
+
+		private void doConsole(String value) {
+			if (!AbstractCommand.this.main.quiet)
+			{
+				System.out.println(value);
+			}
+		}
 	}
 
 }

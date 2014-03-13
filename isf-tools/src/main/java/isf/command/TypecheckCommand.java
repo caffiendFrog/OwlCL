@@ -3,10 +3,9 @@ package isf.command;
 import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.Main;
-import isf.util.OntologyFilesUtil;
+import isf.util.OntologyFiles;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,7 +89,7 @@ public class TypecheckCommand extends AbstractCommand {
 	// Map<File, OWLOntology> ontologies = new HashMap<File, OWLOntology>();
 
 	OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-	OntologyFilesUtil ontologyFiles;
+	OntologyFiles ontologyFiles;
 	Map<IRI, Set<OWLEntity>> iriToEntityMap = new HashMap<IRI, Set<OWLEntity>>();
 
 	Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
@@ -101,16 +100,16 @@ public class TypecheckCommand extends AbstractCommand {
 
 	@Override
 	public void run() {
-		ontologyFiles = new OntologyFilesUtil(files);
+		ontologyFiles = new OntologyFiles(files, subDir);
 
 		Map<File, Exception> exceptions = new HashMap<File, Exception>();
 		//
 		man = OWLManager.createOWLOntologyManager();
 		// setup base files
-		OntologyFilesUtil baseFiles = new OntologyFilesUtil(main.localOwlFiles);
-		baseFiles.setupManager(man, main.subLocalOwlFiles, exceptions);
+		OntologyFiles baseFiles = new OntologyFiles(main.localOwlFiles, main.subLocalOwlFiles);
+		baseFiles.setupManager(man, exceptions);
 		// setup job files
-		ontologyFiles.setupManager(man, subDir, exceptions);
+		ontologyFiles.setupManager(man, exceptions);
 		for (Entry<File, Exception> entry : exceptions.entrySet())
 		{
 			System.out.println("Found error while loading manger for file:" + entry.getKey()
@@ -118,8 +117,7 @@ public class TypecheckCommand extends AbstractCommand {
 		}
 		exceptions.clear();
 
-		for (Entry<File, IRI> entry : ontologyFiles.getLocalOntologyFiles(subDir, exceptions)
-				.entrySet())
+		for (Entry<File, IRI> entry : ontologyFiles.getLocalOntologyFiles(exceptions).entrySet())
 		{
 			ontologies.add(ISFUtil.getOrLoadOntology(entry.getValue(), man));
 		}
@@ -132,14 +130,13 @@ public class TypecheckCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getCommandActions(List<String> actionsList) {
+	protected void addCommandActions(List<String> actionsList) {
 		actionsList.add(Action.duplicatIris.name());
 		actionsList.add(Action.duplicateTypes.name());
 		if (addTypes)
 		{
 			actionsList.add(Action.addTypes.name());
 		}
-		return actionsList;
 	}
 
 	enum Action {
@@ -149,8 +146,8 @@ public class TypecheckCommand extends AbstractCommand {
 			public void execute(TypecheckCommand command) {
 				// show duplicates
 				Map<File, Exception> exceptions = new HashMap<File, Exception>();
-				Map<IRI, List<File>> duplicates = command.ontologyFiles.getDuplicateIris(
-						command.subDir, exceptions);
+				Map<IRI, List<File>> duplicates = command.ontologyFiles
+						.getDuplicateIris(exceptions);
 
 				for (Entry<File, Exception> entry : exceptions.entrySet())
 				{
@@ -214,6 +211,7 @@ public class TypecheckCommand extends AbstractCommand {
 		},
 		addTypes {
 
+			@SuppressWarnings("deprecation")
 			@Override
 			public void execute(TypecheckCommand command) {
 				Map<IRI, Set<OWLOntology>> iriToOntologiesMap = new HashMap<IRI, Set<OWLOntology>>();
@@ -223,10 +221,10 @@ public class TypecheckCommand extends AbstractCommand {
 				man.clearIRIMappers();
 				man.setSilentMissingImportsHandling(true);
 
-				OntologyFilesUtil files = new OntologyFilesUtil(command.files);
-				files.setupManager(man, command.subDir, new HashMap<File, Exception>());
+				OntologyFiles files = new OntologyFiles(command.files, command.subDir);
+				files.setupManager(man, new HashMap<File, Exception>());
 
-				for (Entry<File, IRI> entry : files.getLocalOntologyFiles(command.subDir,
+				for (Entry<File, IRI> entry : files.getLocalOntologyFiles(
 						new HashMap<File, Exception>()).entrySet())
 				{
 					OWLOntology o = ISFUtil.getOrLoadOntology(entry.getValue(), man);

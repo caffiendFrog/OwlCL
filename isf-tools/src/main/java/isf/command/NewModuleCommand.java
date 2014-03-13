@@ -1,6 +1,5 @@
 package isf.command;
 
-import static isf.command.NewModuleCommand.Action.create;
 import isf.ISF;
 import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
@@ -159,9 +158,8 @@ public class NewModuleCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getCommandActions(List<String> actionsList) {
+	protected void addCommandActions(List<String> actionsList) {
 		actionsList.add(Action.create.name());
-		return actionsList;
 	}
 
 	public enum Action {

@@ -2,7 +2,7 @@ package isf.command;
 
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.Main;
-import isf.util.OntologyFilesUtil;
+import isf.util.OntologyFiles;
 
 import java.io.File;
 import java.util.HashMap;
@@ -56,20 +56,18 @@ public class RewriteCommand extends AbstractCommand {
 	// ================================================================================
 	public RewriteCommand(Main main) {
 		super(main);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	protected List<String> getCommandActions(List<String> actionsList) {
+	protected void addCommandActions(List<String> actionsList) {
 		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
 	public void run() {
-		OntologyFilesUtil ofu = new OntologyFilesUtil(files);
+		OntologyFiles ofu = new OntologyFiles(files, true);
 		HashMap<File, Exception> exceptions = new HashMap<File, Exception>();
-		Set<Entry<File, IRI>> entries = ofu.getLocalOntologyFiles(true, exceptions).entrySet();
+		Set<Entry<File, IRI>> entries = ofu.getLocalOntologyFiles(exceptions).entrySet();
 		for (Entry<File, Exception> exception : exceptions.entrySet())
 		{
 			System.out.println(exception.getKey() + " --> " + exception.getValue().getMessage());
@@ -79,8 +77,9 @@ public class RewriteCommand extends AbstractCommand {
 		{
 			if (entry.getValue() == null)
 				continue;
-			if(entry.getKey().getPath().endsWith("catalog-v001.xml")){
-				
+			if (entry.getKey().getPath().endsWith("catalog-v001.xml"))
+			{
+
 				System.out.println("catalog:");
 				System.out.println(entry.getValue());
 			}

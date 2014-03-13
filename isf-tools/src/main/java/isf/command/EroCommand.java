@@ -1,6 +1,9 @@
 package isf.command;
 
-import static isf.command.EroCommand.Action.*;
+import static isf.command.EroCommand.Action.addlegacy;
+import static isf.command.EroCommand.Action.catalog;
+import static isf.command.EroCommand.Action.generate;
+import static isf.command.EroCommand.Action.save;
 import isf.ISFUtil;
 import isf.command.cli.Main;
 import isf.module.Module;
@@ -197,14 +200,13 @@ public class EroCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getCommandActions(List<String> actionsList) {
+	protected void addCommandActions(List<String> actionsList) {
 		actionsList.add(generate.name());
 		actionsList.add(addlegacy.name());
 		// actionsList.add(cleanlegacy.name());
 		// actionsList.add(savelegacy.name());
 		actionsList.add(save.name());
 		actionsList.add(catalog.name());
-		return actionsList;
 	}
 
 	enum Action {

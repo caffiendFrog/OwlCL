@@ -1,10 +1,5 @@
 package isf.action;
 
-import isf.ISFUtil;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,11 +36,12 @@ public class IriMappingAction extends AbstractAction {
 	private boolean isLeftToRight;
 	private Map<IRI, IRI> mappings;
 
-	IriMappingAction(String mappingName, boolean isLeftToRight) throws IOException,
+	// disabled for now
+	private IriMappingAction(String mappingName, boolean isLeftToRight) throws IOException,
 			OWLOntologyCreationException {
 		this.mappingName = mappingName;
 		this.isLeftToRight = isLeftToRight;
-		this.mappings = ISFUtil.getMappings(mappingName, isLeftToRight);
+		// this.mappings = ISFUtil.getMappings(mappingName, isLeftToRight);
 		// loadMappingFile();
 	}
 
@@ -103,7 +99,8 @@ public class IriMappingAction extends AbstractAction {
 				Collections.singleton(ontology));
 		List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
 
-		for (Entry<IRI, IRI> mapping : mappings.entrySet()) {
+		for (Entry<IRI, IRI> mapping : mappings.entrySet())
+		{
 			changes.addAll(renamer.changeIRI(mapping.getKey(), mapping.getValue()));
 		}
 
@@ -117,8 +114,10 @@ public class IriMappingAction extends AbstractAction {
 		changes = new HashMap<OWLOntology, List<OWLOntologyChange>>();
 
 		changes.put(ontology, mapOntology(ontology));
-		if (actTransitively) {
-			for (OWLOntology o : ontology.getImports()) {
+		if (actTransitively)
+		{
+			for (OWLOntology o : ontology.getImports())
+			{
 				changes.put(o, mapOntology(o));
 			}
 		}
@@ -129,7 +128,8 @@ public class IriMappingAction extends AbstractAction {
 	public Map<OWLOntology, List<OWLOntologyChange>> getResults() {
 
 		Map<OWLOntology, List<OWLOntologyChange>> result = new HashMap<OWLOntology, List<OWLOntologyChange>>();
-		for (Entry<OWLOntology, List<OWLOntologyChange>> entry : changes.entrySet()) {
+		for (Entry<OWLOntology, List<OWLOntologyChange>> entry : changes.entrySet())
+		{
 			result.put(entry.getKey(), new ArrayList<OWLOntologyChange>(entry.getValue()));
 		}
 		return result;

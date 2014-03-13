@@ -114,14 +114,13 @@ public class GenerateModuleCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getCommandActions(List<String> actionsList) {
+	protected void addCommandActions(List<String> actionsList) {
 		actionsList.add(Action.load.name());
 		actionsList.add(Action.generate.name());
 		actionsList.add(Action.cleanLegacy.name());
 		actionsList.add(Action.addLegacy.name());
 		actionsList.add(Action.saveLegacy.name());
 		actionsList.add(Action.save.name());
-		return actionsList;
 	}
 
 	enum Action {

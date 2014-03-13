@@ -20,9 +20,10 @@ import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.SimpleIRIMapper;
 
-public class OntologyFilesUtil {
+public class OntologyFiles {
 
 	private List<File> files;
+	private boolean includeSubs;
 
 	/**
 	 * A utility class to help discover and analyze ontology files in a set of
@@ -30,8 +31,9 @@ public class OntologyFilesUtil {
 	 * 
 	 * @param files
 	 */
-	public OntologyFilesUtil(List<File> files) {
+	public OntologyFiles(List<File> files, boolean includeSubs) {
 		this.files = files;
+		this.includeSubs = includeSubs;
 	}
 
 	Map<IRI, List<File>> iriToFileMap = null;
@@ -43,13 +45,12 @@ public class OntologyFilesUtil {
 	 * @param exceptions
 	 * @return
 	 */
-	public Map<IRI, List<File>> getDuplicateIris(boolean includeSubs,
-			Map<File, Exception> exceptions) {
+	public Map<IRI, List<File>> getDuplicateIris(Map<File, Exception> exceptions) {
 		if (iriToFileMap == null)
 		{
 
 			iriToFileMap = new HashMap<IRI, List<File>>();
-			for (Entry<File, IRI> entry : getLocalOntologyFiles(includeSubs, exceptions).entrySet())
+			for (Entry<File, IRI> entry : getLocalOntologyFiles(exceptions).entrySet())
 			{
 				List<File> files = iriToFileMap.get(entry.getValue());
 				if (files == null)
@@ -76,12 +77,12 @@ public class OntologyFilesUtil {
 	Map<File, OWLOntology> fileToOntologyMap = null;
 
 	@SuppressWarnings("deprecation")
-	public Map<File, IRI> getLocalOntologyFiles(boolean includeSubs, Map<File, Exception> exceptions) {
+	public Map<File, IRI> getLocalOntologyFiles(Map<File, Exception> exceptions) {
 		if (fileToIriMap == null)
 		{
 			fileToIriMap = new HashMap<File, IRI>();
 			fileToOntologyMap = new HashMap<File, OWLOntology>();
-			for (File file : getAllFiles(includeSubs))
+			for (File file : getAllFiles())
 			{
 				OWLOntology o = null;
 				OWLOntologyManager man = OWLManager.createOWLOntologyManager();
@@ -92,7 +93,10 @@ public class OntologyFilesUtil {
 					o = man.loadOntologyFromOntologyDocument(file);
 				} catch (OWLOntologyCreationException e)
 				{
-					exceptions.put(file, e);
+					if (exceptions != null)
+					{
+						exceptions.put(file, e);
+					}
 					continue;
 				}
 				if (o.getOntologyID().isAnonymous())
@@ -107,7 +111,7 @@ public class OntologyFilesUtil {
 
 	List<File> allFiles = null;
 
-	public List<File> getAllFiles(boolean includeSubs) {
+	public List<File> getAllFiles() {
 		if (allFiles == null)
 		{
 			allFiles = new ArrayList<File>();
@@ -128,12 +132,11 @@ public class OntologyFilesUtil {
 
 	Map<File, Set<IRI>> iris;
 
-	public Map<File, Set<IRI>> getLocallyUnresolvableIris(boolean includeSubs,
-			Map<File, Exception> exceptions) {
+	public Map<File, Set<IRI>> getLocallyUnresolvableIris(Map<File, Exception> exceptions) {
 		if (iris == null)
 		{
 			iris = new HashMap<File, Set<IRI>>();
-			Map<File, IRI> localOntologies = getLocalOntologyFiles(includeSubs, exceptions);
+			Map<File, IRI> localOntologies = getLocalOntologyFiles(exceptions);
 			for (final Entry<File, IRI> entry : localOntologies.entrySet())
 			{
 				OWLOntologyManager man = OWLManager.createOWLOntologyManager();
@@ -151,24 +154,25 @@ public class OntologyFilesUtil {
 						return null;
 					}
 				});
-				setupManager(man, includeSubs, exceptions);
+				setupManager(man, exceptions);
 				try
 				{
 					man.loadOntology(entry.getValue());
 				} catch (OWLOntologyCreationException e1)
 				{
-					exceptions.put(entry.getKey(), e1);
+					if (exceptions != null)
+					{
+						exceptions.put(entry.getKey(), e1);
+					}
 				}
 			}
 		}
 		return iris;
 	}
 
-	public void setupManager(OWLOntologyManager manager, boolean includeSubs,
-			Map<File, Exception> exceptions) {
-		for (Entry<File, IRI> entry : getLocalOntologyFiles(includeSubs, exceptions).entrySet())
+	public void setupManager(OWLOntologyManager manager, Map<File, Exception> exceptions) {
+		for (Entry<File, IRI> entry : getLocalOntologyFiles(exceptions).entrySet())
 		{
-
 			manager.addIRIMapper(new SimpleIRIMapper(entry.getValue(), IRI.create(entry.getKey())));
 		}
 	}

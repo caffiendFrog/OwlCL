@@ -27,7 +27,10 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 
+@Parameters(commandNames = "catalog", commandDescription = "Creates catalog files based on the "
+		+ "existing OWL files in the specified directory and optionally its subs.")
 public class CatalogCommand extends AbstractCommand {
 
 	// ================================================================================
@@ -37,14 +40,14 @@ public class CatalogCommand extends AbstractCommand {
 	public String directory = ISFUtil.getTrunkDirectory().getAbsolutePath() + "/src/ontology";
 	public boolean directorySet;
 
-	public String getDirectory() {
-		return directory;
-	}
-
 	@Parameter(names = "-directory", description = "The top directory to start cataloging from.")
 	public void setDirectory(String directory) {
 		this.directory = directory;
 		directorySet = true;
+	}
+
+	public String getDirectory() {
+		return directory;
 	}
 
 	// ================================================================================
@@ -69,12 +72,8 @@ public class CatalogCommand extends AbstractCommand {
 	// ================================================================================
 	// Which directories to catalog, all or just *.owl ones
 	// ================================================================================
-	public boolean all;
-	public boolean allSet;
-
-	public boolean isAll() {
-		return all;
-	}
+	public boolean all = false;
+	public boolean allSet = false;
 
 	@Parameter(names = "-all",
 			description = "Catalog all directories. Otherwise, only directories with "
@@ -82,6 +81,10 @@ public class CatalogCommand extends AbstractCommand {
 	public void setAll(boolean all) {
 		this.all = all;
 		this.allSet = true;
+	}
+
+	public boolean isAll() {
+		return all;
 	}
 
 	// ================================================================================
@@ -111,21 +114,22 @@ public class CatalogCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected List<String> getCommandActions(List<String> actionsList) {
+	protected void addCommandActions(List<String> actionsList) {
 		actionsList.add(Action.create.name());
-		return actionsList;
 	}
 
 	@Override
 	public void run() {
 
-		for (String action : getAllActions()) {
+		for (String action : getAllActions())
+		{
 			Action.valueOf(action).execute(this);
 		}
 	}
 
 	enum Action {
 		create {
+
 			@Override
 			public void execute(CatalogCommand command) {
 				System.out.println("Running create action");
@@ -136,24 +140,31 @@ public class CatalogCommand extends AbstractCommand {
 				// for all directories
 				for (File d : FileUtils.listFilesAndDirs(topDirectory,
 						DirectoryFileFilter.INSTANCE, command.isSubs() ? TrueFileFilter.INSTANCE
-								: null)) {
+								: null))
+				{
 					System.out.println(FileUtils.listFiles(d, new SuffixFileFilter(".owl"), null)
 							.size() + "  " + d);
 
 					// if we have any owl files
 					boolean createCatalog = false;
-					if (command.isAll()) {
+					if (command.isAll())
+					{
 						createCatalog = true;
-					} else {
-						if (FileUtils.listFiles(d, new SuffixFileFilter(".owl"), null).size() > 0) {
+					} else
+					{
+						if (FileUtils.listFiles(d, new SuffixFileFilter(".owl"), null).size() > 0)
+						{
 							createCatalog = true;
 						}
 					}
-					try {
-						if (createCatalog) {
+					try
+					{
+						if (createCatalog)
+						{
 							Path directoryPath = Paths.get(d.toURI());
 							XMLCatalog catalog = new XMLCatalog(directoryPath.toUri());
-							for (IRI iri : mapper.getOntologyIRIs()) {
+							for (IRI iri : mapper.getOntologyIRIs())
+							{
 								Path iriPath = Paths.get(mapper.getDocumentIRI(iri).toURI());
 
 								UriEntry entry = new UriEntry("User Entered Import Resolution",
@@ -168,19 +179,24 @@ public class CatalogCommand extends AbstractCommand {
 							fw.close();
 
 						}
-					} catch (URISyntaxException e) {
+					} catch (URISyntaxException e)
+					{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					} catch (IOException e) {
+					} catch (IOException e)
+					{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					} catch (ParserConfigurationException e) {
+					} catch (ParserConfigurationException e)
+					{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					} catch (TransformerFactoryConfigurationError e) {
+					} catch (TransformerFactoryConfigurationError e)
+					{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					} catch (TransformerException e) {
+					} catch (TransformerException e)
+					{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -188,6 +204,7 @@ public class CatalogCommand extends AbstractCommand {
 
 			}
 		};
+
 		public abstract void execute(CatalogCommand command);
 	}
 

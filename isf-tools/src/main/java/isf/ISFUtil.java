@@ -13,10 +13,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -360,6 +358,18 @@ public class ISFUtil {
 
 	@SuppressWarnings("unused")
 	private static boolean ___________OWL_HELPERS________________;
+
+	public static OWLAnnotationProperty getAnnotationProperty(String iri) {
+		return df.getOWLAnnotationProperty(IRI.create(iri));
+	}
+
+	public static OWLObjectProperty getObjectProperty(String iri) {
+		return df.getOWLObjectProperty(IRI.create(iri));
+	}
+
+	public static OWLDataProperty getDataProperty(String iri) {
+		return df.getOWLDataProperty(IRI.create(iri));
+	}
 
 	public static Set<String> getOntologyAnnotationLiteralValues(OWLAnnotationProperty property,
 			OWLOntology ontology, boolean recursive) {
@@ -807,62 +817,62 @@ public class ISFUtil {
 		return axioms;
 	}
 
-	public static Map<IRI, IRI> getMappings(String mappingName, boolean leftToRight)
-			throws OWLOntologyCreationException {
-		Map<IRI, IRI> mappings = new HashMap<IRI, IRI>();
-		OWLOntology mappingOntology = getIsfManagerSingleton().loadOntology(
-				IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + mappingName + ISF.ISF_MAPPING_SUFFIX));
+//	public static Map<IRI, IRI> getMappings(String mappingName, boolean leftToRight)
+//			throws OWLOntologyCreationException {
+//		Map<IRI, IRI> mappings = new HashMap<IRI, IRI>();
+//		OWLOntology mappingOntology = getIsfManagerSingleton().loadOntology(
+//				IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + mappingName + ISF.ISF_MAPPING_SUFFIX));
+//
+//		OWLAnnotationProperty p = getIsfManagerSingleton().getOWLDataFactory()
+//				.getOWLAnnotationProperty(ISF.ISF_IRI_MAPPES_TO_IRI);
+//		for (OWLAnnotationAssertionAxiom aaa : getAnnotationAssertionAxioms(mappingOntology, p,
+//				true))
+//		{
+//			if (aaa.getProperty().getIRI().equals(ISF.ISF_IRI_MAPPES_TO_IRI))
+//			{
+//				IRI subjectIri = (IRI) aaa.getSubject();
+//				IRI objectIri = (IRI) aaa.getValue();
+//
+//				if (leftToRight)
+//				{
+//					duplicateCheck(subjectIri, objectIri, mappingName, mappings);
+//					mappings.put(subjectIri, objectIri);
+//				} else
+//				{
+//					duplicateCheck(objectIri, subjectIri, mappingName, mappings);
+//					mappings.put(objectIri, subjectIri);
+//				}
+//			}
+//		}
+//
+//		// apply transitive mappings
+//		Map<IRI, IRI> finalMappings = new HashMap<IRI, IRI>();
+//		for (IRI from : mappings.keySet())
+//		{
+//			finalMappings.put(from, getTransitiveMapping(from, mappings));
+//		}
+//		return finalMappings;
+//	}
 
-		OWLAnnotationProperty p = getIsfManagerSingleton().getOWLDataFactory()
-				.getOWLAnnotationProperty(ISF.ISF_IRI_MAPPES_TO_IRI);
-		for (OWLAnnotationAssertionAxiom aaa : getAnnotationAssertionAxioms(mappingOntology, p,
-				true))
-		{
-			if (aaa.getProperty().getIRI().equals(ISF.ISF_IRI_MAPPES_TO_IRI))
-			{
-				IRI subjectIri = (IRI) aaa.getSubject();
-				IRI objectIri = (IRI) aaa.getValue();
-
-				if (leftToRight)
-				{
-					duplicateCheck(subjectIri, objectIri, mappingName, mappings);
-					mappings.put(subjectIri, objectIri);
-				} else
-				{
-					duplicateCheck(objectIri, subjectIri, mappingName, mappings);
-					mappings.put(objectIri, subjectIri);
-				}
-			}
-		}
-
-		// apply transitive mappings
-		Map<IRI, IRI> finalMappings = new HashMap<IRI, IRI>();
-		for (IRI from : mappings.keySet())
-		{
-			finalMappings.put(from, getTransitiveMapping(from, mappings));
-		}
-		return finalMappings;
-	}
-
-	private static IRI getTransitiveMapping(IRI from, Map<IRI, IRI> mappings) {
-		if (mappings.get(from) == null)
-		{
-			return from;
-		} else
-		{
-			return getTransitiveMapping(mappings.get(from), mappings);
-		}
-	}
-
-	private static void duplicateCheck(IRI from, IRI to, String mappingName, Map<IRI, IRI> mappings) {
-		if (mappings.containsKey(from) && !mappings.get(from).equals(to))
-		{
-			throw new IllegalStateException("Mapping " + mappingName
-					+ " contains multiple mappings for IRI " + from + ". Found a mapping to " + to
-					+ " while there was an existing mapping to " + mappings.get(from));
-		}
-
-	}
+//	private static IRI getTransitiveMapping(IRI from, Map<IRI, IRI> mappings) {
+//		if (mappings.get(from) == null)
+//		{
+//			return from;
+//		} else
+//		{
+//			return getTransitiveMapping(mappings.get(from), mappings);
+//		}
+//	}
+//
+//	private static void duplicateCheck(IRI from, IRI to, String mappingName, Map<IRI, IRI> mappings) {
+//		if (mappings.containsKey(from) && !mappings.get(from).equals(to))
+//		{
+//			throw new IllegalStateException("Mapping " + mappingName
+//					+ " contains multiple mappings for IRI " + from + ". Found a mapping to " + to
+//					+ " while there was an existing mapping to " + mappings.get(from));
+//		}
+//
+//	}
 
 	// ================================================================================
 	// Load Fact++ native library
