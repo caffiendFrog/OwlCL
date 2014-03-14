@@ -75,11 +75,11 @@ public abstract class AbstractCommand {
 
 	// public PrintWriter pw = new PrintWriter(System.out);
 
-	protected int indent;
+//	protected int indent;
 
-	protected String indent(String string) {
-		return new String(new char[indent]).replace('\0', ' ') + string;
-	}
+//	protected String indent(String string) {
+//		return new String(new char[indent]).replace('\0', ' ') + string;
+//	}
 
 	// protected void warn(String message, Exception e) {
 	// pw.println(indent("Warn: " + message));

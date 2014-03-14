@@ -1,11 +1,11 @@
 package isf.command;
 
-import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.Main;
 import isf.util.OntologyFiles;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,13 +14,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
-import org.semanticweb.owlapi.model.OWLAnnotationSubject;
-import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
@@ -63,7 +63,8 @@ public class TypecheckCommand extends AbstractCommand {
 		return subDir;
 	}
 
-	@Parameter(names = "-subs", arity = 1, description = "Also check sub directories.")
+	@Parameter(names = "-subs", arity = 1, description = "Include sub directories when "
+			+ "looking for ontology/owl files.")
 	public void setSubDir(boolean subDir) {
 		this.subDir = subDir;
 		this.subDirSet = true;
@@ -77,10 +78,10 @@ public class TypecheckCommand extends AbstractCommand {
 			names = "-addTypes",
 			description = "Will add type axioms (declartions) where an IRI is used "
 					+ "but its type is not asserted. This helps resolve certain reasoning issues. If an IRI "
-					+ "has multiple types as reported by thsi tool, all types will be asserted by this action so "
-					+ "the files should be cleaned up before doing this if needed.")
-	public boolean addTypes;
-	public boolean addTypesSet;
+					+ "has multiple types as reported by this tool, all types will be asserted by this action so "
+					+ "the files should be cleaned up before doing this if needed and checked again after running "
+					+ "this command.")
+	public boolean addTypes = false;
 
 	// ================================================================================
 	// Implementation
@@ -88,11 +89,10 @@ public class TypecheckCommand extends AbstractCommand {
 
 	// Map<File, OWLOntology> ontologies = new HashMap<File, OWLOntology>();
 
-	OWLOntologyManager man = OWLManager.createOWLOntologyManager();
 	OntologyFiles ontologyFiles;
 	Map<IRI, Set<OWLEntity>> iriToEntityMap = new HashMap<IRI, Set<OWLEntity>>();
 
-	Set<OWLOntology> ontologies = new HashSet<OWLOntology>();
+	List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
 
 	public TypecheckCommand(Main main) {
 		super(main);
@@ -100,26 +100,24 @@ public class TypecheckCommand extends AbstractCommand {
 
 	@Override
 	public void run() {
+
 		ontologyFiles = new OntologyFiles(files, subDir);
 
-		Map<File, Exception> exceptions = new HashMap<File, Exception>();
-		//
-		man = OWLManager.createOWLOntologyManager();
-		// setup base files
-		OntologyFiles baseFiles = new OntologyFiles(main.localOwlFiles, main.subLocalOwlFiles);
-		baseFiles.setupManager(man, exceptions);
-		// setup job files
-		ontologyFiles.setupManager(man, exceptions);
-		for (Entry<File, Exception> entry : exceptions.entrySet())
+		for (Entry<File, IRI> entry : ontologyFiles.getLocalOntologyFiles(null).entrySet())
 		{
-			System.out.println("Found error while loading manger for file:" + entry.getKey()
-					+ " with exception: " + entry.getValue());
-		}
-		exceptions.clear();
+			// need new managers to make sure we can load duplicate ontology
+			// IRIs
+			OWLOntologyManager man = main.getNewBaseManager();
+			ontologyFiles.setupManager(man, null);
+			try
+			{
+				ontologies.add(man.loadOntology(entry.getValue()));
+			} catch (OWLOntologyCreationException e)
+			{
+				throw new RuntimeException("Failed to load ontology file to find types. "
+						+ "File: " + entry.getKey() + " ontology IRI: " + entry.getValue(), e);
 
-		for (Entry<File, IRI> entry : ontologyFiles.getLocalOntologyFiles(exceptions).entrySet())
-		{
-			ontologies.add(ISFUtil.getOrLoadOntology(entry.getValue(), man));
+			}
 		}
 
 		for (String action : getAllActions())
@@ -132,7 +130,7 @@ public class TypecheckCommand extends AbstractCommand {
 	@Override
 	protected void addCommandActions(List<String> actionsList) {
 		actionsList.add(Action.duplicatIris.name());
-		actionsList.add(Action.duplicateTypes.name());
+		actionsList.add(Action.checkTypes.name());
 		if (addTypes)
 		{
 			actionsList.add(Action.addTypes.name());
@@ -144,36 +142,27 @@ public class TypecheckCommand extends AbstractCommand {
 
 			@Override
 			public void execute(TypecheckCommand command) {
-				// show duplicates
-				Map<File, Exception> exceptions = new HashMap<File, Exception>();
-				Map<IRI, List<File>> duplicates = command.ontologyFiles
-						.getDuplicateIris(exceptions);
-
-				for (Entry<File, Exception> entry : exceptions.entrySet())
-				{
-					command.warn("Errors getting duplicate IRIs. File: "
-							+ entry.getKey().getAbsolutePath(), entry.getValue());
-				}
+				command.logger.info("Executing duplicateIris action.");
 
 				// first warn about duplicate IRIs that will hide files from the
 				// type
 				// checking
-				for (Entry<IRI, List<File>> entry : duplicates.entrySet())
+				for (Entry<IRI, List<File>> entry : command.ontologyFiles.getDuplicateIris(null)
+						.entrySet())
 				{
-					command.warn("Duplicate IRI: " + entry.getKey(), null);
-					command.indent++;
+					command.logger.warn("Duplicate ontology IRI: " + entry.getKey());
 					for (File file : entry.getValue())
 					{
-						command.info("in file: " + file.getAbsolutePath());
+						command.logger.warn("\tIn file: " + file.getAbsolutePath());
 					}
-					command.indent--;
 				}
 			}
 		},
-		duplicateTypes {
+		checkTypes {
 
 			@Override
 			public void execute(TypecheckCommand command) {
+				command.logger.info("Executing checkTypes action.");
 				for (OWLOntology o : command.ontologies)
 				{
 					for (OWLEntity entity : o.getSignature(true))
@@ -195,17 +184,16 @@ public class TypecheckCommand extends AbstractCommand {
 				{
 					if (entry.getValue().size() > 1)
 					{
-						command.warn("Multiple types: " + entry.getKey(), null);
-						command.indent++;
+						command.logger.warn("Multiple types for IRI: " + entry.getKey());
 						String types = "";
 						for (OWLEntity entity : entry.getValue())
 						{
 							types += entity.getEntityType() + " ";
 						}
-						command.info(types);
-						command.indent--;
+						command.logger.warn("\tTypes: " + types);
 					}
 				}
+				command.ontologies.clear();
 			}
 
 		},
@@ -214,93 +202,95 @@ public class TypecheckCommand extends AbstractCommand {
 			@SuppressWarnings("deprecation")
 			@Override
 			public void execute(TypecheckCommand command) {
-				Map<IRI, Set<OWLOntology>> iriToOntologiesMap = new HashMap<IRI, Set<OWLOntology>>();
+				command.logger.info("Executing addTypes action.");
 
-				// we want to intentionally ignore imports
-				OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-				man.clearIRIMappers();
-				man.setSilentMissingImportsHandling(true);
-
-				OntologyFiles files = new OntologyFiles(command.files, command.subDir);
-				files.setupManager(man, new HashMap<File, Exception>());
-
-				for (Entry<File, IRI> entry : files.getLocalOntologyFiles(
-						new HashMap<File, Exception>()).entrySet())
+				for (Entry<File, IRI> entry : command.ontologyFiles.getLocalOntologyFiles(null)
+						.entrySet())
 				{
-					OWLOntology o = ISFUtil.getOrLoadOntology(entry.getValue(), man);
+					// we want to intentionally ignore imports
+					OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+					man.clearIRIMappers();
+					man.setSilentMissingImportsHandling(true);
 
-					for (OWLAxiom axiom : o.getAxioms())
-					{
-						for (OWLEntity entity : axiom.getSignature())
-						{
-							Set<OWLOntology> entityOntologies = iriToOntologiesMap.get(entity
-									.getIRI());
-							if (entityOntologies == null)
-							{
-								entityOntologies = new HashSet<OWLOntology>();
-								iriToOntologiesMap.put(entity.getIRI(), entityOntologies);
-							}
-							entityOntologies.add(o);
-						}
+					boolean changed = false;
 
-						if (axiom instanceof OWLAnnotationAssertionAxiom)
-						{
-							OWLAnnotationSubject subject = ((OWLAnnotationAssertionAxiom) axiom)
-									.getSubject();
-							if (subject instanceof IRI)
-							{
-								IRI subjectIri = (IRI) subject;
-								Set<OWLOntology> entityOntologies = iriToOntologiesMap
-										.get(subjectIri);
-								if (entityOntologies == null)
-								{
-									entityOntologies = new HashSet<OWLOntology>();
-									iriToOntologiesMap.put(subjectIri, entityOntologies);
-								}
-								entityOntologies.add(o);
+					Set<IRI> iris = new HashSet<IRI>();
 
-							}
-						}
-					}
-				}
-
-				Set<OWLOntology> changedOntologies = new HashSet<OWLOntology>();
-				for (Entry<IRI, Set<OWLOntology>> entry : iriToOntologiesMap.entrySet())
-				{
-					Set<OWLEntity> entities = command.iriToEntityMap.get(entry.getKey());
-					if (entities != null)
-					{
-						for (OWLEntity entity : entities)
-						{
-
-							OWLDeclarationAxiom da = man.getOWLDataFactory()
-									.getOWLDeclarationAxiom(entity);
-							for (OWLOntology o : entry.getValue())
-							{
-								if (man.addAxiom(o, da).size() > 0)
-								{
-									changedOntologies.add(o);
-									command.info("Add declaration: " + da + " to ontology: "
-											+ o.getOntologyID().getOntologyIRI());
-								}
-							}
-						}
-
-					}
-
-				}
-
-				for (OWLOntology o : changedOntologies)
-				{
+					OWLOntology o = null;
 					try
 					{
-						man.saveOntology(o);
-					} catch (OWLOntologyStorageException e)
+						o = man.loadOntologyFromOntologyDocument(entry.getKey());
+					} catch (OWLOntologyCreationException e2)
 					{
-						throw new RuntimeException("Failed to save ontology after adding types. "
-								+ o.getOntologyID().getOntologyIRI(), e);
+						throw new RuntimeException("Failed to load ontology to add types. "
+								+ "File: " + entry.getKey() + " and IRI: " + entry.getValue(), e2);
+					}
+
+					for (OWLEntity e : o.getSignature(false))
+					{
+						iris.add(e.getIRI());
+					}
+					for (OWLAnnotationAssertionAxiom a : o
+							.getAxioms(AxiomType.ANNOTATION_ASSERTION))
+					{
+						if (a.getSubject() instanceof IRI)
+						{
+							iris.add((IRI) a.getSubject());
+						}
+						if (a.getValue() instanceof IRI)
+						{
+							iris.add((IRI) a.getValue());
+						}
+					}
+
+					for (IRI iri : iris)
+					{
+						Set<OWLEntity> entities = command.iriToEntityMap.get(iri);
+						if (entities != null)
+						{
+							if (entities.size() > 1)
+							{
+								String types = "";
+								for (OWLEntity e : entities)
+								{
+									types += e.getEntityType() + " ";
+								}
+								command.logger.warn("IRI " + iri
+										+ " will have multiple types in file: " + entry.getKey()
+										+ "\n\tTypes: " + types);
+							}
+							// add the types, and save later if changed.
+							for (OWLEntity e : entities)
+							{
+								OWLDeclarationAxiom da = man.getOWLDataFactory()
+										.getOWLDeclarationAxiom(e);
+								if (!man.addAxiom(o, da).isEmpty())
+								{
+									changed = true;
+									command.logger.debug("Added type " + e.getEntityType()
+											+ " to IRI " + iri + " in file: " + entry.getValue()
+											+ " for ontology IRI: " + entry.getValue());
+								}
+							}
+						}
+					}
+
+					if (changed)
+					{
+						try
+						{
+							man.saveOntology(o);
+							command.logger.info("Saving ontology: " + entry.getValue()
+									+ " to file: " + entry.getKey());
+						} catch (OWLOntologyStorageException e1)
+						{
+							throw new RuntimeException(
+									"Failed to save ontology after adding types. " + "File: "
+											+ entry.getKey() + " IRI: " + entry.getValue(), e1);
+						}
 					}
 				}
+
 			}
 		};
 

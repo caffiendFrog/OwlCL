@@ -19,11 +19,14 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyIRIMapper;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.SimpleIRIMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OntologyFiles {
 
 	private List<File> files;
 	private boolean includeSubs;
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	/**
 	 * A utility class to help discover and analyze ontology files in a set of
@@ -90,6 +93,7 @@ public class OntologyFiles {
 				man.setSilentMissingImportsHandling(true);
 				try
 				{
+					logger.info("Trying to load file: " + file.getAbsolutePath());
 					o = man.loadOntologyFromOntologyDocument(file);
 				} catch (OWLOntologyCreationException e)
 				{
@@ -97,12 +101,15 @@ public class OntologyFiles {
 					{
 						exceptions.put(file, e);
 					}
+					logger.info("Problem loading file as ontology file. " + e.getMessage(), e);
 					continue;
 				}
 				if (o.getOntologyID().isAnonymous())
 				{
 					continue;
 				}
+				logger.info("Found ontology: " + o.getOntologyID() + " in file: "
+						+ file.getAbsolutePath());
 				fileToIriMap.put(file, o.getOntologyID().getOntologyIRI());
 			}
 		}
@@ -140,6 +147,8 @@ public class OntologyFiles {
 			for (final Entry<File, IRI> entry : localOntologies.entrySet())
 			{
 				OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+				// this mapper catches all requests that were not found by
+				// higher mappings
 				man.addIRIMapper(new OWLOntologyIRIMapper() {
 
 					@Override
