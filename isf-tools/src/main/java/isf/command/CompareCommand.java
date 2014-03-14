@@ -193,7 +193,7 @@ public class CompareCommand extends AbstractCommand {
 		fromOntologyFiles.setupManager(fromManager, null);
 		if (fromIri != null)
 		{
-			fromOntology = fromManager.getOntology(fromIri);
+			fromOntology = main.getOrLoadOntology(fromIri, fromManager);
 		} else
 		{
 			try
@@ -224,7 +224,7 @@ public class CompareCommand extends AbstractCommand {
 		toOntologyFiles.setupManager(toManager, null);
 		if (toIri != null)
 		{
-			toOntology = toManager.getOntology(toIri);
+			toOntology = main.getOrLoadOntology(toIri, toManager);
 		} else
 		{
 			try
@@ -403,38 +403,51 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology o : command.onlyFromOntologies)
 				{
+					int added = 0;
+					int removed = 0;
 
+					command.report.info("");
 					command.report.info("-" + o.getOntologyID().getOntologyIRI());
 					Set<OWLEntity> entities = new TreeSet<OWLEntity>(o.getSignature(false));
 					for (OWLEntity e : entities)
 					{
 						if (reportEntity(e))
 						{
-							command.report.detail("\t-" + e.getEntityType() + " " + e);
+							command.report.detail("\t- " + e.getEntityType() + " " + e);
+							++removed;
 						}
 					}
-					command.report.info("");
+					command.report.info("\tCounts: -" + removed + " +0");
 				}
 
 				for (OWLOntology o : command.onlyToOntologies)
 				{
 
+					int added = 0;
+					int removed = 0;
+					command.report.info("");
 					command.report.info("+" + o.getOntologyID().getOntologyIRI());
 					Set<OWLEntity> entities = new TreeSet<OWLEntity>(o.getSignature(false));
 					for (OWLEntity e : entities)
 					{
 						if (reportEntity(e))
 						{
-							command.report.detail("\t+" + e.getEntityType() + " " + e);
+							command.report.detail("\t+ " + e.getEntityType() + " " + e);
+							++added;
 						}
 					}
-					command.report.info("");
+					command.report.info("\tCounts: -0" + " +" + added);
 				}
 
 				for (OWLOntology bothfromOntology : command.bothFromOntologies)
 				{
+
+					int added = 0;
+					int removed = 0;
+
 					OWLOntology bothToOntology = command.getMatchingToOntology(bothfromOntology);
 
+					command.report.info("");
 					command.report.info("=" + bothfromOntology.getOntologyID().getOntologyIRI());
 
 					Set<OWLEntity> entities = new TreeSet<OWLEntity>(
@@ -445,7 +458,8 @@ public class CompareCommand extends AbstractCommand {
 						{
 							if (reportEntity(e))
 							{
-								command.report.detail("\t-" + e.getEntityType() + " " + e);
+								command.report.detail("\t- " + e.getEntityType() + " " + e);
+								++removed;
 							}
 						}
 					}
@@ -457,11 +471,13 @@ public class CompareCommand extends AbstractCommand {
 						{
 							if (reportEntity(e))
 							{
-								command.report.detail("\t+" + e.getEntityType() + " " + e);
+								command.report.detail("\t+ " + e.getEntityType() + " " + e);
+								++added;
 							}
 						}
 					}
-					command.report.info("");
+
+					command.report.info("\tCounts: -" + removed + " +" + added);
 				}
 
 			}

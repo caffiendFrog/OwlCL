@@ -14,6 +14,7 @@ import isf.module.ModuleNames;
 import java.io.File;
 import java.util.List;
 
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -301,9 +302,12 @@ public class EroCommand extends AbstractCommand {
 			public void execute(EroCommand command) {
 				CompareCommand cc = new CompareCommand(command.main);
 
+				cc.fromIri = IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl");
 				cc.fromFiles.add(command.previousDirectory);
+				
+				cc.toIri = IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl");
 				cc.toFiles.add(command.outputDirectory);
-				cc.reportPath = "ero-diff-with-last-original.txt";
+				cc.reportPath = "ero-diff-with-previous";
 				cc.run();
 			}
 		};

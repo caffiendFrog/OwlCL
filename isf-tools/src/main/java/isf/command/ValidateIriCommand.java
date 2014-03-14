@@ -26,7 +26,7 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.FileConverter;
 
 @Parameters(
-		commandNames = "iri",
+		commandNames = "validate",
 		commandDescription = "This command validates IRIs in the *.owl files. "
 				+ "It first loads all *.owl files and gives an error if there is an IRI that is used in more "
 				+ "than one file. Then, after finding all the IRIs from the first step, it tries to auto-load "
@@ -125,6 +125,7 @@ public class ValidateIriCommand extends AbstractCommand {
 
 				for (Entry<IRI, List<File>> entry : command.of.getDuplicateIris(null).entrySet())
 				{
+					command.problemsFound = true;
 					command.report.info("");
 					command.report.info("IRI: " + entry.getKey());
 
@@ -171,16 +172,24 @@ public class ValidateIriCommand extends AbstractCommand {
 							command.problemsFound = true;
 						} else
 						{
-							command.report.info("IRI loaded correctly. IRI: " + entry.getValue());
+							command.report.info("IRI loaded correctly. IRI: " + entry.getValue()
+									+ "  <---  " + entry.getKey().getCanonicalPath());
 						}
 					} catch (OWLOntologyCreationException e)
 					{
-						throw new RuntimeException("Failed while auto loading IRI: "
-								+ entry.getValue(), e);
+						command.report.warn("Error creating ontology during auto loading IRI: "
+								+ entry.getValue());
+						command.report.warn("\tException: " + e.getMessage());
+						command.report.warn("\tCause: " + e.getCause());
+						command.problemsFound = true;
+
 					} catch (IOException e)
 					{
-						throw new RuntimeException("Failed while auto loading IRI: "
-								+ entry.getValue(), e);
+						command.report.warn("IOException during auto loading IRI: "
+								+ entry.getValue());
+						command.report.warn("\tException: " + e.getMessage());
+						command.report.warn("\tCause: " + e.getCause());
+						command.problemsFound = true;
 					}
 				}
 
@@ -211,6 +220,7 @@ public class ValidateIriCommand extends AbstractCommand {
 					for (IRI iri : entry.getValue())
 					{
 						command.report.warn("\tHas unresolved import of IRI: " + iri);
+						command.problemsFound = true;
 					}
 				}
 

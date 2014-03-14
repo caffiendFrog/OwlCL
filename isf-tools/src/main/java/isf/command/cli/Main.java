@@ -233,8 +233,8 @@ public class Main {
 		CatalogCommand catalog = new CatalogCommand(main);
 		jc.addCommand("catalog", catalog);
 
-		ValidateIriCommand iri = new ValidateIriCommand(main);
-		jc.addCommand("iri", iri);
+		ValidateIriCommand validate = new ValidateIriCommand(main);
+		jc.addCommand("validate", validate);
 
 		CompareCommand cc = new CompareCommand(main);
 		jc.addCommand("compare", cc);
@@ -282,9 +282,9 @@ public class Main {
 		} else if (command.equalsIgnoreCase("catalog"))
 		{
 			catalog.run();
-		} else if (command.equalsIgnoreCase("iri"))
+		} else if (command.equalsIgnoreCase("validate"))
 		{
-			iri.run();
+			validate.run();
 		} else if (command.equalsIgnoreCase("compare"))
 		{
 			cc.run();

@@ -27,7 +27,7 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
-@Parameters(commandNames = "typeCheck", commandDescription = "Checks if an IRI has more than "
+@Parameters(commandNames = "typecheck", commandDescription = "Checks if an IRI has more than "
 		+ "one type in the files, directories, and any of their imports."
 		+ " Imports are loaded from local files when possible, otherwise, loaded online. "
 		+ "All ontologies are loaded from/into a single manager.")
@@ -98,9 +98,12 @@ public class TypecheckCommand extends AbstractCommand {
 		super(main);
 	}
 
+	Report report;
+
 	@Override
 	public void run() {
 
+		report = new Report("typecheckReport");
 		ontologyFiles = new OntologyFiles(files, subDir);
 
 		for (Entry<File, IRI> entry : ontologyFiles.getLocalOntologyFiles(null).entrySet())
@@ -124,7 +127,7 @@ public class TypecheckCommand extends AbstractCommand {
 		{
 			Action.valueOf(action).execute(this);
 		}
-
+		report.finish();
 	}
 
 	@Override
@@ -142,7 +145,12 @@ public class TypecheckCommand extends AbstractCommand {
 
 			@Override
 			public void execute(TypecheckCommand command) {
-				command.logger.info("Executing duplicateIris action.");
+
+				command.report.info("");
+				command.report.info("==================================================");
+				command.report.info("==========   Checking for duplicate IRIs  ========");
+				command.report.info("==================================================");
+				command.report.info("");
 
 				// first warn about duplicate IRIs that will hide files from the
 				// type
@@ -150,10 +158,10 @@ public class TypecheckCommand extends AbstractCommand {
 				for (Entry<IRI, List<File>> entry : command.ontologyFiles.getDuplicateIris(null)
 						.entrySet())
 				{
-					command.logger.warn("Duplicate ontology IRI: " + entry.getKey());
+					command.report.info("Duplicate ontology IRI: " + entry.getKey());
 					for (File file : entry.getValue())
 					{
-						command.logger.warn("\tIn file: " + file.getAbsolutePath());
+						command.report.info("\tIn file: " + file.getAbsolutePath());
 					}
 				}
 			}
@@ -162,7 +170,13 @@ public class TypecheckCommand extends AbstractCommand {
 
 			@Override
 			public void execute(TypecheckCommand command) {
-				command.logger.info("Executing checkTypes action.");
+
+				command.report.info("");
+				command.report.info("==================================================");
+				command.report.info("==========   Checking for multiple types  ========");
+				command.report.info("==================================================");
+				command.report.info("");
+
 				for (OWLOntology o : command.ontologies)
 				{
 					for (OWLEntity entity : o.getSignature(true))
@@ -184,13 +198,13 @@ public class TypecheckCommand extends AbstractCommand {
 				{
 					if (entry.getValue().size() > 1)
 					{
-						command.logger.warn("Multiple types for IRI: " + entry.getKey());
+						command.report.info("Multiple types for IRI: " + entry.getKey());
 						String types = "";
 						for (OWLEntity entity : entry.getValue())
 						{
 							types += entity.getEntityType() + " ";
 						}
-						command.logger.warn("\tTypes: " + types);
+						command.report.info("\tTypes: " + types);
 					}
 				}
 				command.ontologies.clear();
@@ -202,7 +216,12 @@ public class TypecheckCommand extends AbstractCommand {
 			@SuppressWarnings("deprecation")
 			@Override
 			public void execute(TypecheckCommand command) {
-				command.logger.info("Executing addTypes action.");
+
+				command.report.info("");
+				command.report.info("==================================================");
+				command.report.info("==========   Adding types  =======================");
+				command.report.info("==================================================");
+				command.report.info("");
 
 				for (Entry<File, IRI> entry : command.ontologyFiles.getLocalOntologyFiles(null)
 						.entrySet())
@@ -255,9 +274,10 @@ public class TypecheckCommand extends AbstractCommand {
 								{
 									types += e.getEntityType() + " ";
 								}
-								command.logger.warn("IRI " + iri
-										+ " will have multiple types in file: " + entry.getKey()
-										+ "\n\tTypes: " + types);
+								command.report.info("IRI " + iri
+										+ " will have multiple types in file: " + entry.getKey());
+
+								command.report.info("\tTypes: " + types);
 							}
 							// add the types, and save later if changed.
 							for (OWLEntity e : entities)
@@ -267,7 +287,7 @@ public class TypecheckCommand extends AbstractCommand {
 								if (!man.addAxiom(o, da).isEmpty())
 								{
 									changed = true;
-									command.logger.debug("Added type " + e.getEntityType()
+									command.report.detail("Added type " + e.getEntityType()
 											+ " to IRI " + iri + " in file: " + entry.getValue()
 											+ " for ontology IRI: " + entry.getValue());
 								}
@@ -280,7 +300,7 @@ public class TypecheckCommand extends AbstractCommand {
 						try
 						{
 							man.saveOntology(o);
-							command.logger.info("Saving ontology: " + entry.getValue()
+							command.report.info("Saving ontology: " + entry.getValue()
 									+ " to file: " + entry.getKey());
 						} catch (OWLOntologyStorageException e1)
 						{
