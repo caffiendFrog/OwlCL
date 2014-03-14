@@ -5,7 +5,6 @@ import isf.command.cli.Main;
 import isf.util.OntologyFiles;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -31,8 +30,7 @@ public class RewriteCommand extends AbstractCommand {
 	public String format = "rdfxml";
 	public boolean formatSet;
 
-	@Parameter(names = "-format", description = "Which formats, valid options include \"rdfxml\" "
-			+ "")
+	@Parameter(names = "-format", description = "Which formats, valid options include rdfxml ")
 	public void setFormat(String format) {
 		this.format = format;
 		this.formatSet = true;
@@ -63,26 +61,21 @@ public class RewriteCommand extends AbstractCommand {
 		// TODO Auto-generated method stub
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void run() {
 		OntologyFiles ofu = new OntologyFiles(files, true);
-		HashMap<File, Exception> exceptions = new HashMap<File, Exception>();
-		Set<Entry<File, IRI>> entries = ofu.getLocalOntologyFiles(exceptions).entrySet();
-		for (Entry<File, Exception> exception : exceptions.entrySet())
-		{
-			System.out.println(exception.getKey() + " --> " + exception.getValue().getMessage());
-		}
+		Set<Entry<File, IRI>> entries = ofu.getLocalOntologyFiles(null).entrySet();
 
 		for (Entry<File, IRI> entry : entries)
 		{
-			if (entry.getValue() == null)
-				continue;
-			if (entry.getKey().getPath().endsWith("catalog-v001.xml"))
-			{
-
-				System.out.println("catalog:");
-				System.out.println(entry.getValue());
-			}
+			// if (entry.getValue() == null)
+			// continue;
+			// if (entry.getKey().getPath().endsWith("catalog-v001.xml"))
+			// {
+			// System.out.println("catalog:");
+			// System.out.println(entry.getValue());
+			// }
 			OWLOntologyManager man = OWLManager.createOWLOntologyManager();
 			man.clearIRIMappers();
 			man.setSilentMissingImportsHandling(true);

@@ -19,7 +19,7 @@ import com.beust.jcommander.Parameters;
 		commandDescription = "Generate the named module. The module has to be already created.")
 public class GenerateModuleCommand extends AbstractCommand {
 
-	private static Logger log = LoggerFactory
+	private static Logger logger = LoggerFactory
 			.getLogger(GenerateModuleCommand.class.getSimpleName());
 
 	// ================================================================================

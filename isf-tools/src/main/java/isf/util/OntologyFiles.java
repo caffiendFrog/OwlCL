@@ -1,6 +1,7 @@
 package isf.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -126,11 +127,28 @@ public class OntologyFiles {
 			{
 				if (file.isFile())
 				{
-					allFiles.add(file);
+					try
+					{
+						allFiles.add(file.getCanonicalFile());
+					} catch (IOException e)
+					{
+						throw new RuntimeException("Failed to get canonical file for: " + file, e);
+					}
 				} else if (file.isDirectory())
 				{
-					allFiles.addAll(FileUtils.listFiles(file, TrueFileFilter.INSTANCE,
-							includeSubs ? TrueFileFilter.INSTANCE : null));
+					for (File file2 : FileUtils.listFiles(file, TrueFileFilter.INSTANCE,
+							includeSubs ? TrueFileFilter.INSTANCE : null))
+					{
+						try
+						{
+							allFiles.add(file2.getCanonicalFile());
+						} catch (IOException e)
+						{
+							throw new RuntimeException(
+									"Failed to get canonical file for: " + file2, e);
+						}
+
+					}
 				}
 			}
 		}

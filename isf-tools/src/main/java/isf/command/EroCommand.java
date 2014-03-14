@@ -5,6 +5,8 @@ import static isf.command.EroCommand.Action.catalog;
 import static isf.command.EroCommand.Action.generate;
 import static isf.command.EroCommand.Action.save;
 import isf.ISFUtil;
+import isf.command.cli.CanonicalFileConverter;
+import isf.command.cli.DirectoryExistsValidator;
 import isf.command.cli.Main;
 import isf.module.Module;
 import isf.module.ModuleNames;
@@ -24,22 +26,38 @@ import com.beust.jcommander.Parameters;
 @Parameters(commandNames = { "ero" }, commandDescription = "Creates the ERO modules.")
 public class EroCommand extends AbstractCommand {
 
+	// ================================================================================
+	// If any legacy files should be cleaned from the axioms the module is now
+	// generating.
+	// ================================================================================
 	@Parameter(names = "-cleanLegacy",
 			description = "Will clean the legacy ERO files from any axioms the module is "
 					+ "generating. To enable this, simply add the option without a value "
 					+ "(i.e. -cleanLegacy without \"true\" as an option value)")
 	boolean cleanLegacy = false;
 
-	@Parameter(names = "-addLegacy",
+	// ================================================================================
+	// If legacy content should be added to the module.
+	// ================================================================================
+	@Parameter(names = "-addLegacy", arity = 1,
 			description = "Will add the legacy ERO content to the generated module. Use "
-					+ "the option with a value (i.e. -addLegacy false) to disable this.", arity = 1)
+					+ "the option with a value (i.e. -addLegacy false) to disable this.")
 	boolean addLegacy = true;
+
+	// ================================================================================
+	// Directory of reference run for diff report.
+	// ================================================================================
+
+	@Parameter(names = "-previous", converter = CanonicalFileConverter.class,
+			validateWith = DirectoryExistsValidator.class)
+	public File previousDirectory;
 
 	// ================================================================================
 	// Implementation
 	// ================================================================================
 
 	Module topModule = null;
+
 	OWLOntology isfOntology = null;
 	OWLOntologyManager man = null;
 	OWLReasoner reasoner = null;
@@ -47,7 +65,6 @@ public class EroCommand extends AbstractCommand {
 
 	public EroCommand(Main main) {
 		super(main);
-
 	}
 
 	private void init() {
@@ -207,6 +224,10 @@ public class EroCommand extends AbstractCommand {
 		// actionsList.add(savelegacy.name());
 		actionsList.add(save.name());
 		actionsList.add(catalog.name());
+		if (previousDirectory != null)
+		{
+			actionsList.add(Action.compare.name());
+		}
 	}
 
 	enum Action {
@@ -272,6 +293,18 @@ public class EroCommand extends AbstractCommand {
 				CatalogCommand catalog = new CatalogCommand(command.main);
 				catalog.setDirectory(command.outputDirectory.getAbsolutePath());
 				catalog.run();
+			}
+		},
+		compare {
+
+			@Override
+			public void execute(EroCommand command) {
+				CompareCommand cc = new CompareCommand(command.main);
+
+				cc.fromFiles.add(command.previousDirectory);
+				cc.toFiles.add(command.outputDirectory);
+				cc.reportPath = "ero-diff-with-last-original.txt";
+				cc.run();
 			}
 		};
 

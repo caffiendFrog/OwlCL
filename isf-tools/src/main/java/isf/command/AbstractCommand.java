@@ -75,11 +75,11 @@ public abstract class AbstractCommand {
 
 	// public PrintWriter pw = new PrintWriter(System.out);
 
-//	protected int indent;
+	// protected int indent;
 
-//	protected String indent(String string) {
-//		return new String(new char[indent]).replace('\0', ' ') + string;
-//	}
+	// protected String indent(String string) {
+	// return new String(new char[indent]).replace('\0', ' ') + string;
+	// }
 
 	// protected void warn(String message, Exception e) {
 	// pw.println(indent("Warn: " + message));
@@ -118,42 +118,67 @@ public abstract class AbstractCommand {
 	public class Report {
 
 		PrintWriter pw;
+		PrintWriter pwDetailed;
+		int counter = 0;
 
-		public Report(String relativeFilePath) throws FileNotFoundException {
-			pw = new PrintWriter(new File(AbstractCommand.this.main.getOutputDirectory(),
-					relativeFilePath));
+		public Report(String relativeFilePath) {
+			try
+			{
+				pw = new PrintWriter(new File(AbstractCommand.this.main.getOutputDirectory(),
+						relativeFilePath + ".txt"));
+				pwDetailed = new PrintWriter(new File(
+						AbstractCommand.this.main.getOutputDirectory(), relativeFilePath
+								+ "-detailed.txt"));
+			} catch (FileNotFoundException e)
+			{
+				throw new RuntimeException("Failed to create report files", e);
+			}
+
+		}
+
+		private String getNextLineNumber() {
+			String lineNumber = "00000000000" + ++counter;
+			int len = lineNumber.length();
+			return lineNumber.substring(len - 6, len) + ") ";
 		}
 
 		void error(String value) {
+			String number = getNextLineNumber();
 			AbstractCommand.this.logger.error(value);
-			pw.append(value);
-			doConsole(value);
+			pw.println(number + value);
+			pwDetailed.println(number + value);
+			doConsole(number + value);
 		}
 
 		void warn(String value) {
+			String number = getNextLineNumber();
 			AbstractCommand.this.logger.warn(value);
-			pw.append(value);
-			doConsole(value);
+			pw.println(number + value);
+			pwDetailed.println(number + value);
+			doConsole(number + value);
 		}
 
 		void info(String value) {
+			String number = getNextLineNumber();
 			AbstractCommand.this.logger.info(value);
-			pw.append(value);
-			doConsole(value);
+			pw.println(number + value);
+			pwDetailed.println(number + value);
+			doConsole(number + value);
 
 		}
 
 		void detail(String value) {
+			String number = getNextLineNumber();
 			AbstractCommand.this.logger.debug(value);
-			if (AbstractCommand.this.main.detailedReport)
-			{
-				pw.append(value);
-			}
-			doConsole(value);
+			pwDetailed.println(number + value);
+			// doConsole(value);
 		}
 
 		void finish() {
+			pw.println("\n=====  Finished report!  ======");
 			pw.close();
+			pwDetailed.println("\n=====  Finished report!  ======");
+			pwDetailed.close();
 			doConsole("\n=====  Finished report!  ======");
 		}
 

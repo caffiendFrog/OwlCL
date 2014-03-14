@@ -1,16 +1,19 @@
 package isf.command;
 
 import isf.ISFUtil;
+import isf.command.cli.DirectoryExistsValidator;
 import isf.command.cli.Main;
+import isf.util.OntologyFiles;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -20,6 +23,7 @@ import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.FileConverter;
 
 @Parameters(
 		commandNames = "iri",
@@ -33,26 +37,37 @@ import com.beust.jcommander.Parameters;
 				+ "report the URL they will be actually resolved from.")
 public class ValidateIriCommand extends AbstractCommand {
 
-	public String directory = ISFUtil.getTrunkDirectory().getAbsolutePath() + "/src/ontology";
+	// ================================================================================
+	// the directory to validate
+	// ================================================================================
+	public File directory = new File(ISFUtil.getTrunkDirectory().getAbsolutePath(), "src/ontology");
 	public boolean directorySet;
 
-	public boolean problemsFound;
-
-	@Parameter(names = "-directory",
+	@Parameter(names = "-directory", converter = FileConverter.class,
+			validateWith = DirectoryExistsValidator.class,
 			description = "The starting directory to validate ontologies and thier IRIs.")
-	public void setDirectory(String directory) {
+	public void setDirectory(File directory) {
 		this.directory = directory;
 		this.directorySet = true;
 	}
 
-	public String getDirectory() {
+	public File getDirectory() {
 		return directory;
 	}
+
+	// ================================================================================
+	// Report path
+	// ================================================================================
+
+	@Parameter(names = "-report",
+			description = "Relative path/name for the report file without suffix")
+	public String reportPath = "validateReport";
 
 	// ================================================================================
 	// Implementation
 	// ================================================================================
 
+	public boolean problemsFound;
 	Map<IRI, String> iriToDocMap = new HashMap<IRI, String>();
 	public String[] extensions = { "owl" };
 
@@ -67,8 +82,16 @@ public class ValidateIriCommand extends AbstractCommand {
 		actionsList.add(Action.resolve.name());
 	}
 
+	OntologyFiles of;
+	Report report;
+
 	@Override
 	public void run() {
+		List<File> files = new ArrayList<File>();
+		files.add(directory);
+		of = new OntologyFiles(files, true);
+
+		report = new Report(reportPath);
 
 		for (String action : getAllActions())
 		{
@@ -77,13 +100,16 @@ public class ValidateIriCommand extends AbstractCommand {
 
 		if (problemsFound)
 		{
-			System.out.println("\n============ POSSIBLE PROBLEMS, SEE LOG ABOVE  ===============");
+			report.info("");
+			report.info("===========  Possible problems, see above. =============");
 		} else
 		{
-			System.out.println("\n============ ALL GOOD, SEE LOG ABOVE  ===============");
+			report.info("");
+			report.info("============ ALL GOOD, SEE LOG ABOVE  ==============");
 
 		}
 
+		report.finish();
 	}
 
 	enum Action {
@@ -91,41 +117,20 @@ public class ValidateIriCommand extends AbstractCommand {
 
 			@Override
 			public void execute(ValidateIriCommand command) {
-				System.out.println("=====   Checking for duplicate IRIs.  =====\n");
-				int counter = 0;
-				for (File file : FileUtils.listFiles(new File(command.getDirectory()),
-						command.extensions, true))
+				command.report.info("");
+				command.report.info("===========================================");
+				command.report.info("=====   Checking for duplicate IRIs.  =====");
+				command.report.info("===========================================");
+				command.report.info("");
+
+				for (Entry<IRI, List<File>> entry : command.of.getDuplicateIris(null).entrySet())
 				{
-					++counter;
+					command.report.info("");
+					command.report.info("IRI: " + entry.getKey());
 
-					try
+					for (File file : entry.getValue())
 					{
-
-						OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-						man.setSilentMissingImportsHandling(true);
-						IRI iri = man.loadOntologyFromOntologyDocument(file).getOntologyID()
-								.getOntologyIRI();
-
-						if (command.iriToDocMap.keySet().contains(iri))
-						{
-							System.err.println(counter + "\tFound duplicate IRI of: " + iri
-									+ "\n in file: " + file.getAbsolutePath());
-							System.err.println("\tPrevious file with same IRI was: "
-									+ command.iriToDocMap.get(iri));
-							command.problemsFound = true;
-						} else
-						{
-							command.iriToDocMap.put(iri, file.getAbsolutePath());
-							System.out.print(counter + " - Found IRI: " + iri);
-							System.out.println("\t In file: " + file.getAbsolutePath());
-						}
-
-					} catch (OWLOntologyCreationException e)
-					{
-						throw new RuntimeException(
-								"Error during loading all *.owl files to check for duplicates."
-										+ "\n\tSee below exception for details"
-										+ "\n\tFile beind loaded was: " + file.getAbsolutePath(), e);
+						command.report.info("\tIn file: " + file.getAbsolutePath());
 					}
 				}
 
@@ -133,45 +138,49 @@ public class ValidateIriCommand extends AbstractCommand {
 		},
 		autoload {
 
+			@SuppressWarnings("deprecation")
 			@Override
 			public void execute(ValidateIriCommand command) {
-				System.out.println("\n\n=====   Checking for autoloading IRIs.  =====\n");
-				OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-				man.setSilentMissingImportsHandling(true);
-				man.clearIRIMappers();
-				AutoIRIMapper mapper = new AutoIRIMapper(new File(command.getDirectory()), true);
-				man.addIRIMapper(mapper);
+				command.report.info("");
+				command.report.info("==================================================");
+				command.report.info("==========   Checking for autoloading IRIs.  =====");
+				command.report.info("==================================================");
+				command.report.info("");
 
-				int counter = 0;
-				for (Entry<IRI, String> entry : command.iriToDocMap.entrySet())
+				for (Entry<File, IRI> entry : command.of.getLocalOntologyFiles(null).entrySet())
 				{
-					++counter;
+					OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+					man.setSilentMissingImportsHandling(true);
+					man.clearIRIMappers();
+					AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), true);
+					man.addIRIMapper(mapper);
+
 					try
 					{
-						OWLOntology o = man.loadOntology(entry.getKey());
+						OWLOntology o = man.loadOntology(entry.getValue());
 
 						boolean samePath = new File(man.getOntologyDocumentIRI(o).toURI())
-								.getCanonicalPath().equals(entry.getValue());
+								.getCanonicalPath().equals(entry.getKey().getCanonicalPath());
 						if (!samePath)
 						{
-							System.err.println(counter + "\tIRI: " + entry.getKey()
-									+ " should have been loaded from: " + entry.getValue());
-							System.err.println("\tBut it was loaded from: "
+							command.report.warn("IRI: " + entry.getValue()
+									+ " should have been loaded from: "
+									+ entry.getKey().getCanonicalPath());
+							command.report.warn("\tBut it was loaded from: "
 									+ man.getOntologyDocumentIRI(o));
 							command.problemsFound = true;
 						} else
 						{
-							System.out.println(counter + " - IRI loaded correctly. IRI: "
-									+ entry.getKey());
+							command.report.info("IRI loaded correctly. IRI: " + entry.getValue());
 						}
 					} catch (OWLOntologyCreationException e)
 					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException("Failed while auto loading IRI: "
+								+ entry.getValue(), e);
 					} catch (IOException e)
 					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new RuntimeException("Failed while auto loading IRI: "
+								+ entry.getValue(), e);
 					}
 				}
 
@@ -181,44 +190,27 @@ public class ValidateIriCommand extends AbstractCommand {
 
 			@Override
 			public void execute(ValidateIriCommand command) {
-				System.out.println("\n\n=====   Checking for non-local imports  =====\n");
 
-				OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-				AutoIRIMapper mapper = new AutoIRIMapper(new File(command.getDirectory()), true);
-				man.addIRIMapper(mapper);
-				int counter = 0;
-				for (Entry<IRI, String> entry : command.iriToDocMap.entrySet())
+				command.report.info("");
+				command.report.info("==================================================");
+				command.report.info("==========   Checking for non-local imports  =====");
+				command.report.info("==================================================");
+				command.report.info("");
+
+				for (Entry<File, Set<IRI>> entry : command.of.getLocallyUnresolvableIris(null)
+						.entrySet())
 				{
-					++counter;
 					try
 					{
-						OWLOntology o = man.loadOntology(entry.getKey());
-						System.out.println();
-						System.out.println(counter + " - Ontology: "
-								+ o.getOntologyID().getOntologyIRI());
-						for (OWLOntology imprt : o.getImports())
-						{
-							IRI docIri = man.getOntologyDocumentIRI(imprt);
-							if (!docIri.toString().startsWith("file:/"))
-							{
-								System.out.println(counter
-										+ "\t============= Remote import of IRI:"
-										+ imprt.getOntologyID().getOntologyIRI());
-								System.out.println("\t============= From location: " + docIri);
-								command.problemsFound = true;
-							} else
-							{
-								System.out.println("\tLocal import: "
-										+ imprt.getOntologyID().getOntologyIRI());
-							}
-						}
-
-					} catch (OWLOntologyCreationException e)
+						command.report.warn("File: " + entry.getKey().getCanonicalPath());
+					} catch (IOException e)
 					{
-						System.err.println(counter + "\tError loading ontology with IRI: "
-								+ entry.getKey());
-						System.err.println("\tWhile checking imports.");
-						throw new RuntimeException("", e);
+						throw new RuntimeException("Failed to get canonical path for file: "
+								+ entry.getKey(), e);
+					}
+					for (IRI iri : entry.getValue())
+					{
+						command.report.warn("\tHas unresolved import of IRI: " + iri);
 					}
 				}
 

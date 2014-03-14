@@ -7,7 +7,6 @@ import isf.command.cli.Main;
 import isf.util.OntologyFiles;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +40,7 @@ public class CompareCommand extends AbstractCommand {
 	// from files
 	// ================================================================================
 
-	public List<File> fromFiles;
+	public List<File> fromFiles = new ArrayList<File>();
 	public boolean fromFilesSet;
 
 	@Parameter(names = "-fromFiles", description = "Starting/from files or directories.",
@@ -77,7 +76,7 @@ public class CompareCommand extends AbstractCommand {
 	// to files
 	// ================================================================================
 
-	public List<File> toFiles;
+	public List<File> toFiles = new ArrayList<File>();
 	public boolean toFilesSet;
 
 	@Parameter(names = "-toFiles", description = "The to/end files or directories for the diff.",
@@ -187,13 +186,7 @@ public class CompareCommand extends AbstractCommand {
 			throw new IllegalStateException("Called with one IRI set but not the other.");
 		}
 
-		try
-		{
-			report = new Report(reportPath);
-		} catch (FileNotFoundException e1)
-		{
-			throw new RuntimeException("Failed to create report: " + reportPath, e1);
-		}
+		report = new Report(reportPath);
 
 		fromOntologyFiles = new OntologyFiles(fromFiles, subDir);
 		fromManager = main.getNewBaseManager();
@@ -205,7 +198,7 @@ public class CompareCommand extends AbstractCommand {
 		{
 			try
 			{
-				fromOntology = fromManager.createOntology();
+				fromOntology = fromManager.createOntology(IRI.create("http://ontology/aggregator"));
 			} catch (OWLOntologyCreationException e)
 			{
 				throw new RuntimeException("Failed to create top fromOntology", e);
@@ -236,7 +229,7 @@ public class CompareCommand extends AbstractCommand {
 		{
 			try
 			{
-				toOntology = toManager.createOntology();
+				toOntology = toManager.createOntology(IRI.create("http://ontology/aggregator"));
 			} catch (OWLOntologyCreationException e)
 			{
 				throw new RuntimeException("Failed to create top toOntology", e);
@@ -276,6 +269,8 @@ public class CompareCommand extends AbstractCommand {
 		{
 			Action.valueOf(action).execute(this);
 		}
+
+		report.finish();
 	}
 
 	@Override
@@ -283,19 +278,18 @@ public class CompareCommand extends AbstractCommand {
 
 		actionsList.add(Action.imports.name());
 		actionsList.add(Action.ontannot.name());
+		actionsList.add(Action.entitySummary.name());
+		actionsList.add(Action.axiomSummary.name());
 		actionsList.add(Action.entities.name());
 		actionsList.add(Action.axioms.name());
 	}
 
 	OWLOntology getMatchingToOntology(OWLOntology ontology) {
-		if (!ontology.isAnonymous())
+		for (OWLOntology to : toOntology.getImportsClosure())
 		{
-			for (OWLOntology to : toOntology.getImportsClosure())
+			if (to.equals(ontology))
 			{
-				if (to.equals(ontology))
-				{
-					return to;
-				}
+				return to;
 			}
 		}
 		return null;
@@ -308,6 +302,7 @@ public class CompareCommand extends AbstractCommand {
 			@Override
 			public void execute(CompareCommand command) {
 
+				command.report.info("");
 				command.report.info("===========================");
 				command.report.info("=====  Imports report =====");
 				command.report.info("===========================");
@@ -321,12 +316,15 @@ public class CompareCommand extends AbstractCommand {
 
 					if (ic.getCurrentFromOntology() != null)
 					{
+
 						if (ic.getCurrentToOntology() != null)
 						{
+
 							if (currentDepth >= depth)
 							{
-								String indentString = currentDepth
-										+ new String(new char[ic.getDepth()]).replace('\0', '=');
+								String indentString = "= "
+										+ new String(new char[ic.getDepth()]).replace('\0', '_')
+										+ currentDepth + " ";
 								String info = indentString
 										+ ic.getCurrentToOntology().getOntologyID()
 												.getOntologyIRI();
@@ -335,9 +333,9 @@ public class CompareCommand extends AbstractCommand {
 								command.report.info(info + "  <--  " + document);
 								if (ic.isCyclic())
 								{
-									indentString = (currentDepth + 1)
+									indentString = "  "
 											+ new String(new char[ic.getDepth()])
-													.replace('\0', ' ');
+													.replace('\0', '_') + (currentDepth + 1) + " ";
 									command.report.info(indentString + "...");
 								}
 
@@ -347,8 +345,9 @@ public class CompareCommand extends AbstractCommand {
 						{
 							if (currentDepth >= depth)
 							{
-								String indentString = currentDepth
-										+ new String(new char[ic.getDepth()]).replace('\0', '-');
+								String indentString = "- "
+										+ new String(new char[ic.getDepth()]).replace('\0', '_')
+										+ currentDepth + " ";
 								String info = indentString
 										+ ic.getCurrentFromOntology().getOntologyID()
 												.getOntologyIRI();
@@ -357,9 +356,9 @@ public class CompareCommand extends AbstractCommand {
 								command.report.info(info + "  <--  " + document);
 								if (ic.isCyclic())
 								{
-									indentString = (currentDepth + 1)
+									indentString = "  "
 											+ new String(new char[ic.getDepth()])
-													.replace('\0', ' ');
+													.replace('\0', '_') + (currentDepth + 1) + " ";
 									command.report.info(indentString + "...");
 								}
 							}
@@ -369,8 +368,9 @@ public class CompareCommand extends AbstractCommand {
 					{
 						if (currentDepth >= depth)
 						{
-							String indentString = currentDepth
-									+ new String(new char[ic.getDepth()]).replace('\0', '+');
+							String indentString = "+ "
+									+ new String(new char[ic.getDepth()]).replace('\0', '_')
+									+ currentDepth + " ";
 							String info = indentString
 									+ ic.getCurrentToOntology().getOntologyID().getOntologyIRI();
 							IRI document = ic.getCurrentToOntology().getOWLOntologyManager()
@@ -378,8 +378,9 @@ public class CompareCommand extends AbstractCommand {
 							command.report.info(info + "  <--  " + document);
 							if (ic.isCyclic())
 							{
-								indentString = (currentDepth + 1)
-										+ new String(new char[ic.getDepth()]).replace('\0', ' ');
+								indentString = "  "
+										+ new String(new char[ic.getDepth()]).replace('\0', '_')
+										+ (currentDepth + 1) + " ";
 								command.report.info(indentString + "...");
 							}
 						}
@@ -402,10 +403,10 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology o : command.onlyFromOntologies)
 				{
-					if (o.isAnonymous())
-						continue;
+
 					command.report.info("-" + o.getOntologyID().getOntologyIRI());
-					for (OWLEntity e : o.getSignature(false))
+					Set<OWLEntity> entities = new TreeSet<OWLEntity>(o.getSignature(false));
+					for (OWLEntity e : entities)
 					{
 						if (reportEntity(e))
 						{
@@ -417,10 +418,10 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology o : command.onlyToOntologies)
 				{
-					if (o.isAnonymous())
-						continue;
+
 					command.report.info("+" + o.getOntologyID().getOntologyIRI());
-					for (OWLEntity e : o.getSignature(false))
+					Set<OWLEntity> entities = new TreeSet<OWLEntity>(o.getSignature(false));
+					for (OWLEntity e : entities)
 					{
 						if (reportEntity(e))
 						{
@@ -432,15 +433,13 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology bothfromOntology : command.bothFromOntologies)
 				{
-					if (bothfromOntology.isAnonymous())
-					{
-						continue;
-					}
 					OWLOntology bothToOntology = command.getMatchingToOntology(bothfromOntology);
 
 					command.report.info("=" + bothfromOntology.getOntologyID().getOntologyIRI());
 
-					for (OWLEntity e : bothfromOntology.getSignature(false))
+					Set<OWLEntity> entities = new TreeSet<OWLEntity>(
+							bothfromOntology.getSignature(false));
+					for (OWLEntity e : entities)
 					{
 						if (!bothToOntology.containsEntityInSignature(e, false))
 						{
@@ -450,7 +449,8 @@ public class CompareCommand extends AbstractCommand {
 							}
 						}
 					}
-					for (OWLEntity e : bothToOntology.getSignature(false))
+					entities = new TreeSet<OWLEntity>(bothToOntology.getSignature(false));
+					for (OWLEntity e : entities)
 					{
 						if (!bothfromOntology.containsEntityInSignature(e, false))
 
@@ -486,9 +486,9 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology o : command.onlyFromOntologies)
 				{
-					if (o.isAnonymous())
-						continue;
-					command.report.info("\n-" + o.getOntologyID().getVersionIRI());
+
+					command.report.info("");
+					command.report.info("- " + o.getOntologyID().getOntologyIRI());
 					int count = 0;
 					for (OWLAnnotation a : o.getAnnotations())
 					{
@@ -500,9 +500,8 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology o : command.onlyToOntologies)
 				{
-					if (o.isAnonymous())
-						continue;
-					command.report.info("\n+" + o.getOntologyID().getVersionIRI());
+					command.report.info("");
+					command.report.info("+ " + o.getOntologyID().getOntologyIRI());
 					int count = 0;
 					for (OWLAnnotation a : o.getAnnotations())
 					{
@@ -514,15 +513,9 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology from : command.bothFromOntologies)
 				{
-					if (from.isAnonymous())
-					{
-						continue;
-					}
-
 					OWLOntology to = command.getMatchingToOntology(from);
-
-					command.report.info("\n=" + from.getOntologyID().getOntologyIRI());
-
+					command.report.info("");
+					command.report.info("= " + from.getOntologyID().getOntologyIRI());
 					int removed = 0;
 					int added = 0;
 					for (OWLAnnotation a : from.getAnnotations())
@@ -559,11 +552,11 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology from : command.onlyFromOntologies)
 				{
-					if (from.isAnonymous())
-						continue;
-					command.report.info("\n-" + from.getOntologyID().getOntologyIRI());
+					command.report.info("");
+					command.report.info("- " + from.getOntologyID().getOntologyIRI());
 					int removed = 0;
-					for (OWLAxiom a : from.getAxioms())
+					Set<OWLAxiom> axioms = new TreeSet<OWLAxiom>(from.getAxioms());
+					for (OWLAxiom a : axioms)
 					{
 						command.report.detail("\t-" + a);
 						++removed;
@@ -573,11 +566,12 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology to : command.onlyToOntologies)
 				{
-					if (to.isAnonymous())
-						continue;
-					command.report.info("\n+" + to.getOntologyID().getOntologyIRI());
+					command.report.info("");
+					command.report.info("+ " + to.getOntologyID().getOntologyIRI());
 					int added = 0;
-					for (OWLAxiom a : to.getAxioms())
+
+					Set<OWLAxiom> axioms = new TreeSet<OWLAxiom>(to.getAxioms());
+					for (OWLAxiom a : axioms)
 					{
 						command.report.detail("\t+" + a);
 						++added;
@@ -587,16 +581,14 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology bothFrom : command.bothFromOntologies)
 				{
-					if (bothFrom.isAnonymous())
-						continue;
-
-					command.report.info("\n=" + bothFrom.getOntologyID().getOntologyIRI());
-
+					command.report.info("");
+					command.report.info("= " + bothFrom.getOntologyID().getOntologyIRI());
 					OWLOntology bothTo = command.getMatchingToOntology(bothFrom);
 					int added = 0;
 					int removed = 0;
 
-					for (OWLAxiom a : bothFrom.getAxioms())
+					Set<OWLAxiom> axioms = new TreeSet<OWLAxiom>(bothFrom.getAxioms());
+					for (OWLAxiom a : axioms)
 					{
 						if (!bothTo.containsAxiom(a))
 						{
@@ -605,7 +597,8 @@ public class CompareCommand extends AbstractCommand {
 						}
 					}
 
-					for (OWLAxiom a : bothTo.getAxioms())
+					axioms = new TreeSet<OWLAxiom>(bothTo.getAxioms());
+					for (OWLAxiom a : axioms)
 					{
 						if (!bothFrom.containsAxiom(a))
 						{
@@ -617,6 +610,80 @@ public class CompareCommand extends AbstractCommand {
 
 				}
 
+			}
+		},
+		entitySummary {
+
+			@Override
+			public void execute(CompareCommand command) {
+
+				command.report.info("");
+				command.report.info("=================================");
+				command.report.info("==== Entity summary =============");
+				command.report.info("=================================");
+				command.report.info("");
+
+				Set<OWLEntity> fromEntities = new TreeSet<OWLEntity>(
+						command.fromOntology.getSignature(true));
+
+				Set<OWLEntity> toEntities = new TreeSet<OWLEntity>(
+						command.toOntology.getSignature(true));
+
+				int added = 0;
+				int removed = 0;
+
+				for (OWLEntity e : fromEntities)
+				{
+					if (!toEntities.remove(e))
+					{
+						command.report.detail("- " + e.getEntityType() + " " + e);
+						++removed;
+					}
+				}
+
+				for (OWLEntity e : toEntities)
+				{
+					command.report.detail("+ " + e.getEntityType() + " " + e);
+					++added;
+				}
+
+				command.report.info("Counts: -" + removed + " +" + added);
+			}
+		},
+		axiomSummary {
+
+			@Override
+			public void execute(CompareCommand command) {
+
+				command.report.info("");
+				command.report.info("=================================");
+				command.report.info("==== Axioms summary =============");
+				command.report.info("=================================");
+				command.report.info("");
+
+				Set<OWLAxiom> fromAxioms = new TreeSet<OWLAxiom>(ISFUtil.getAxioms(
+						command.fromOntology, true));
+				Set<OWLAxiom> toAxioms = new TreeSet<OWLAxiom>(ISFUtil.getAxioms(
+						command.toOntology, true));
+
+				int removed = 0;
+				int added = 0;
+
+				for (OWLAxiom a : fromAxioms)
+				{
+					if (!toAxioms.remove(a))
+					{
+						command.report.detail("- " + a);
+						++removed;
+					}
+				}
+
+				for (OWLAxiom a : toAxioms)
+				{
+					command.report.detail("+ " + a);
+					++added;
+				}
+				command.report.info("counts: -" + removed + " +" + added);
 			}
 		};
 
@@ -639,6 +706,24 @@ public class CompareCommand extends AbstractCommand {
 		List<List<OWLOntology>> toPaths = new ArrayList<List<OWLOntology>>();
 
 		ImportCompare(OWLOntology from, OWLOntology to) {
+
+			for (OWLOntology o : from.getImportsClosure())
+			{
+				if (o.isAnonymous())
+				{
+					throw new IllegalStateException(
+							"The from ontology closure contains an anonymous ontology");
+				}
+			}
+			for (OWLOntology o : to.getImportsClosure())
+			{
+				if (o.isAnonymous())
+				{
+					throw new IllegalStateException(
+							"The to ontology closure contains an anonymous ontology");
+				}
+			}
+
 			List<OWLOntology> paths = new ArrayList<OWLOntology>();
 			paths.add(from);
 			fromPaths.add(paths);
@@ -693,20 +778,17 @@ public class CompareCommand extends AbstractCommand {
 				fromPath.add(fromOntology);
 				List<OWLOntology> imports = new ArrayList<OWLOntology>(
 						fromOntology.getDirectImports());
-				validateImports(imports);
 				Collections.sort(imports);
 				fromPaths.add(imports);
 				boolean foundMatch = false;
 				for (OWLOntology o : toPaths.get(toPaths.size() - 1))
 				{
-					if (o.getOntologyID().equals(fromOntology.getOntologyID())
-							|| (fromOntology.isAnonymous() && o.isAnonymous()))
+					if (o.getOntologyID().equals(fromOntology.getOntologyID()))
 					{
 						toPath.add(o);
 						toPaths.get(toPaths.size() - 1).remove(o);
 						foundMatch = true;
 						imports = new ArrayList<OWLOntology>(o.getDirectImports());
-						validateImports(imports);
 						Collections.sort(imports);
 						toPaths.add(imports);
 						break;
@@ -724,7 +806,6 @@ public class CompareCommand extends AbstractCommand {
 				toPath.add(toOntology);
 				List<OWLOntology> imports = new ArrayList<OWLOntology>(
 						toOntology.getDirectImports());
-				validateImports(imports);
 				Collections.sort(imports);
 				toPaths.add(imports);
 				fromPath.add(null);
@@ -747,25 +828,6 @@ public class CompareCommand extends AbstractCommand {
 								+ " " + toPaths.size());
 			}
 			return !finished();
-		}
-
-		private void validateImports(List<OWLOntology> imports) {
-			boolean foundAnonymous = false;
-			for (OWLOntology o : imports)
-			{
-				if (o.isAnonymous())
-				{
-					if (foundAnonymous)
-					{
-						throw new IllegalStateException(
-								"More than one anonymous ontology is found in direct imports! ");
-					} else
-					{
-						foundAnonymous = true;
-					}
-				}
-			}
-
 		}
 
 		boolean finished() {
