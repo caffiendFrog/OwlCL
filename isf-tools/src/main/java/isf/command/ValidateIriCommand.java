@@ -1,8 +1,8 @@
 package isf.command;
 
-import isf.ISFUtil;
 import isf.command.cli.DirectoryExistsValidator;
 import isf.command.cli.Main;
+import isf.util.ISFUtil;
 import isf.util.OntologyFiles;
 
 import java.io.File;

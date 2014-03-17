@@ -1,4 +1,4 @@
-package isf;
+package isf.util;
 
 import org.semanticweb.owlapi.model.IRI;
 
@@ -26,23 +26,5 @@ public class ISF {
 	public static final String MODULE_EXCLUDE_IRI_SUFFIX = "-module-exclude.owl";
 	public static final String MODULE_LEGACY_IRI_SUFFIX = "-module-legacy.owl";
 	public static final String MODULE_LEGACY_REMOVED_IRI_SUFFIX = "-module-legacy-removed.owl";
-	public static final String ISF_IRI_MAPPES_TO_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-iri-mappes-to";
-	public static final String INCLUDE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-include";
-	public static final String INCLUDE_SUBS_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-include-subs";
-	public static final String INCLUDE_INSTANCES_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-include-instances";
-	public static final String EXCLUDE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-exclude";
-	public static final String EXCLUDE_SUBS_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-exclude-subs";
-	public static final String MODULE_FINAL_IRI_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-iri";
-	public static final String MODULE_FILE_NAME_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-file-name";
-	public static final String MODULE_SOURCE_ANNOTATION_IRI = ISF_ONTOLOGY_IRI_PREFIX
-			+ "isftools-module-source";
 
 }

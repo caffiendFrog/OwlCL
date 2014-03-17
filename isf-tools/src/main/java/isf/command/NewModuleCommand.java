@@ -1,11 +1,11 @@
 package isf.command;
 
-import isf.ISF;
-import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
 import isf.command.cli.Main;
 import isf.module.SimpleModule;
+import isf.util.ISF;
+import isf.util.ISFUtil;
 
 import java.io.File;
 import java.util.ArrayList;

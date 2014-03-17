@@ -1,4 +1,6 @@
-package isf;
+package isf.util;
+
+import isf.util.ISFT.Vocab;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -416,7 +418,7 @@ public class ISFUtil {
 
 		return ISFUtil
 				.getAnnotationAssertionAxioms(ontology,
-						df.getOWLAnnotationProperty(IRI.create(ISF.INCLUDE_ANNOTATION_IRI)),
+						df.getOWLAnnotationProperty(ISFT.include.iri()),
 						includeImports);
 	}
 
@@ -424,7 +426,7 @@ public class ISFUtil {
 			boolean includeImports) {
 
 		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(ISF.INCLUDE_INSTANCES_ANNOTATION_IRI)),
+				df.getOWLAnnotationProperty(IRI.create(Vocab.ISFT_INCLUDE_INSTANCES)),
 				includeImports);
 	}
 
@@ -432,7 +434,7 @@ public class ISFUtil {
 			boolean includeImports) {
 
 		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(ISF.INCLUDE_SUBS_ANNOTATION_IRI)),
+				df.getOWLAnnotationProperty(IRI.create(Vocab.ISFT_INCLUDE_SUBS)),
 				includeImports);
 	}
 
@@ -441,7 +443,7 @@ public class ISFUtil {
 
 		return ISFUtil
 				.getAnnotationAssertionAxioms(ontology,
-						df.getOWLAnnotationProperty(IRI.create(ISF.EXCLUDE_ANNOTATION_IRI)),
+						ISFT.exclude.getAP(),
 						includeImports);
 	}
 
@@ -449,7 +451,7 @@ public class ISFUtil {
 			boolean includeImports) {
 
 		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(ISF.EXCLUDE_SUBS_ANNOTATION_IRI)),
+				df.getOWLAnnotationProperty(IRI.create(Vocab.ISFT_EXCLUDE_SUBS)),
 				includeImports);
 	}
 

@@ -1,7 +1,11 @@
 package isf.module;
 
+import isf.command.AbstractCommand.Report;
+import isf.module.builder.ModuleBuilder;
+
 import java.io.File;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -25,13 +29,16 @@ public abstract class AbstractModule implements Module {
 	private Set<Module> imports = new HashSet<Module>();
 	private OWLOntologyManager genManager;
 	private OWLOntologyManager defineManager;
+	protected Report report;
+	protected List<ModuleBuilder> builders;
 
 	private static Logger log = LoggerFactory.getLogger(AbstractModule.class);
 
 	public AbstractModule(String moduleName, OWLOntologyManager definingManager, File directory,
 			File outputDirectory) {
 
-		if (moduleName == null || directory == null || outputDirectory == null) {
+		if (moduleName == null || directory == null || outputDirectory == null)
+		{
 			throw new IllegalStateException("Module name, directory, or output cannot be null.");
 		}
 		this.name = moduleName;
@@ -54,8 +61,31 @@ public abstract class AbstractModule implements Module {
 	// return man;
 	// }
 
+	@Override
+	public void setReport(Report report) {
+		this.report = report;
+
+	}
+
+	@Override
+	public Report getReport() {
+		return report;
+	}
+
+	@Override
+	public void addBuilder(ModuleBuilder builder) {
+		builders.add(builder);
+
+	}
+
+	@Override
+	public List<ModuleBuilder> getBuilders() {
+		return builders;
+	}
+
 	public OWLOntologyManager getGeneratedManager() {
-		if (genManager == null) {
+		if (genManager == null)
+		{
 			genManager = OWLManager.createOWLOntologyManager();
 
 		}
@@ -63,7 +93,8 @@ public abstract class AbstractModule implements Module {
 	}
 
 	public OWLOntologyManager getDefiningManager() {
-		if (defineManager == null) {
+		if (defineManager == null)
+		{
 			defineManager = OWLManager.createOWLOntologyManager();
 
 		}
@@ -187,10 +218,12 @@ public abstract class AbstractModule implements Module {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
+		if (this == obj)
+		{
 			return true;
 		}
-		if (obj instanceof Module) {
+		if (obj instanceof Module)
+		{
 			return this.name.equals(((Module) obj).getName());
 		}
 		return false;
@@ -201,10 +234,12 @@ public abstract class AbstractModule implements Module {
 		RDFXMLOntologyFormat of = new RDFXMLOntologyFormat();
 		of.setAddMissingTypes(true);
 
-		try {
+		try
+		{
 			ontology = man.createOntology(iri);
 			man.setOntologyFormat(ontology, of);
-		} catch (OWLOntologyCreationException e) {
+		} catch (OWLOntologyCreationException e)
+		{
 			throw new IllegalStateException("Failed to create new ontology for: " + iri, e);
 		}
 		File ontologyDoc = getOntologyFile(directory, iri);

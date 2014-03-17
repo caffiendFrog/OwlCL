@@ -1,6 +1,5 @@
 package isf.command;
 
-import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
 import isf.command.cli.Main;
@@ -8,6 +7,7 @@ import isf.command.cli.ManualIriMapping;
 import isf.mapping.DefaultMapping;
 import isf.mapping.Mapper;
 import isf.mapping.Mapping;
+import isf.util.ISFUtil;
 import isf.util.OntologyFiles;
 
 import java.io.File;

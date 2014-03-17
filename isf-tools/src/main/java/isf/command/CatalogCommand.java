@@ -1,7 +1,7 @@
 package isf.command;
 
-import isf.ISFUtil;
 import isf.command.cli.Main;
+import isf.util.ISFUtil;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -11,6 +11,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -163,7 +165,8 @@ public class CatalogCommand extends AbstractCommand {
 						{
 							Path directoryPath = Paths.get(d.toURI());
 							XMLCatalog catalog = new XMLCatalog(directoryPath.toUri());
-							for (IRI iri : mapper.getOntologyIRIs())
+							Set<IRI> iris = new TreeSet<IRI>(mapper.getOntologyIRIs());
+							for (IRI iri : iris)
 							{
 								Path iriPath = Paths.get(mapper.getDocumentIRI(iri).toURI());
 

@@ -1,7 +1,7 @@
 package isf.mapping;
 
-import isf.ISF;
-import isf.ISFUtil;
+import isf.util.ISFT;
+import isf.util.ISFUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,8 +17,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 
 public class DefaultMapping implements Mapping {
 
-	private OWLAnnotationProperty property = ISFUtil
-			.getAnnotationProperty(ISF.ISF_IRI_MAPPES_TO_IRI);
+	private OWLAnnotationProperty property = ISFT.iri_mapps_to.getAP();
 
 	private Map<IRI, Set<IRI>> forwardMap = new HashMap<IRI, Set<IRI>>();
 	private Map<IRI, Set<IRI>> backwardMap = new HashMap<IRI, Set<IRI>>();

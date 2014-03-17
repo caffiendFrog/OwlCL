@@ -142,7 +142,7 @@ public abstract class AbstractCommand {
 			return lineNumber.substring(len - 6, len) + ") ";
 		}
 
-		void error(String value) {
+		public void error(String value) {
 			String number = getNextLineNumber();
 			AbstractCommand.this.logger.error(value);
 			pw.println(number + value);
@@ -150,7 +150,7 @@ public abstract class AbstractCommand {
 			doConsole(number + value);
 		}
 
-		void warn(String value) {
+		public void warn(String value) {
 			String number = getNextLineNumber();
 			AbstractCommand.this.logger.warn(value);
 			pw.println(number + value);
@@ -158,7 +158,7 @@ public abstract class AbstractCommand {
 			doConsole(number + value);
 		}
 
-		void info(String value) {
+		public void info(String value) {
 			String number = getNextLineNumber();
 			AbstractCommand.this.logger.info(value);
 			pw.println(number + value);
@@ -167,14 +167,14 @@ public abstract class AbstractCommand {
 
 		}
 
-		void detail(String value) {
+		public void detail(String value) {
 			String number = getNextLineNumber();
 			AbstractCommand.this.logger.debug(value);
 			pwDetailed.println(number + value);
 			// doConsole(value);
 		}
 
-		void finish() {
+		public void finish() {
 			pw.println("\n=====  Finished report!  ======");
 			pw.close();
 			pwDetailed.println("\n=====  Finished report!  ======");

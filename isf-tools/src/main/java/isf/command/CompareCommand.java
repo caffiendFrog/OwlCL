@@ -1,9 +1,9 @@
 package isf.command;
 
-import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
 import isf.command.cli.Main;
+import isf.util.ISFUtil;
 import isf.util.OntologyFiles;
 
 import java.io.File;

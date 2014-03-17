@@ -4,12 +4,12 @@ import static isf.command.EroCommand.Action.addlegacy;
 import static isf.command.EroCommand.Action.catalog;
 import static isf.command.EroCommand.Action.generate;
 import static isf.command.EroCommand.Action.save;
-import isf.ISFUtil;
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.DirectoryExistsValidator;
 import isf.command.cli.Main;
 import isf.module.Module;
 import isf.module.ModuleNames;
+import isf.util.ISFUtil;
 
 import java.io.File;
 import java.util.List;

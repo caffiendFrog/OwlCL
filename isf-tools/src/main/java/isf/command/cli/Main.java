@@ -1,6 +1,5 @@
 package isf.command.cli;
 
-import isf.ISFUtil;
 import isf.command.CatalogCommand;
 import isf.command.CompareCommand;
 import isf.command.EroCommand;
@@ -10,6 +9,7 @@ import isf.command.NewModuleCommand;
 import isf.command.RewriteCommand;
 import isf.command.TypecheckCommand;
 import isf.command.ValidateIriCommand;
+import isf.util.ISFUtil;
 import isf.util.OntologyFiles;
 
 import java.io.File;

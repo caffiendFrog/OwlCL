@@ -1,10 +1,22 @@
 package isf.module;
 
+import java.util.List;
+
+import isf.command.AbstractCommand.Report;
+import isf.module.builder.ModuleBuilder;
+
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 public interface Module {
+
+	void addBuilder(ModuleBuilder builder);
+
+	List<ModuleBuilder> getBuilders();
+	
+	void setReport(Report report);
+	Report getReport();
 
 	Object getName();
 
