@@ -8,6 +8,8 @@ import isf.util.ISFUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,10 +52,6 @@ public class SimpleModule extends AbstractModule {
 
 	private OWLOntology ontology;
 
-	// private OWLOntology sourceOntology;
-
-	// private final SimpleModuleBuilder builder;
-
 	private IRI moduleIri;
 
 	private IRI includeIri;
@@ -93,6 +91,12 @@ public class SimpleModule extends AbstractModule {
 	private String customFileName;
 
 	private OWLOntology mergedSource;
+
+	private List<String> builderNames = new ArrayList<String>();
+
+	public List<String> getBuilderNames() {
+		return builderNames;
+	}
 
 	/**
 	 * @param moduleName
@@ -274,12 +278,15 @@ public class SimpleModule extends AbstractModule {
 
 			for (OWLAnnotation a : annotationOntology.getAnnotations())
 			{
+				// look for custom IRI
 				if (a.getProperty().equals(ISFT.module_iri.getAP()))
 				{
 					moduleIri = IRI.create(((OWLLiteral) a.getValue()).getLiteral());
 					SetOntologyID setid = new SetOntologyID(ontology, moduleIri);
 					getGeneratedManager().applyChange(setid);
 				}
+
+				// look for custom file name.
 				if (a.getProperty().equals(ISFT.module_file_name.getAP()))
 				{
 					customFileName = ((OWLLiteral) a.getValue()).getLiteral();
@@ -293,7 +300,9 @@ public class SimpleModule extends AbstractModule {
 							"Failed to create merged source ontology while loading module: "
 									+ getName(), e);
 				}
-				if (a.getProperty().equals(ISFT.module_iri.getAP()))
+
+				// look for sources
+				if (a.getProperty().equals(ISFT.module_source.getAP()))
 				{
 					String sourceIri = ((OWLLiteral) a.getValue()).getLiteral();
 
@@ -303,6 +312,16 @@ public class SimpleModule extends AbstractModule {
 					logger.info("Adding source import for module: " + getName() + " imported "
 							+ sourceIri);
 					getDefiningManager().applyChange(i);
+				}
+
+				// look for builders
+				if (a.getProperty().equals(ISFT.module_builders))
+				{
+					String[] names = ((OWLLiteral) a.getValue()).getLiteral().split(",");
+					for (int i = 0; i > names.length; ++i)
+					{
+						builderNames.add(names[i].toLowerCase().trim());
+					}
 				}
 			}
 
