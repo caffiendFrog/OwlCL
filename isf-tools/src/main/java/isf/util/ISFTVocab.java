@@ -1,12 +1,12 @@
 package isf.util;
 
-import static isf.util.ISFT.Vocab.*;
+import static isf.util.ISFTVocab.Vocab.*;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 
-public enum ISFT {
+public enum ISFTVocab {
 
 	prefix(ISFT_PREFIX), exclude(ISFT_EXCLUDE), exclude_subs(ISFT_EXCLUDE_SUBS), include(
 			ISFT_INCLUDE), include_subs(ISFT_INCLUDE_SUBS), include_instances(
@@ -16,7 +16,7 @@ public enum ISFT {
 
 	private String vocab;
 
-	private ISFT(String vocab) {
+	private ISFTVocab(String vocab) {
 		this.vocab = vocab;
 	}
 

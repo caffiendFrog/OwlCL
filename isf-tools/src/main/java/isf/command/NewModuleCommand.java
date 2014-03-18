@@ -1,19 +1,27 @@
 package isf.command;
 
-import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
 import isf.command.cli.Main;
-import isf.module.SimpleModule;
 import isf.util.ISF;
+import isf.util.ISFTVocab;
 import isf.util.ISFUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.AddImport;
+import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.IRI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
+import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.RemoveImport;
+import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -24,7 +32,7 @@ public class NewModuleCommand extends AbstractCommand {
 	// ================================================================================
 	// The module name
 	// ================================================================================
-	public String moduleName = "_default-new-module";
+	public String moduleName;
 	public boolean moduleNameSet;
 
 	@Parameter(
@@ -33,14 +41,6 @@ public class NewModuleCommand extends AbstractCommand {
 	public void setModuleName(String moduleName) {
 		this.moduleName = moduleName;
 		this.moduleNameSet = true;
-		if (!directorySet) {
-			// don't use the setter.
-			directory = getDefaultDirectory();
-		}
-		if (!iriSet) {
-			// don't use the setter.
-			iri = getDefaultIri();
-		}
 	}
 
 	public String getModuleName() {
@@ -48,17 +48,29 @@ public class NewModuleCommand extends AbstractCommand {
 	}
 
 	// ================================================================================
-	// The source IRIs for the module, ISF by default
+	// The output directory
 	// ================================================================================
-	public List<IRI> sourceIris = getDefaultSources();
+
+	public File directory;
+
+	public File getDirectory() {
+		return directory;
+	}
+
+	@Parameter(names = "-directory",
+			description = "The directory where the module will be created.")
+	public void setDirectory(File directory) {
+		this.directory = directory;
+	}
+
+	// ================================================================================
+	// The source IRIs for the module
+	// ================================================================================
+	public List<IRI> sourceIris;
 	public boolean sourceIrisSet;
 
-	@Parameter(
-			names = "-sourceIris",
-			converter = IriConverter.class,
-			description = "The source IRIs that will be used for this module. The OWL documents for the "
-					+ "IRIs will first be looked for under the ISF trunk/src/ontology directory and then "
-					+ "an attempt will be made to resolve online.")
+	@Parameter(names = "-sourceIris", converter = IriConverter.class,
+			description = "The source IRIs that will be used for this module.")
 	public void setSourceIris(List<IRI> sourceIris) {
 		this.sourceIris = sourceIris;
 		this.sourceIrisSet = true;
@@ -68,16 +80,10 @@ public class NewModuleCommand extends AbstractCommand {
 		return sourceIris;
 	}
 
-	private List<IRI> getDefaultSources() {
-		List<IRI> iris = new ArrayList<IRI>();
-		iris.add(ISF.ISF_DEV_IRI);
-		return iris;
-	}
-
 	// ================================================================================
 	// The final IRI of the module
 	// ================================================================================
-	public IRI iri = getDefaultIri();
+	public IRI iri;
 	public boolean iriSet;
 
 	@Parameter(names = "-iri", description = "The generated module's IRI",
@@ -91,89 +97,188 @@ public class NewModuleCommand extends AbstractCommand {
 		return iri;
 	}
 
-	private IRI getDefaultIri() {
-		return IRI.create("http://isf-tools/default-" + getModuleName() + "-module.owl");
+	// ================================================================================
+	// The final IRI of the module
+	// ================================================================================
+	public String fileName;
+	public boolean fileNameSet;
+
+	@Parameter(names = "-fileName", description = "The generated module's file name.")
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+		this.fileNameSet = true;
+	}
+
+	public String getFileName() {
+		return fileName;
 	}
 
 	// ================================================================================
-	// The directory where the module files are located (not the generated
-	// files)
+	// The IRI prefix of the module's files
 	// ================================================================================
-	public File directory = getDefaultDirectory();
-	public boolean directorySet;
+	public String iriPrefix;
+	public boolean iriPrefixSet;
 
-	@Parameter(names = "-directory", converter = CanonicalFileConverter.class,
-			description = "The location where the module defining files will be created"
-					+ " (not the output).")
-	public void setDirectory(File directory) {
-		this.directory = directory;
-		this.directorySet = true;
+	@Parameter(names = "-iriPrefix",
+			description = "The IRI prefix for the module's various owl files. "
+					+ "It should end with a forward slash.", converter = IriConverter.class)
+	public void setIriPrefix(String iriPrefix) {
+		this.iriPrefix = iriPrefix;
+		this.iriPrefixSet = true;
 	}
 
-	public File getDirectory() {
-		return directory;
-	}
-
-	private File getDefaultDirectory() {
-		return new File(ISFUtil.getDefaultModuleDirectory(), getModuleName());
-	}
-
-	// ================================================================================
-	// The legacy indicator
-	// ================================================================================
-	public boolean legacy = false;
-	public boolean legacySet;
-
-	@Parameter(
-			names = "-legacy",
-			description = "If this option is set, legacy mode will be used to execute or "
-					+ "skip legacy related actions even if they are specified in the *action options.")
-	public void setLegacy(boolean legacy) {
-		this.legacy = legacy;
-		this.legacySet = true;
-	}
-
-	public boolean isLegacy() {
-		return legacy;
+	public String getIriPrefix() {
+		return iriPrefix;
 	}
 
 	// ================================================================================
 	// Implementation
 	// ================================================================================
 
-	SimpleModule module = null;
-
 	public NewModuleCommand(Main main) {
 		super(main);
+		preConfigure();
 	}
 
 	@Override
-	public void run() {
-		module = new SimpleModule(moduleName, ISFUtil.getIsfManagerSingleton(), directory,
-				new File(ISFUtil.getGeneratedDirectory(), "module/" + moduleName));
+	protected void preConfigure() {
+		moduleName = "new-module";
+		directory = new File(main.getJobDirectory(), "module");
 
-		for (String action : getAllActions()) {
-			Action.valueOf(action).execute(this);
+		sourceIris = new ArrayList<IRI>();
+		sourceIris.add(ISF.ISF_DEV_IRI);
+
+		iri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + moduleName + ISF.MODULE_IRI_SUFFIX);
+		fileName = moduleName + ISF.MODULE_IRI_SUFFIX;
+		iriPrefix = ISF.ISF_ONTOLOGY_IRI_PREFIX;
+	}
+
+	@Override
+	protected void init() {
+		directory.mkdirs();
+
+		man = OWLManager.createOWLOntologyManager();
+		man.clearIRIMappers();
+		man.addIRIMapper(new AutoIRIMapper(directory, false));
+		man.setSilentMissingImportsHandling(true);
+
+		df = man.getOWLDataFactory();
+
+		topIri = IRI.create(iriPrefix + moduleName + ISF.TOP_IRI_SUFFIX);
+		annotationIri = IRI.create(iriPrefix + moduleName + ISF.ANNOTATION_IRI_SUFFIX);
+		includeIri = IRI.create(iriPrefix + moduleName + ISF.MODULE_INCLUDE_IRI_SUFFIX);
+		excludeIri = IRI.create(iriPrefix + moduleName + ISF.MODULE_EXCLUDE_IRI_SUFFIX);
+		legacyIri = IRI.create(iriPrefix + moduleName + ISF.MODULE_LEGACY_IRI_SUFFIX);
+		isfToolsIri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + ISF.ISF_TOOLS_IRI);
+
+	}
+
+	OWLOntologyManager man;
+	OWLDataFactory df;
+	IRI topIri;
+	IRI annotationIri;
+	IRI includeIri;
+	IRI excludeIri;
+	IRI legacyIri;
+	IRI legacyRemovedIri;
+	IRI isfToolsIri;
+
+	@Override
+	public void run() {
+		init();
+
+		try
+		{
+			// include
+			OWLOntology includeOntology = getOrLoadOrCreateOntology(includeIri, man);
+			man.saveOntology(includeOntology, new FileOutputStream(new File(getDirectory(),
+					getModuleName() + ISF.MODULE_INCLUDE_IRI_SUFFIX)));
+
+			// exclude
+			OWLOntology excludeOntology = getOrLoadOrCreateOntology(excludeIri, man);
+			man.saveOntology(excludeOntology, new FileOutputStream(new File(getDirectory(),
+					getModuleName() + ISF.MODULE_EXCLUDE_IRI_SUFFIX)));
+
+			// legacy
+			OWLOntology legacyOntology = getOrLoadOrCreateOntology(legacyIri, man);
+			man.saveOntology(legacyOntology, new FileOutputStream(new File(getDirectory(),
+					getModuleName() + ISF.MODULE_LEGACY_IRI_SUFFIX)));
+
+			// legacy removed
+			OWLOntology legacyRemovedOntology = getOrLoadOrCreateOntology(legacyRemovedIri, man);
+			man.saveOntology(legacyRemovedOntology, new FileOutputStream(new File(getDirectory(),
+					getModuleName() + ISF.MODULE_LEGACY_REMOVED_IRI_SUFFIX)));
+
+			// annotation
+			OWLOntology annotationOntology = getOrLoadOrCreateOntology(annotationIri, man);
+			// remove the old imports
+			man.applyChange(new RemoveImport(annotationOntology, df
+					.getOWLImportsDeclaration(includeIri)));
+			man.applyChange(new RemoveImport(annotationOntology, df
+					.getOWLImportsDeclaration(excludeIri)));
+			man.applyChange(new RemoveImport(annotationOntology, df
+					.getOWLImportsDeclaration(legacyIri)));
+			man.applyChange(new RemoveImport(annotationOntology, df
+					.getOWLImportsDeclaration(legacyRemovedIri)));
+			for (IRI source : sourceIris)
+			{
+				man.applyChange(new AddImport(annotationOntology, df
+						.getOWLImportsDeclaration(source)));
+			}
+			// ifs-tools.owl import
+			man.applyChange(new AddImport(annotationOntology, df
+					.getOWLImportsDeclaration(isfToolsIri)));
+
+			// check/add the module IRI annotation
+			Set<OWLAnnotationAssertionAxiom> axioms = ISFUtil.getAnnotationAssertionAxioms(
+					annotationOntology, ISFTVocab.module_iri.getAP(), false);
+			if (axioms.size() > 1)
+			{
+				logger.warn("Found multiple module IRI annotations for module: " + getModuleName());
+			} else if (axioms.size() == 0)
+			{
+				man.applyChange(new AddOntologyAnnotation(annotationOntology, df.getOWLAnnotation(
+						ISFTVocab.module_iri.getAP(),
+						df.getOWLLiteral(iriPrefix + ISF.MODULE_IRI_SUFFIX))));
+			}
+
+			// check/add the module file name annotation
+			axioms = ISFUtil.getAnnotationAssertionAxioms(annotationOntology,
+					ISFTVocab.module_file_name.getAP(), false);
+			if (axioms.size() > 1)
+			{
+				logger.warn("Found multiple module file name annotations for module: "
+						+ getModuleName());
+			} else if (axioms.size() == 0)
+			{
+				man.applyChange(new AddOntologyAnnotation(annotationOntology, df.getOWLAnnotation(
+						ISFTVocab.module_file_name.getAP(), df.getOWLLiteral(fileName))));
+			}
+
+			man.saveOntology(annotationOntology, new FileOutputStream(new File(getDirectory(),
+					fileName)));
+
+			// top
+			OWLOntology topOntology = getOrLoadOrCreateOntology(topIri, man);
+			man.applyChange(new AddImport(topOntology, df.getOWLImportsDeclaration(annotationIri)));
+			man.applyChange(new AddImport(topOntology, df.getOWLImportsDeclaration(includeIri)));
+			man.applyChange(new AddImport(topOntology, df.getOWLImportsDeclaration(excludeIri)));
+			man.applyChange(new AddImport(topOntology, df.getOWLImportsDeclaration(legacyIri)));
+			man.applyChange(new AddImport(topOntology, df
+					.getOWLImportsDeclaration(legacyRemovedIri)));
+			man.saveOntology(topOntology, new FileOutputStream(new File(getDirectory(),
+					getModuleName() + ISF.MODULE_TOP_IRI_SUFFIX)));
+
+		} catch (Exception e)
+		{
+			throw new RuntimeException("Failed to save module file", e);
 		}
+
 	}
 
 	@Override
 	protected void addCommandActions(List<String> actionsList) {
-		actionsList.add(Action.create.name());
-	}
 
-	public enum Action {
-		create {
-			@Override
-			public void execute(NewModuleCommand command) {
-				log.debug("Running newModule create action.");
-				command.module.create(command.iri, command.sourceIris, command.legacy);
-			}
-		};
-
-		Logger log = LoggerFactory.getLogger(Action.class);
-
-		public abstract void execute(NewModuleCommand command);
 	}
 
 }

@@ -2,7 +2,7 @@ package isf.module;
 
 import isf.module.builder.ModuleBuilder;
 import isf.util.ISF;
-import isf.util.ISFT;
+import isf.util.ISFTVocab;
 import isf.util.ISFUtil;
 
 import java.io.File;
@@ -212,7 +212,7 @@ public class SimpleModule extends AbstractModule {
 				getDefiningManager().applyChange(ai);
 				// save the sources as ontology annotations
 				OWLLiteral source = getDataFactory().getOWLLiteral(iri.toString());
-				OWLAnnotation a = getDataFactory().getOWLAnnotation(ISFT.module_source.getAP(),
+				OWLAnnotation a = getDataFactory().getOWLAnnotation(ISFTVocab.module_source.getAP(),
 						source);
 				AddOntologyAnnotation aoa = new AddOntologyAnnotation(annotationOntology, a);
 				getDefiningManager().applyChange(aoa);
@@ -220,7 +220,7 @@ public class SimpleModule extends AbstractModule {
 			// add the final IRI annotation
 			OWLLiteral finalIriLiteral = getDataFactory().getOWLLiteral(
 					generatedFinalIri.toString());
-			OWLAnnotation a = getDataFactory().getOWLAnnotation(ISFT.module_iri.getAP(),
+			OWLAnnotation a = getDataFactory().getOWLAnnotation(ISFTVocab.module_iri.getAP(),
 					finalIriLiteral);
 			AddOntologyAnnotation aoa = new AddOntologyAnnotation(annotationOntology, a);
 			getDefiningManager().applyChange(aoa);
@@ -279,7 +279,7 @@ public class SimpleModule extends AbstractModule {
 			for (OWLAnnotation a : annotationOntology.getAnnotations())
 			{
 				// look for custom IRI
-				if (a.getProperty().equals(ISFT.module_iri.getAP()))
+				if (a.getProperty().equals(ISFTVocab.module_iri.getAP()))
 				{
 					moduleIri = IRI.create(((OWLLiteral) a.getValue()).getLiteral());
 					SetOntologyID setid = new SetOntologyID(ontology, moduleIri);
@@ -287,7 +287,7 @@ public class SimpleModule extends AbstractModule {
 				}
 
 				// look for custom file name.
-				if (a.getProperty().equals(ISFT.module_file_name.getAP()))
+				if (a.getProperty().equals(ISFTVocab.module_file_name.getAP()))
 				{
 					customFileName = ((OWLLiteral) a.getValue()).getLiteral();
 				}
@@ -302,7 +302,7 @@ public class SimpleModule extends AbstractModule {
 				}
 
 				// look for sources
-				if (a.getProperty().equals(ISFT.module_source.getAP()))
+				if (a.getProperty().equals(ISFTVocab.module_source.getAP()))
 				{
 					String sourceIri = ((OWLLiteral) a.getValue()).getLiteral();
 
@@ -315,7 +315,7 @@ public class SimpleModule extends AbstractModule {
 				}
 
 				// look for builders
-				if (a.getProperty().equals(ISFT.module_builders))
+				if (a.getProperty().equals(ISFTVocab.module_builders))
 				{
 					String[] names = ((OWLLiteral) a.getValue()).getLiteral().split(",");
 					for (int i = 0; i > names.length; ++i)

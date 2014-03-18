@@ -8,6 +8,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +26,19 @@ public abstract class AbstractCommand {
 	public AbstractCommand(Main main) {
 		this.main = main;
 	}
+
+	protected abstract void preConfigure();
+
+	protected abstract void init();
+
+	/**
+	 * Returns a list of string values that represent the execution steps with
+	 * any required input in the form of param1=value1. Warning, this method is
+	 * called before the constructor is finished, be careful.
+	 * 
+	 * @return
+	 */
+	protected abstract void addCommandActions(List<String> actionsList);
 
 	public List<String> actions = getCommandDefaultActions();
 
@@ -54,15 +71,6 @@ public abstract class AbstractCommand {
 					+ "the command.")
 	public List<String> postActions = new ArrayList<String>();
 
-	/**
-	 * Returns a list of string values that represent the execution steps with
-	 * any required input in the form of param1=value1. Warning, this method is
-	 * called before the constructor is finished, be careful.
-	 * 
-	 * @return
-	 */
-	protected abstract void addCommandActions(List<String> actionsList);
-
 	public abstract void run();
 
 	protected List<String> getAllActions() {
@@ -73,47 +81,26 @@ public abstract class AbstractCommand {
 		return allActions;
 	}
 
-	// public PrintWriter pw = new PrintWriter(System.out);
+	protected OWLOntology getOrLoadOntology(IRI iri, OWLOntologyManager man) {
+		return main.getOrLoadOntology(iri, man);
+	}
 
-	// protected int indent;
-
-	// protected String indent(String string) {
-	// return new String(new char[indent]).replace('\0', ' ') + string;
-	// }
-
-	// protected void warn(String message, Exception e) {
-	// pw.println(indent("Warn: " + message));
-	// if (e != null)
-	// {
-	// ++indent;
-	// pw.print(indent("E: " + e.getClass().getSimpleName() + " -> " +
-	// e.getMessage()));
-	// --indent;
-	// }
-	// pw.flush();
-	// }
-	//
-	// protected void info(String message) {
-	// pw.println(indent(message));
-	// pw.flush();
-	// }
-	//
-	// protected void infoDetail(String message) {
-	// pw.println(indent(message));
-	// pw.flush();
-	// }
-	//
-	// protected void debug(String message, Exception e) {
-	// pw.println(indent("Debug: " + message));
-	// if (e != null)
-	// {
-	// ++indent;
-	// pw.print("E: " + e.getClass().getSimpleName() + " -> " + e.getMessage());
-	// --indent;
-	// }
-	// pw.flush();
-	//
-	// }
+	protected OWLOntology getOrLoadOrCreateOntology(IRI iri, OWLOntologyManager man) {
+		OWLOntology o = getOrLoadOntology(iri, man);
+		if (o == null)
+		{
+			try
+			{
+				return man.createOntology(iri);
+			} catch (OWLOntologyCreationException e)
+			{
+				throw new RuntimeException("Failed to create new ontology with IRI: " + iri);
+			}
+		} else
+		{
+			return o;
+		}
+	}
 
 	public class Report {
 
