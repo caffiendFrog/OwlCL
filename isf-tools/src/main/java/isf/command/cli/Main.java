@@ -142,7 +142,7 @@ public class Main {
 
 	@Parameter(names = "-work", description = "The working directory, where a configuration "
 			+ "file might be located", converter = CanonicalFileConverter.class,
-			validateValueWith = FileExistsValidator.class)
+			validateValueWith = FileValueExistsValidator.class)
 	public void setWorkingDirectory(File workingDirectory) {
 		this.workingDirectory = workingDirectory;
 		this.workingDirectorySet = true;
@@ -160,7 +160,7 @@ public class Main {
 	public boolean ontologyFilesSet = false;
 
 	@Parameter(names = "-ontologyFiles", converter = CanonicalFileConverter.class,
-			validateValueWith = FileExistsValidator.class, description = "")
+			validateValueWith = FileListValueValidator.class, description = "")
 	public void setOntologyFiles(List<File> ontologyFiles) {
 		this.ontologyFiles = ontologyFiles;
 		this.ontologyFilesSet = true;
@@ -196,7 +196,7 @@ public class Main {
 	public boolean importFilesSet = false;
 
 	@Parameter(names = "-importFiles", converter = CanonicalFileConverter.class,
-			validateValueWith = FileExistsValidator.class, description = "")
+			validateValueWith = FileListValueValidator.class, description = "")
 	public void setImportFiles(List<File> importFiles) {
 		this.importFiles = importFiles;
 		this.importFilesSet = true;
@@ -668,18 +668,42 @@ public class Main {
 		return sharedBaseManager;
 	}
 
-	public OWLOntology getOrLoadOntology(IRI iri, OWLOntologyManager man) {
-		return ISFUtil.getOrLoadOntology(iri, man);
+	private Properties getProperties(File directory, Properties parent) {
+		File mainPropertiesFile = new File(directory, "isft-main.properties");
+		Properties properties = null;
+
+		if (mainPropertiesFile.isFile())
+		{
+			if (parent != null)
+			{
+				properties = new Properties(parent);
+			} else
+			{
+				properties = new Properties();
+			}
+			try
+			{
+				properties.load(new FileReader(mainPropertiesFile));
+				return properties;
+			} catch (IOException e)
+			{
+				throw new RuntimeException(
+						"Error while loading isf-tools.properties file from directory: "
+								+ directory, e);
+			}
+		}
+		return null;
 	}
 
-	public void run(String[] args) {
+	public static void main(String[] args) {
+		Main main = new Main();
+		main.preConfigure();
 
 		JCommander jc = new JCommander();
 		jc.setAllowAbbreviatedOptions(true);
 		jc.setCaseSensitiveOptions(false);
 		jc.setProgramName("java -jar isf-tools-*.jar");
 
-		Main main = new Main();
 		jc.addObject(main);
 
 		EroCommand ero = new EroCommand(main);
@@ -706,7 +730,7 @@ public class Main {
 		RewriteCommand rw = new RewriteCommand(main);
 		jc.addCommand("rewrite", rw);
 
-		MapperCommand mc = new MapperCommand(this);
+		MapperCommand mc = new MapperCommand(main);
 		jc.addCommand("map", mc);
 
 		if (args.length == 0)
@@ -757,37 +781,6 @@ public class Main {
 			mc.run();
 		}
 
-	}
-
-	public static void main(String[] args) {
-		new Main().run(args);
-	}
-
-	private Properties getProperties(File directory, Properties parent) {
-		File mainPropertiesFile = new File(directory, "isft-main.properties");
-		Properties properties = null;
-
-		if (mainPropertiesFile.isFile())
-		{
-			if (parent != null)
-			{
-				properties = new Properties(parent);
-			} else
-			{
-				properties = new Properties();
-			}
-			try
-			{
-				properties.load(new FileReader(mainPropertiesFile));
-				return properties;
-			} catch (IOException e)
-			{
-				throw new RuntimeException(
-						"Error while loading isf-tools.properties file from directory: "
-								+ directory, e);
-			}
-		}
-		return null;
 	}
 
 }

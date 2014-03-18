@@ -1,3 +1,5 @@
 /bin
-/src/isf/local
+/src/main/java/isf/local
 /target
+/isft-output
+/temp

@@ -48,7 +48,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 	// The directory where the module files are located (not the generated
 	// files)
 	// ================================================================================
-	public File directory = getDefaultDirectory();
+	public File directory = null;
 	public boolean directorySet;
 
 	@Parameter(names = "-directory", converter = CanonicalFileConverter.class,
@@ -63,9 +63,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return directory;
 	}
 
-	private File getDefaultDirectory() {
-		return new File(ISFUtil.getDefaultModuleDirectory(), getModuleName());
-	}
+
 
 	// ================================================================================
 	// The legacy indicator
@@ -94,7 +92,6 @@ public class GenerateModuleCommand extends AbstractCommand {
 	public GenerateModuleCommand(Main main) {
 		super(main);
 
-		outputDirectory = new File(main.getOutputDirectory(), "module/" + moduleName);
 	}
 
 	public File outputDirectory;

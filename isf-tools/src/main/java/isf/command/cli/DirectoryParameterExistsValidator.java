@@ -6,7 +6,7 @@ import com.beust.jcommander.IParameterValidator2;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
 
-public class DirectoryExistsValidator implements IParameterValidator2 {
+public class DirectoryParameterExistsValidator implements IParameterValidator2 {
 
 	@Override
 	public void validate(String name, String value) throws ParameterException {

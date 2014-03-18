@@ -5,7 +5,7 @@ import static isf.command.EroCommand.Action.catalog;
 import static isf.command.EroCommand.Action.generate;
 import static isf.command.EroCommand.Action.save;
 import isf.command.cli.CanonicalFileConverter;
-import isf.command.cli.DirectoryExistsValidator;
+import isf.command.cli.DirectoryParameterExistsValidator;
 import isf.command.cli.Main;
 import isf.module.Module;
 import isf.module.ModuleNames;
@@ -50,7 +50,7 @@ public class EroCommand extends AbstractCommand {
 	// ================================================================================
 
 	@Parameter(names = "-previous", converter = CanonicalFileConverter.class,
-			validateWith = DirectoryExistsValidator.class)
+			validateWith = DirectoryParameterExistsValidator.class)
 	public File previousDirectory;
 
 	// ================================================================================

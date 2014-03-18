@@ -1,6 +1,6 @@
 package isf.command;
 
-import isf.command.cli.DirectoryExistsValidator;
+import isf.command.cli.DirectoryParameterExistsValidator;
 import isf.command.cli.Main;
 import isf.util.ISFUtil;
 import isf.util.OntologyFiles;
@@ -40,11 +40,12 @@ public class ValidateIriCommand extends AbstractCommand {
 	// ================================================================================
 	// the directory to validate
 	// ================================================================================
-	public File directory = new File(ISFUtil.getTrunkDirectory().getAbsolutePath(), "src/ontology");
+//	public File directory = new File(ISFUtil.getTrunkDirectory().getAbsolutePath(), "src/ontology");
+	public File directory = null;
 	public boolean directorySet;
 
 	@Parameter(names = "-directory", converter = FileConverter.class,
-			validateWith = DirectoryExistsValidator.class,
+			validateWith = DirectoryParameterExistsValidator.class,
 			description = "The starting directory to validate ontologies and thier IRIs.")
 	public void setDirectory(File directory) {
 		this.directory = directory;
@@ -228,6 +229,18 @@ public class ValidateIriCommand extends AbstractCommand {
 		};
 
 		public abstract void execute(ValidateIriCommand command);
+	}
+
+	@Override
+	protected void preConfigure() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void init() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

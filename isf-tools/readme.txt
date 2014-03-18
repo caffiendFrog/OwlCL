@@ -1,3 +1,5 @@
+The following is outdated. Will fix.
+
 This is an Eclipse Java project for an initial set of simple scripts and classes to help with generating an ISF release. Each class might have additional comments but the main content is:
 
 1. An "isf" package with a ISFUtil class. This class is meant to hold ISF wide constants and useful OWL-API static methods.

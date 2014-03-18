@@ -39,7 +39,8 @@ public class CatalogCommand extends AbstractCommand {
 	// The top directory to catalog from
 	// ================================================================================
 
-	public String directory = ISFUtil.getTrunkDirectory().getAbsolutePath() + "/src/ontology";
+//	public String directory = ISFUtil.getTrunkDirectory().getAbsolutePath() + "/src/ontology";
+	public String directory = null;
 	public boolean directorySet;
 
 	@Parameter(names = "-directory", description = "The top directory to start cataloging from.")
@@ -112,7 +113,6 @@ public class CatalogCommand extends AbstractCommand {
 
 	public CatalogCommand(Main main) {
 		super(main);
-		directory = main.getISFTrunkDirecotry().getAbsolutePath() + "/src/ontology";
 	}
 
 	@Override
@@ -209,6 +209,18 @@ public class CatalogCommand extends AbstractCommand {
 		};
 
 		public abstract void execute(CatalogCommand command);
+	}
+
+	@Override
+	protected void preConfigure() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void init() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
