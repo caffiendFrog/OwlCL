@@ -2,7 +2,6 @@ package isf.command;
 
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
-import isf.command.cli.Main;
 import isf.util.ISFUtil;
 import isf.util.OntologyFiles;
 

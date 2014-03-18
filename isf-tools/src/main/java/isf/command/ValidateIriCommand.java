@@ -1,8 +1,7 @@
 package isf.command;
 
-import isf.command.cli.DirectoryParameterExistsValidator;
-import isf.command.cli.Main;
-import isf.util.ISFUtil;
+import isf.command.cli.CanonicalFileConverter;
+import isf.command.cli.DirectoryExistsValueValidator;
 import isf.util.OntologyFiles;
 
 import java.io.File;
@@ -23,7 +22,6 @@ import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.FileConverter;
 
 @Parameters(
 		commandNames = "validate",
@@ -40,12 +38,13 @@ public class ValidateIriCommand extends AbstractCommand {
 	// ================================================================================
 	// the directory to validate
 	// ================================================================================
-//	public File directory = new File(ISFUtil.getTrunkDirectory().getAbsolutePath(), "src/ontology");
+	// public File directory = new
+	// File(ISFUtil.getTrunkDirectory().getAbsolutePath(), "src/ontology");
 	public File directory = null;
 	public boolean directorySet;
 
-	@Parameter(names = "-directory", converter = FileConverter.class,
-			validateWith = DirectoryParameterExistsValidator.class,
+	@Parameter(names = "-directory", converter = CanonicalFileConverter.class,
+			validateValueWith = DirectoryExistsValueValidator.class,
 			description = "The starting directory to validate ontologies and thier IRIs.")
 	public void setDirectory(File directory) {
 		this.directory = directory;
@@ -234,13 +233,13 @@ public class ValidateIriCommand extends AbstractCommand {
 	@Override
 	protected void preConfigure() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	protected void init() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

@@ -1,7 +1,6 @@
 package isf.command;
 
 import isf.command.cli.IriConverter;
-import isf.command.cli.Main;
 import isf.util.ISF;
 import isf.util.ISFTVocab;
 import isf.util.ISFUtil;
@@ -147,11 +146,8 @@ public class NewModuleCommand extends AbstractCommand {
 	@Override
 	protected void preConfigure() {
 		moduleName = "_unnamed";
-		directory = new File(main.getJobDirectory(), "module/" + moduleName);
-
 		sourceIris = new ArrayList<IRI>();
 		sourceIris.add(ISF.ISF_DEV_IRI);
-
 		iri = IRI.create(ISF.ISF_ONTOLOGY_IRI_PREFIX + moduleName + ISF.MODULE_IRI_SUFFIX);
 		fileName = moduleName + ISF.MODULE_IRI_SUFFIX;
 		iriPrefix = ISF.ISF_ONTOLOGY_IRI_PREFIX;
@@ -160,6 +156,16 @@ public class NewModuleCommand extends AbstractCommand {
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void init() {
+		if (this.directory == null)
+		{
+			if (main.project != null)
+			{
+				directory = new File(main.getProject(), "module/" + moduleName);
+			} else
+			{
+				directory = new File(main.getJobDirectory(), "module/" + moduleName);
+			}
+		}
 		directory.mkdirs();
 
 		man = OWLManager.createOWLOntologyManager();

@@ -5,8 +5,7 @@ import static isf.command.EroCommand.Action.catalog;
 import static isf.command.EroCommand.Action.generate;
 import static isf.command.EroCommand.Action.save;
 import isf.command.cli.CanonicalFileConverter;
-import isf.command.cli.DirectoryParameterExistsValidator;
-import isf.command.cli.Main;
+import isf.command.cli.DirectoryExistsValueValidator;
 import isf.module.Module;
 import isf.module.ModuleNames;
 import isf.util.ISFUtil;
@@ -50,7 +49,7 @@ public class EroCommand extends AbstractCommand {
 	// ================================================================================
 
 	@Parameter(names = "-previous", converter = CanonicalFileConverter.class,
-			validateWith = DirectoryParameterExistsValidator.class)
+			validateValueWith = DirectoryExistsValueValidator.class)
 	public File previousDirectory;
 
 	// ================================================================================
@@ -304,7 +303,7 @@ public class EroCommand extends AbstractCommand {
 
 				cc.fromIri = IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl");
 				cc.fromFiles.add(command.previousDirectory);
-				
+
 				cc.toIri = IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl");
 				cc.toFiles.add(command.outputDirectory);
 				cc.reportPath = "ero-diff-with-previous";

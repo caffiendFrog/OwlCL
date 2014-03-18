@@ -1,15 +1,9 @@
-package isf.command.cli;
+package isf.command;
 
-import isf.command.CatalogCommand;
-import isf.command.CompareCommand;
-import isf.command.EroCommand;
-import isf.command.GenerateModuleCommand;
-import isf.command.MapperCommand;
-import isf.command.NewModuleCommand;
-import isf.command.RewriteCommand;
-import isf.command.TypecheckCommand;
-import isf.command.ValidateIriCommand;
-import isf.util.ISFUtil;
+import isf.command.cli.CanonicalFileConverter;
+import isf.command.cli.DirectoryExistsValueValidator;
+import isf.command.cli.FileListValueValidator;
+import isf.command.cli.FileValueExistsValidator;
 import isf.util.OntologyFiles;
 
 import java.io.File;
@@ -23,7 +17,6 @@ import java.util.Properties;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +62,7 @@ public class Main {
 	public static final String PROGRAM_DESC = "This is the ISF Tools program with various "
 			+ "(in development) commands and options.\n";
 
+	public static final String PROJECT_PROPERTY = "project";
 	/**
 	 * A comma seperated list of files or directories that are considered to be
 	 * the ontology files under development. The order does matter. When
@@ -99,25 +93,6 @@ public class Main {
 	public static final String DETAILS_PROPERTY = "details";
 
 	// ================================================================================
-	// The location of ISF trunk directory if not specified in some other way.
-	// ================================================================================
-	// @Parameter(
-	// names = "-trunk",
-	// validateWith = CreateDirectoryValidator.class,
-	// converter = CanonicalFileConverter.class,
-	// description =
-	// "The directory location of the ISF SVN trunk directory (Git wroking tree) if not"
-	// +
-	// "specified in some other way (system property, evn, or isf.properties file).")
-	// public void setISFTrunkDirecotry(File isfTrunkDirectory) {
-	// ISFUtil.setISFTrunkDirecotry(isfTrunkDirectory);
-	// }
-	//
-	// public File getISFTrunkDirecotry() {
-	// return ISFUtil.ISF_TRUNK_DIR;
-	// }
-
-	// ================================================================================
 	// Working directory
 	// ================================================================================
 
@@ -135,7 +110,7 @@ public class Main {
 	 * 
 	 * The working directory is not related to the output directory but by
 	 * default the output directory will be a sub directory named "isft-output".
-	 * This default location can be overridden.
+	 * This default output location can be overridden.
 	 */
 	public File workingDirectory = new File(System.getProperty("user.dir"));
 	public boolean workingDirectorySet = false;
@@ -150,6 +125,27 @@ public class Main {
 
 	public File getWorkingDirectory() {
 		return workingDirectory;
+	}
+
+	// ================================================================================
+	// Ontology project directory
+	// ================================================================================
+
+	public File project = null;
+	public boolean projectSet = false;
+
+	public File getProject() {
+		return project;
+	}
+
+	@Parameter(names = "-project", description = "The location of the ontology project. "
+			+ "If this is set, certain commands will will work with files under this "
+			+ "project location based on an assumed project file structure.",
+			converter = CanonicalFileConverter.class,
+			validateValueWith = DirectoryExistsValueValidator.class)
+	public void setProject(File project) {
+		this.project = project;
+		this.projectSet = true;
 	}
 
 	// ================================================================================
@@ -386,6 +382,28 @@ public class Main {
 			}
 		}
 
+		// project directory
+		String projectPath = configProperties.getProperty(PROJECT_PROPERTY);
+		if (projectPath != null)
+		{
+			try
+			{
+				File project = new File(projectPath).getCanonicalFile();
+				if (project.isDirectory())
+				{
+					this.project = project;
+				} else
+				{
+					throw new IllegalStateException("Project directory does not exist. Directory: "
+							+ projectPath);
+				}
+			} catch (IOException e)
+			{
+				throw new RuntimeException("Failed to get canonical File to project directory + "
+						+ projectPath, e);
+			}
+		}
+
 		// ontology files
 		String ontologyFileNames = configProperties.getProperty(ONTOLOGY_FILES_PROPERTY);
 		if (ontologyFileNames != null)
@@ -477,7 +495,7 @@ public class Main {
 			this.jobQualifier = jobQualifier.trim().replace(' ', '_');
 		} else
 		{
-			SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd_HH-mm-ss");
+			SimpleDateFormat df = new SimpleDateFormat("yy.MM.dd-HH.mm.ss");
 			this.jobQualifier = df.format(new Date());
 		}
 
@@ -536,6 +554,11 @@ public class Main {
 		encoder.setPattern("%r %c %level - %msg%n");
 		encoder.start();
 
+		PatternLayoutEncoder encoderDebug = new PatternLayoutEncoder();
+		encoderDebug.setContext(context);
+		encoderDebug.setPattern("%r %c %level - %msg%n");
+		encoderDebug.start();
+
 		FileAppender<ILoggingEvent> appender = new FileAppender<ILoggingEvent>();
 		appender.setFile(new File(getJobDirectory(), "log.txt").getAbsolutePath());
 		appender.setContext(context);
@@ -559,7 +582,7 @@ public class Main {
 		FileAppender<ILoggingEvent> appenderDebug = new FileAppender<ILoggingEvent>();
 		appenderDebug.setFile(new File(getJobDirectory(), "log-debug.txt").getAbsolutePath());
 		appenderDebug.setContext(context);
-		appenderDebug.setEncoder(encoder);
+		appenderDebug.setEncoder(encoderDebug);
 		appenderDebug.start();
 
 		ch.qos.logback.classic.Logger rootLogger = context
@@ -634,6 +657,40 @@ public class Main {
 			logger.debug("\t" + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
 		}
 
+		// ================================================================================
+		// Run the command
+		// ================================================================================
+		String command = jc.getParsedCommand();
+
+		if (command.equalsIgnoreCase("newModule"))
+		{
+			newModule.run();
+		} else if (command.equalsIgnoreCase("module"))
+		{
+			module.run();
+		} else if (command.equalsIgnoreCase("ero"))
+		{
+			ero.run();
+		} else if (command.equalsIgnoreCase("catalog"))
+		{
+			catalog.run();
+		} else if (command.equalsIgnoreCase("validate"))
+		{
+			validate.run();
+		} else if (command.equalsIgnoreCase("compare"))
+		{
+			cc.run();
+		} else if (command.equalsIgnoreCase("typecheck"))
+		{
+			typescheck.run();
+		} else if (command.equalsIgnoreCase("rewrite"))
+		{
+			rw.run();
+		} else if (command.equalsIgnoreCase("map"))
+		{
+			mc.run();
+		}
+
 	}
 
 	// ================================================================================
@@ -695,42 +752,49 @@ public class Main {
 		return null;
 	}
 
-	public static void main(String[] args) {
-		Main main = new Main();
-		main.preConfigure();
+	JCommander jc = new JCommander();
+	NewModuleCommand newModule;
+	GenerateModuleCommand module;
+	EroCommand ero;
+	CatalogCommand catalog;
+	ValidateIriCommand validate;
+	CompareCommand cc;
+	TypecheckCommand typescheck;
+	RewriteCommand rw;
+	MapperCommand mc;
 
-		JCommander jc = new JCommander();
+	public void parseArgs(String[] args) {
 		jc.setAllowAbbreviatedOptions(true);
 		jc.setCaseSensitiveOptions(false);
 		jc.setProgramName("java -jar isf-tools-*.jar");
 
-		jc.addObject(main);
+		jc.addObject(this);
 
-		EroCommand ero = new EroCommand(main);
-		jc.addCommand("ero", ero);
-
-		NewModuleCommand newModule = new NewModuleCommand(main);
+		newModule = new NewModuleCommand(this);
 		jc.addCommand("newModule", newModule);
 
-		GenerateModuleCommand module = new GenerateModuleCommand(main);
+		module = new GenerateModuleCommand(this);
 		jc.addCommand("module", module);
 
-		CatalogCommand catalog = new CatalogCommand(main);
+		ero = new EroCommand(this);
+		jc.addCommand("ero", ero);
+
+		catalog = new CatalogCommand(this);
 		jc.addCommand("catalog", catalog);
 
-		ValidateIriCommand validate = new ValidateIriCommand(main);
+		validate = new ValidateIriCommand(this);
 		jc.addCommand("validate", validate);
 
-		CompareCommand cc = new CompareCommand(main);
+		cc = new CompareCommand(this);
 		jc.addCommand("compare", cc);
 
-		TypecheckCommand typescheck = new TypecheckCommand(main);
+		typescheck = new TypecheckCommand(this);
 		jc.addCommand("typecheck", typescheck);
 
-		RewriteCommand rw = new RewriteCommand(main);
+		rw = new RewriteCommand(this);
 		jc.addCommand("rewrite", rw);
 
-		MapperCommand mc = new MapperCommand(main);
+		mc = new MapperCommand(this);
 		jc.addCommand("map", mc);
 
 		if (args.length == 0)
@@ -750,36 +814,13 @@ public class Main {
 			jc.usage();
 		}
 
-		String command = jc.getParsedCommand();
+	}
 
-		if (command.equalsIgnoreCase("newModule"))
-		{
-			newModule.run();
-		} else if (command.equalsIgnoreCase("module"))
-		{
-			module.run();
-		} else if (command.equalsIgnoreCase("ero"))
-		{
-			ero.run();
-		} else if (command.equalsIgnoreCase("catalog"))
-		{
-			catalog.run();
-		} else if (command.equalsIgnoreCase("validate"))
-		{
-			validate.run();
-		} else if (command.equalsIgnoreCase("compare"))
-		{
-			cc.run();
-		} else if (command.equalsIgnoreCase("typecheck"))
-		{
-			typescheck.run();
-		} else if (command.equalsIgnoreCase("rewrite"))
-		{
-			rw.run();
-		} else if (command.equalsIgnoreCase("map"))
-		{
-			mc.run();
-		}
+	public static void main(String[] args) {
+		Main main = new Main();
+		main.preConfigure();
+		main.parseArgs(args);
+		main.initWithLogging();
 
 	}
 

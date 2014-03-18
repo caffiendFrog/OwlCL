@@ -2,7 +2,6 @@ package isf.command;
 
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
-import isf.command.cli.Main;
 import isf.command.cli.ManualIriMapping;
 import isf.mapping.DefaultMapping;
 import isf.mapping.Mapper;

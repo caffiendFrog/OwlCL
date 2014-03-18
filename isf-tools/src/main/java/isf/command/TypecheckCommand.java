@@ -1,7 +1,6 @@
 package isf.command;
 
 import isf.command.cli.CanonicalFileConverter;
-import isf.command.cli.Main;
 import isf.util.OntologyFiles;
 
 import java.io.File;

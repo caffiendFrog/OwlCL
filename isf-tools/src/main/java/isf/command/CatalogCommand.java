@@ -1,6 +1,5 @@
 package isf.command;
 
-import isf.command.cli.Main;
 import isf.util.ISFUtil;
 
 import java.io.File;
