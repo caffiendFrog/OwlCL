@@ -73,6 +73,7 @@ public class ValidateIriCommand extends AbstractCommand {
 
 	public ValidateIriCommand(Main main) {
 		super(main);
+		preConfigure();
 	}
 
 	@Override

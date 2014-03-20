@@ -2,7 +2,7 @@ package isf.command;
 
 import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
-import isf.util.ISFUtil;
+import isf.util.ISFTUtil;
 import isf.util.OntologyFiles;
 
 import java.io.File;
@@ -175,6 +175,7 @@ public class CompareCommand extends AbstractCommand {
 
 	public CompareCommand(Main main) {
 		super(main);
+		preConfigure();
 	}
 
 	@Override
@@ -192,7 +193,7 @@ public class CompareCommand extends AbstractCommand {
 		fromOntologyFiles.setupManager(fromManager, null);
 		if (fromIri != null)
 		{
-			fromOntology = main.getOrLoadOntology(fromIri, fromManager);
+			fromOntology = ISFTUtil.getOrLoadOntology(fromIri, fromManager);
 		} else
 		{
 			try
@@ -207,7 +208,7 @@ public class CompareCommand extends AbstractCommand {
 			{
 				OWLImportsDeclaration id = fromManager.getOWLDataFactory()
 						.getOWLImportsDeclaration(entry.getValue());
-				OWLOntology ontology = main.getOrLoadOntology(entry.getValue(), fromManager);
+				OWLOntology ontology = ISFTUtil.getOrLoadOntology(entry.getValue(), fromManager);
 				if (ontology == null)
 				{
 					throw new IllegalStateException("Could not load fromOntology with IRI: "
@@ -223,7 +224,7 @@ public class CompareCommand extends AbstractCommand {
 		toOntologyFiles.setupManager(toManager, null);
 		if (toIri != null)
 		{
-			toOntology = main.getOrLoadOntology(toIri, toManager);
+			toOntology = ISFTUtil.getOrLoadOntology(toIri, toManager);
 		} else
 		{
 			try
@@ -238,7 +239,7 @@ public class CompareCommand extends AbstractCommand {
 			{
 				OWLImportsDeclaration id = toManager.getOWLDataFactory().getOWLImportsDeclaration(
 						entry.getValue());
-				OWLOntology ontology = main.getOrLoadOntology(entry.getValue(), toManager);
+				OWLOntology ontology = ISFTUtil.getOrLoadOntology(entry.getValue(), toManager);
 				if (ontology == null)
 				{
 					throw new IllegalStateException("Could not load toOntology with IRI: "
@@ -402,7 +403,6 @@ public class CompareCommand extends AbstractCommand {
 
 				for (OWLOntology o : command.onlyFromOntologies)
 				{
-					int added = 0;
 					int removed = 0;
 
 					command.report.info("");
@@ -423,7 +423,6 @@ public class CompareCommand extends AbstractCommand {
 				{
 
 					int added = 0;
-					int removed = 0;
 					command.report.info("");
 					command.report.info("+" + o.getOntologyID().getOntologyIRI());
 					Set<OWLEntity> entities = new TreeSet<OWLEntity>(o.getSignature(false));
@@ -676,9 +675,9 @@ public class CompareCommand extends AbstractCommand {
 				command.report.info("=================================");
 				command.report.info("");
 
-				Set<OWLAxiom> fromAxioms = new TreeSet<OWLAxiom>(ISFUtil.getAxioms(
+				Set<OWLAxiom> fromAxioms = new TreeSet<OWLAxiom>(ISFTUtil.getAxioms(
 						command.fromOntology, true));
-				Set<OWLAxiom> toAxioms = new TreeSet<OWLAxiom>(ISFUtil.getAxioms(
+				Set<OWLAxiom> toAxioms = new TreeSet<OWLAxiom>(ISFTUtil.getAxioms(
 						command.toOntology, true));
 
 				int removed = 0;
@@ -849,6 +848,18 @@ public class CompareCommand extends AbstractCommand {
 			return fromPath.isEmpty() && fromPaths.get(0).isEmpty() && toPath.isEmpty()
 					&& toPaths.get(0).isEmpty();
 		}
+	}
+
+	@Override
+	protected void preConfigure() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void init() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

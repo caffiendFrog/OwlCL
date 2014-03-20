@@ -645,7 +645,7 @@ public class Main {
 			logger.debug("\t" + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
 		}
 
-		ofiles = new OntologyFiles(ontologyFiles, ontologyFilesSet);
+		ofiles = new OntologyFiles(ontologyFiles, ontologySubs);
 		logger.info("Use ontology sub directories: " + ontologySubs);
 		for (File file : ontologyFiles)
 		{

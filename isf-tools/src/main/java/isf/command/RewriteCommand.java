@@ -53,6 +53,7 @@ public class RewriteCommand extends AbstractCommand {
 	// ================================================================================
 	public RewriteCommand(Main main) {
 		super(main);
+		preConfigure();
 	}
 
 	@Override
@@ -106,5 +107,17 @@ public class RewriteCommand extends AbstractCommand {
 			}
 		}
 
+	}
+
+	@Override
+	protected void preConfigure() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void init() {
+		// TODO Auto-generated method stub
+		
 	}
 }

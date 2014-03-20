@@ -1,6 +1,7 @@
 package isf.command;
 
-import isf.util.ISFUtil;
+import isf.command.cli.CanonicalFileConverter;
+import isf.command.cli.DirectoryExistsValueValidator;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -38,17 +39,20 @@ public class CatalogCommand extends AbstractCommand {
 	// The top directory to catalog from
 	// ================================================================================
 
-//	public String directory = ISFUtil.getTrunkDirectory().getAbsolutePath() + "/src/ontology";
-	public String directory = null;
+	// public String directory = ISFUtil.getTrunkDirectory().getAbsolutePath() +
+	// "/src/ontology";
+	public File directory = null;
 	public boolean directorySet;
 
-	@Parameter(names = "-directory", description = "The top directory to start cataloging from.")
-	public void setDirectory(String directory) {
+	@Parameter(names = "-directory", description = "The top directory to start cataloging from.",
+			converter = CanonicalFileConverter.class,
+			validateValueWith = DirectoryExistsValueValidator.class)
+	public void setDirectory(File directory) {
 		this.directory = directory;
 		directorySet = true;
 	}
 
-	public String getDirectory() {
+	public File getDirectory() {
 		return directory;
 	}
 
@@ -106,12 +110,43 @@ public class CatalogCommand extends AbstractCommand {
 		return catalogName;
 	}
 
+	@Override
+	protected void preConfigure() {
+		if (main.project != null)
+		{
+			directory = main.project;
+		} else
+		{
+			directory = main.getJobDirectory();
+		}
+
+	}
+
 	// ================================================================================
 	// Implementation
 	// ================================================================================
 
+	@Override
+	protected void init() {
+		if (main.project != null)
+		{
+			if (!directorySet)
+			{
+				directory = main.project;
+			}
+		} else
+		{
+			if (!directorySet)
+			{
+				directory = main.getJobDirectory();
+			}
+		}
+
+	}
+
 	public CatalogCommand(Main main) {
 		super(main);
+		preConfigure();
 	}
 
 	@Override
@@ -121,6 +156,7 @@ public class CatalogCommand extends AbstractCommand {
 
 	@Override
 	public void run() {
+		init();
 
 		for (String action : getAllActions())
 		{
@@ -134,9 +170,9 @@ public class CatalogCommand extends AbstractCommand {
 			@Override
 			public void execute(CatalogCommand command) {
 				System.out.println("Running create action");
-				AutoIRIMapper mapper = new AutoIRIMapper(new File(command.getDirectory()), true);
+				AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), true);
 
-				File topDirectory = new File(command.getDirectory());
+				File topDirectory = command.getDirectory();
 
 				// for all directories
 				for (File d : FileUtils.listFilesAndDirs(topDirectory,
@@ -208,18 +244,6 @@ public class CatalogCommand extends AbstractCommand {
 		};
 
 		public abstract void execute(CatalogCommand command);
-	}
-
-	@Override
-	protected void preConfigure() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected void init() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

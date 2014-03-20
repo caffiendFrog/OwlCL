@@ -2,8 +2,10 @@ package isf.util;
 
 import org.semanticweb.owlapi.model.IRI;
 
-public class ISF {
+public class ISFT {
 
+	public static final String ISFT_PREFIX = ISFT.ISF_ONTOLOGY_IRI_PREFIX + "isftools-";
+	
 	public static final String ISF_ONTOLOGY_IRI_PREFIX = "http://purl.obolibrary.org/obo/arg/";
 	public static final IRI ISF_DEV_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX + "isf-dev.owl");
 	public static final IRI ISF_TOOLS_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX + "isf-tools.owl");
@@ -15,9 +17,10 @@ public class ISF {
 			+ "isf-full-dev-reasoned.owl");
 	public static final String ISF_MAPPING_SUFFIX = "-mapping.owl";
 	public static final IRI ISF_SKOS_IRI = IRI.create(ISF_ONTOLOGY_IRI_PREFIX + "isf-skos.owl");
-	public static final String ANNOTATION_IRI_SUFFIX = "-module-annotation.owl";
+	public static final String CONFIGURATION_IRI_SUFFIX = "-module-configuration.owl";
 	public static final String TOP_IRI_SUFFIX = "-module-top.owl";
 	public static final String MODULE_IRI_SUFFIX = "-module.owl";
+	public static final String MODULE_IRI_INRERRED_SUFFIX = "-module-inferred.owl";
 	public static final String MODULE_INCLUDE_IRI_SUFFIX = "-module-include.owl";
 	public static final String MODULE_EXCLUDE_IRI_SUFFIX = "-module-exclude.owl";
 	public static final String MODULE_LEGACY_IRI_SUFFIX = "-module-legacy.owl";

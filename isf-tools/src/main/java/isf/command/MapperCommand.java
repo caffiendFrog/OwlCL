@@ -6,7 +6,7 @@ import isf.command.cli.ManualIriMapping;
 import isf.mapping.DefaultMapping;
 import isf.mapping.Mapper;
 import isf.mapping.Mapping;
-import isf.util.ISFUtil;
+import isf.util.ISFTUtil;
 import isf.util.OntologyFiles;
 
 import java.io.File;
@@ -220,6 +220,7 @@ public class MapperCommand extends AbstractCommand {
 	// ================================================================================
 	public MapperCommand(Main main) {
 		super(main);
+		preConfigure();
 	}
 
 	@Override
@@ -243,23 +244,23 @@ public class MapperCommand extends AbstractCommand {
 
 		for (IRI iri : ontologyIris)
 		{
-			ISFUtil.getOrLoadOntology(iri, man);
+			ISFTUtil.getOrLoadOntology(iri, man);
 		}
 		for (IRI iri : ontologyFilesFinder.getLocalOntologyFiles(exceptions).values())
 		{
-			ISFUtil.getOrLoadOntology(iri, man);
+			ISFTUtil.getOrLoadOntology(iri, man);
 		}
 
 		DefaultMapping defaultMapping = new DefaultMapping();
 		mappingFilesFinder = new OntologyFiles(mappingFiles, false);
 		for (IRI iri : mappingIris)
 		{
-			ISFUtil.getOrLoadOntology(iri, man);
+			ISFTUtil.getOrLoadOntology(iri, man);
 			defaultMapping.addMappingOntologies(man.getOntology(iri).getImportsClosure());
 		}
 		for (IRI iri : mappingFilesFinder.getLocalOntologyFiles(exceptions).values())
 		{
-			ISFUtil.getOrLoadOntology(iri, man);
+			ISFTUtil.getOrLoadOntology(iri, man);
 			defaultMapping.addMappingOntologies(man.getOntology(iri).getImportsClosure());
 		}
 		for (ManualIriMapping mm : manualMappings)
@@ -378,6 +379,18 @@ public class MapperCommand extends AbstractCommand {
 		};
 
 		abstract public void execute(MapperCommand command);
+	}
+
+	@Override
+	protected void preConfigure() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void init() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

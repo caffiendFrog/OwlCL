@@ -95,6 +95,7 @@ public class TypecheckCommand extends AbstractCommand {
 
 	public TypecheckCommand(Main main) {
 		super(main);
+		preConfigure();
 	}
 
 	Report report;
@@ -314,6 +315,18 @@ public class TypecheckCommand extends AbstractCommand {
 		};
 
 		public abstract void execute(TypecheckCommand command);
+	}
+
+	@Override
+	protected void preConfigure() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void init() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

@@ -1,13 +1,14 @@
 package isf.command;
 
 import isf.command.cli.CanonicalFileConverter;
-import isf.module.SimpleModule;
-import isf.util.ISFUtil;
+import isf.module.DefaultModule;
+import isf.module.Module;
 
 import java.io.File;
 import java.util.List;
 
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,13 +19,13 @@ import com.beust.jcommander.Parameters;
 		commandDescription = "Generate the named module. The module has to be already created.")
 public class GenerateModuleCommand extends AbstractCommand {
 
-	private static Logger logger = LoggerFactory
-			.getLogger(GenerateModuleCommand.class.getSimpleName());
+	private static Logger logger = LoggerFactory.getLogger(GenerateModuleCommand.class
+			.getSimpleName());
 
 	// ================================================================================
 	// The module name
 	// ================================================================================
-	public String moduleName = "_default-new-module";
+	public String moduleName = null;
 	public boolean moduleNameSet;
 
 	@Parameter(
@@ -33,10 +34,6 @@ public class GenerateModuleCommand extends AbstractCommand {
 	public void setModuleName(String moduleName) {
 		this.moduleName = moduleName;
 		this.moduleNameSet = true;
-		if (!directorySet) {
-			// don't use the setter.
-			directory = getDefaultDirectory();
-		}
 	}
 
 	public String getModuleName() {
@@ -51,8 +48,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 	public boolean directorySet;
 
 	@Parameter(names = "-directory", converter = CanonicalFileConverter.class,
-			description = "The location where the module defining files will be created"
-					+ " (not the output).")
+			description = "The location where the module defining files.")
 	public void setDirectory(File directory) {
 		this.directory = directory;
 		this.directorySet = true;
@@ -62,121 +58,198 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return directory;
 	}
 
-
-
 	// ================================================================================
-	// The legacy indicator
+	// The directory where the module output will go
 	// ================================================================================
-	public boolean legacy = false;
-	public boolean legacySet;
+	public File output = null;
+	public boolean outputSet;
 
-	@Parameter(
-			names = "-legacy",
-			description = "If this option is set, legacy mode will be used to execute or "
-					+ "skip legacy related actions even if they are specified in the *action options.")
-	public void setLegacy(boolean legacy) {
-		this.legacy = legacy;
-		this.legacySet = true;
+	@Parameter(names = "-output", converter = CanonicalFileConverter.class,
+			description = "The location where the module output will go.")
+	public void setOutput(File directory) {
+		this.output = directory;
+		this.outputSet = true;
 	}
 
-	public boolean isLegacy() {
-		return legacy;
+	public File getOutput() {
+		return output;
+	}
+
+	// ================================================================================
+	// do unreasoned
+	// ================================================================================
+	public boolean unReasoned = false;
+	public boolean unReasonedSet = false;
+
+	@Parameter(names = "-unReasoned", arity = 1,
+			description = "Set the module to generate the un-reasoned version. "
+					+ "Use it to overrides the default module configuration if needed."
+					+ "Ignore the shown default on the command line, the default is what "
+					+ "is set in the module configuration file.")
+	public void setUnReasoned(boolean unReasoned) {
+		this.unReasoned = unReasoned;
+		this.unReasonedSet = true;
+	}
+
+	public boolean isUnReasoned() {
+		return unReasoned;
+	}
+
+	// ================================================================================
+	// do reasoned
+	// ================================================================================
+	public boolean reasoned = false;
+	public boolean reasonedSet = false;
+
+	@Parameter(names = "-reasoned", arity = 1,
+			description = "Set the module to generate the reasoned version. "
+					+ "Use it to overrides the default module configuration if needed."
+					+ "Ignore the shown default on the command line, the default is what "
+					+ "is set in the module configuration file.")
+	public void setReasoned(boolean reasoned) {
+		this.reasoned = reasoned;
+		this.reasonedSet = true;
+	}
+
+	public boolean isReasoned() {
+		return reasoned;
+	}
+
+	// ================================================================================
+	// Add legacy
+	// ================================================================================
+	public boolean addLegacy = false;
+	public boolean addLegacySet;
+
+	@Parameter(names = "-addLegacy",
+			description = "If this option is set, legacy content will be added.")
+	public void setAddLegacy(boolean addLegacy) {
+		this.addLegacy = addLegacy;
+		this.addLegacySet = true;
+	}
+
+	public boolean isAddLegacy() {
+		return addLegacy;
+	}
+
+	// ================================================================================
+	// clean legacy
+	// ================================================================================
+	public boolean cleanLegacy = false;
+	public boolean cleanLegacySet;
+
+	private boolean inited;
+
+	@Parameter(names = "-cleanLegacy",
+			description = "If this option is set, legacy content will be cleaned.")
+	public void setCleanLegacy(boolean cleanLegacy) {
+		this.cleanLegacy = cleanLegacy;
+		this.cleanLegacySet = true;
+	}
+
+	public boolean isCleanLegacy() {
+		return cleanLegacy;
+	}
+
+	// ================================================================================
+	// Initialization
+	// ================================================================================
+
+	@Override
+	protected void preConfigure() {
+		this.moduleName = "_unnamed";
+		if (main.project == null)
+		{
+			directory = new File(main.outputDirectory, "module/" + moduleName);
+			output = new File(main.outputDirectory + "module-output/" + moduleName);
+		} else
+		{
+			directory = new File(main.project, "module/" + moduleName);
+			output = new File(main.project, "module-output/" + moduleName);
+		}
+	}
+
+	@Override
+	public void init() {
+		if (inited)
+		{
+			return;
+		}
+
+		this.inited = true;
+
+		if (main.project == null)
+		{
+			if (!directorySet)
+			{
+				directory = new File(main.outputDirectory, "module/" + moduleName);
+			}
+			if (!outputSet)
+			{
+				output = new File(main.outputDirectory + "module-output/" + moduleName);
+			}
+		} else
+		{
+			if (!directorySet)
+			{
+				directory = new File(main.project, "module/" + moduleName);
+			}
+			if (!outputSet)
+			{
+				output = new File(main.project, "module-output/" + moduleName);
+			}
+		}
+
+		output.mkdirs();
+
+		if (sourceOntology != null && sourceReasoner != null)
+		{
+			module = new DefaultModule(moduleName, directory, sourceOntology, sourceReasoner,
+					output, addLegacy, cleanLegacy);
+		} else
+		{
+			module = new DefaultModule(this.moduleName, this.directory,
+					main.getSharedBaseManager(), this.output, addLegacy, cleanLegacy);
+		}
+		module.loadConfiguration();
+
+		if (reasonedSet)
+		{
+			module.setGenerateInferred(reasoned);
+		}
+
+		if (unReasonedSet)
+		{
+			module.setGenerateInferred(unReasoned);
+		}
+
 	}
 
 	// ================================================================================
 	// Implementation
 	// ================================================================================
-	public SimpleModule module = null;
 
 	public GenerateModuleCommand(Main main) {
 		super(main);
-
+		preConfigure();
 	}
 
-	public File outputDirectory;
-
-	public void init() {
-		module = new SimpleModule(moduleName, ISFUtil.getIsfManagerSingleton(), directory,
-				outputDirectory);
-		module.load();
-	}
+	OWLReasoner sourceReasoner;
+	OWLOntology sourceOntology;
+	Module module = null;
 
 	@Override
 	public void run() {
+		init();
+		module.generateModule();
+		module.saveGeneratedModule();
+		module.saveModuleConfiguration();
 
-		for (String action : getAllActions()) {
-			Action.valueOf(action).execute(this);
-		}
 	}
 
 	@Override
 	protected void addCommandActions(List<String> actionsList) {
-		actionsList.add(Action.load.name());
-		actionsList.add(Action.generate.name());
-		actionsList.add(Action.cleanLegacy.name());
-		actionsList.add(Action.addLegacy.name());
-		actionsList.add(Action.saveLegacy.name());
-		actionsList.add(Action.save.name());
-	}
 
-	enum Action {
-		load {
-			@Override
-			public void execute(GenerateModuleCommand command) {
-				command.module.load();
-
-			}
-		},
-		generate {
-			@Override
-			public void execute(GenerateModuleCommand command) {
-				try {
-					command.module.generateModule();
-				} catch (Exception e) {
-					// TODO fix this exception in the module implementation
-					throw new RuntimeException("Error caught while generating module in command", e);
-				}
-			}
-		},
-		cleanLegacy {
-			@Override
-			public void execute(GenerateModuleCommand command) {
-				command.module.cleanLegacyOntologies();
-
-			}
-		},
-		addLegacy {
-			@Override
-			public void execute(GenerateModuleCommand command) {
-				command.module.addLegacyOntologies();
-
-			}
-		},
-		save {
-			@Override
-			public void execute(GenerateModuleCommand command) {
-				try {
-					command.module.saveModule();
-				} catch (OWLOntologyStorageException e) {
-					throw new RuntimeException("Error caught while saving module in command.", e);
-				}
-
-			}
-		},
-		saveLegacy {
-			@Override
-			public void execute(GenerateModuleCommand command) {
-				try {
-					command.module.saveLegacyOntologies();
-				} catch (OWLOntologyStorageException e) {
-					throw new RuntimeException(
-							"Error caught while saving module legacy ontologies in command.", e);
-				}
-
-			}
-		};
-
-		public abstract void execute(GenerateModuleCommand command);
 	}
 
 }

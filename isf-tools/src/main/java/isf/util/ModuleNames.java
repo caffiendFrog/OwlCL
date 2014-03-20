@@ -1,4 +1,4 @@
-package isf.module;
+package isf.util;
 
 public interface ModuleNames {
 

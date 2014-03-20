@@ -1,7 +1,7 @@
 package isf.mapping;
 
 import isf.util.ISFTVocab;
-import isf.util.ISFUtil;
+import isf.util.ISFTUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,7 +51,7 @@ public class DefaultMapping implements Mapping {
 	}
 
 	public void addMappingOntology(OWLOntology ontology) {
-		for (OWLAnnotationAssertionAxiom aaa : ISFUtil.getAnnotationAssertionAxioms(ontology,
+		for (OWLAnnotationAssertionAxiom aaa : ISFTUtil.getAnnotationAssertionAxioms(ontology,
 				property, true))
 		{
 			OWLAnnotationSubject subject = aaa.getSubject();

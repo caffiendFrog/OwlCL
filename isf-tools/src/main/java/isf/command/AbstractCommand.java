@@ -1,17 +1,11 @@
 package isf.command;
 
-import isf.util.RuntimeOntologyLoadingException;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,56 +73,6 @@ public abstract class AbstractCommand {
 		addCommandActions(allActions);
 		allActions.addAll(postActions);
 		return allActions;
-	}
-
-	protected OWLOntology getOrLoadOntology(IRI iri, OWLOntologyManager man) {
-		OWLOntology o = man.getOntology(iri);
-		if (o == null)
-		{
-			try
-			{
-				o = man.loadOntology(iri);
-			} catch (OWLOntologyCreationException e)
-			{
-				throw new RuntimeOntologyLoadingException("Failed while getOrLoadOntology IRI: "
-						+ iri, e);
-			}
-		}
-		return o;
-	}
-
-	protected OWLOntology createOntology(IRI iri, OWLOntologyManager man) {
-
-		OWLOntology o = null;
-
-		try
-		{
-			o = man.createOntology(iri);
-		} catch (OWLOntologyCreationException e)
-		{
-			throw new RuntimeOntologyLoadingException("Faild to createOntology for IRI: " + iri, e);
-		}
-
-		return o;
-
-	}
-
-	protected OWLOntology getOrLoadOrCreateOntology(IRI iri, OWLOntologyManager man) {
-		OWLOntology o = null;
-		try
-		{
-			o = getOrLoadOntology(iri, man);
-		} catch (RuntimeOntologyLoadingException e1)
-		{
-			if (e1.isIriMapping())
-			{
-				o = createOntology(iri, man);
-			} else
-			{
-				throw e1;
-			}
-		}
-		return o;
 	}
 
 	public class Report {

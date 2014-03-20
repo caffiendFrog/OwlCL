@@ -1,6 +1,6 @@
 package isf.util;
 
-import isf.util.ISFTVocab.Vocab;
+import isf.module.builder.simple.MBSimpleVocab;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,8 +12,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -41,11 +43,13 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.ReasonerInternalException;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
+import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
+
 /**
  * @author Shahim Essaid
  * 
  */
-public class ISFUtil {
+public class ISFTUtil {
 
 	// ================================================================================
 	// OWL helper methods
@@ -93,54 +97,39 @@ public class ISFUtil {
 		return values;
 	}
 
-	public static OWLOntology getOrLoadOntology(IRI iri, OWLOntologyManager man) {
-		OWLOntology o = man.getOntology(iri);
-		if (o == null)
-		{
-			try
-			{
-				o = man.loadOntology(iri);
-			} catch (OWLOntologyCreationException e)
-			{
-				throw new RuntimeException("Failed to getOrLoad ontology: " + iri, e);
-			}
-		}
-		return o;
-	}
-
 	public static Set<OWLAnnotationAssertionAxiom> getIncludeAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
-		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(ISFTVocab.include.iri()), includeImports);
+		return ISFTUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.include.getAP(),
+				includeImports);
 	}
 
 	public static Set<OWLAnnotationAssertionAxiom> getIncludeInstancesAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
-		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(Vocab.ISFT_INCLUDE_INSTANCES)),
-				includeImports);
+		return ISFTUtil.getAnnotationAssertionAxioms(ontology,
+				MBSimpleVocab.include_instances.getAP(), includeImports);
 	}
 
 	public static Set<OWLAnnotationAssertionAxiom> getIncludeSubsAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
-		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(Vocab.ISFT_INCLUDE_SUBS)), includeImports);
+		return ISFTUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.include_subs.getAP(),
+				includeImports);
 	}
 
 	public static Set<OWLAnnotationAssertionAxiom> getExcludeAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
-		return ISFUtil.getAnnotationAssertionAxioms(ontology, ISFTVocab.exclude.getAP(), includeImports);
+		return ISFTUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.exclude.getAP(),
+				includeImports);
 	}
 
 	public static Set<OWLAnnotationAssertionAxiom> getExcludeSubsAxioms(OWLOntology ontology,
 			boolean includeImports) {
 
-		return ISFUtil.getAnnotationAssertionAxioms(ontology,
-				df.getOWLAnnotationProperty(IRI.create(Vocab.ISFT_EXCLUDE_SUBS)), includeImports);
+		return ISFTUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.exclude_subs.getAP(),
+				includeImports);
 	}
 
 	public static Set<OWLEntity> getIncludeEntities(OWLOntology ontology, boolean includeImports) {
@@ -376,75 +365,10 @@ public class ISFUtil {
 
 	}
 
-	public static Set<OWLAxiom> getDefiningAxioms(final OWLEntity entity,
-			Set<OWLOntology> ontologies, boolean includeImports) {
-		Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
-		for (OWLOntology o : ontologies)
-		{
-			axioms.addAll(getDefiningAxioms(entity, o, includeImports));
-		}
-		return axioms;
-	}
-
-	public static Set<OWLAxiom> getDefiningAxioms(final OWLEntity entity, OWLOntology ontology,
-			boolean includeImports) {
-		final Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
-		Set<OWLOntology> ontologies;
-		if (includeImports)
-		{
-			ontologies = ontology.getImportsClosure();
-		} else
-		{
-			ontologies = Collections.singleton(ontology);
-		}
-
-		for (final OWLOntology o : ontologies)
-		{
-			entity.accept(new OWLEntityVisitor() {
-
-				@Override
-				public void visit(OWLAnnotationProperty property) {
-					axioms.addAll(o.getAxioms(property));
-				}
-
-				@Override
-				public void visit(OWLDatatype datatype) {
-					axioms.addAll(o.getAxioms(datatype));
-
-				}
-
-				@Override
-				public void visit(OWLNamedIndividual individual) {
-					axioms.addAll(o.getAxioms(individual));
-
-				}
-
-				@Override
-				public void visit(OWLDataProperty property) {
-					axioms.addAll(o.getAxioms(property));
-
-				}
-
-				@Override
-				public void visit(OWLObjectProperty property) {
-					axioms.addAll(o.getAxioms(property));
-
-				}
-
-				@Override
-				public void visit(OWLClass cls) {
-					axioms.addAll(o.getAxioms(cls));
-
-				}
-			});
-		}
-
-		return axioms;
-	}
 
 	// TODO: where is this used?
 	public static Set<LabelInfo> getLabels(IRI iri, Set<OWLOntology> ontologies) {
-		Set<LabelInfo> infos = new HashSet<ISFUtil.LabelInfo>();
+		Set<LabelInfo> infos = new HashSet<ISFTUtil.LabelInfo>();
 
 		for (OWLOntology ontology : ontologies)
 		{
@@ -563,7 +487,7 @@ public class ISFUtil {
 			final Path libDir = Files.createTempDirectory("factpp-");
 			libDir.toFile().deleteOnExit();
 			fos = new FileOutputStream(new File(libDir.toFile(), libName));
-			fis = ISFUtil.class.getResourceAsStream(libPath + libName);
+			fis = ISFTUtil.class.getResourceAsStream(libPath + libName);
 			byte[] buffer = new byte[1024];
 			int bytesRead = 0;
 			while ((bytesRead = fis.read(buffer)) != -1)
@@ -619,4 +543,86 @@ public class ISFUtil {
 
 	}
 
+	static public OWLOntology getOrLoadOntology(IRI iri, OWLOntologyManager man)
+			throws RuntimeOntologyLoadingException {
+		OWLOntology o = man.getOntology(iri);
+		if (o == null)
+		{
+			try
+			{
+				o = man.loadOntology(iri);
+			} catch (OWLOntologyCreationException e)
+			{
+				throw new RuntimeOntologyLoadingException("Failed while getOrLoadOntology IRI: "
+						+ iri, e);
+			}
+		}
+		return o;
+	}
+
+	static public OWLOntology createOntology(IRI iri, OWLOntologyManager man)
+			throws RuntimeOntologyLoadingException {
+
+		OWLOntology o = null;
+
+		try
+		{
+			o = man.createOntology(iri);
+		} catch (OWLOntologyCreationException e)
+		{
+			throw new RuntimeOntologyLoadingException("Faild to createOntology for IRI: " + iri, e);
+		}
+
+		return o;
+
+	}
+
+	/**
+	 * This method ignore missing IRI mappings when loading. If there is no
+	 * mapping, a new ontology with the IRI is created in the manager. This
+	 * means that the mappers has to be set correctly to avoid getting a new
+	 * ontology when it should have been loaded. Use the getOrLoadOntology if
+	 * the ontology mapping should exist.
+	 * 
+	 * @param iri
+	 * @param man
+	 * @return
+	 */
+	static public OWLOntology getOrLoadOrCreateOntology(IRI iri, OWLOntologyManager man)
+			throws RuntimeOntologyLoadingException {
+		OWLOntology o = null;
+		try
+		{
+			o = getOrLoadOntology(iri, man);
+		} catch (RuntimeOntologyLoadingException e1)
+		{
+			if (e1.isIriMapping())
+			{
+				o = createOntology(iri, man);
+			} else
+			{
+				throw e1;
+			}
+		}
+		return o;
+	}
+
+	private static Map<IRI, OWLReasoner> reasoners = new HashMap<IRI, OWLReasoner>();
+	private static FaCTPlusPlusReasonerFactory rf = new FaCTPlusPlusReasonerFactory();
+
+	static public OWLReasoner getReasoner(OWLOntology ontology) {
+		OWLReasoner r = reasoners.get(ontology.getOntologyID().getOntologyIRI());
+		if (r == null)
+		{
+			r = rf.createNonBufferingReasoner(ontology);
+			reasoners.put(ontology.getOntologyID().getOntologyIRI(), r);
+		}
+		return r;
+	}
+
+	static public void disposeReasoner(OWLReasoner reasoner) {
+		IRI iri = reasoner.getRootOntology().getOntologyID().getOntologyIRI();
+		reasoner.dispose();
+		reasoners.remove(iri);
+	}
 }

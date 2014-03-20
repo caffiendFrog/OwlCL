@@ -1,15 +1,13 @@
-package isf.module.builder;
+package isf.module.builder.simple;
 
 import isf.module.Module;
-import isf.module.SimpleModule;
-import isf.util.ISFUtil;
+import isf.module.builder.ModuleBuilder;
+import isf.util.ISFTUtil;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.AddOntologyAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
@@ -21,7 +19,7 @@ import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
 public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 
-	public InferredSimpleModuleBuilder(SimpleModule simeplModule) {
+	public InferredSimpleModuleBuilder(Module simeplModule) {
 		super(simeplModule);
 	}
 
@@ -34,16 +32,17 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 		report.info("===========================================================");
 		report.info("");
 
-		if (module.getReasoner().getUnsatisfiableClasses().getEntities().size() > 0)
+		if (module.getSourceReasoned().getUnsatisfiableClasses().getEntities().size() > 0)
 		{
 			report.info("");
 			report.info("Unsatisfied entities:");
-			for (OWLEntity entity : module.getReasoner().getUnsatisfiableClasses().getEntities())
+			for (OWLEntity entity : module.getSourceReasoned().getUnsatisfiableClasses()
+					.getEntities())
 			{
 				report.info("\t" + entity);
 			}
 			report.info("Unsatisfieds: "
-					+ module.getReasoner().getUnsatisfiableClasses().getEntities());
+					+ module.getSourceReasoned().getUnsatisfiableClasses().getEntities());
 		}
 
 		report.info("Doing includes: ");
@@ -59,9 +58,6 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 		report.info("Doing exclude subs: ");
 		removeExcludeSubs();
 
-		report.info("Merging in by hand: ");
-		mergeModuleInclude();
-
 		report.info("Adding parents to BFO: ");
 		addClosureToBfo();
 
@@ -75,79 +71,71 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 
 	}
 
-	private void addOntologyAnnotations() {
-		for (OWLAnnotation a : module.getAnnotationOntology().getAnnotations())
-		{
-			if (!a.getProperty().getIRI().toString().contains("isftools-"))
-			{
-				AddOntologyAnnotation aa = new AddOntologyAnnotation(module.getOntology(), a);
-				module.getGeneratedManager().applyChange(aa);
-			}
-		}
-
-	}
-
 	public void addIncludes() {
-		Set<OWLEntity> entities = ISFUtil.getIncludeEntities(module.getAnnotationOntology(), true);
+		Set<OWLEntity> entities = ISFTUtil.getIncludeEntities(module.getModuleConfiguration(),
+				false);
 
 		for (OWLEntity e : entities)
 		{
 			addAxiom(module.getDataFactory().getOWLDeclarationAxiom(e));
-			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSourceOntology(), true));
+			addAxioms(getDefiningAxioms(e, module.getSource(), true));
 		}
 
 	}
 
 	public void addIncludeSubs() {
-		Set<OWLEntity> entities = ISFUtil.getIncludeSubsEntities(module.getAnnotationOntology(),
-				true);
+		Set<OWLEntity> entities = ISFTUtil.getIncludeSubsEntities(module.getModuleConfiguration(),
+				false);
 		// report.info("Found sub annotations for: " + entities);
 		Set<OWLEntity> closureEntities = new HashSet<OWLEntity>();
 
 		for (OWLEntity e : entities)
 		{
-			closureEntities.addAll(ISFUtil.getSubs(e, true, module.getReasoner()));
+			closureEntities.addAll(ISFTUtil.getSubs(e, true, module.getSourceReasoned()));
 		}
 		for (OWLEntity e : closureEntities)
 		{
 			addAxiom(df.getOWLDeclarationAxiom(e));
-			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSourceOntology(), true));
+			addAxioms(getDefiningAxioms(e, module.getSource(), true));
 		}
 	}
 
 	private void addIncludeInstances() {
-		Set<OWLEntity> entities = ISFUtil.getIncludeInstances(module.getAnnotationOntology(), true);
+		Set<OWLEntity> entities = ISFTUtil.getIncludeInstances(module.getModuleConfiguration(),
+				false);
 
 		for (OWLEntity e : entities)
 		{
 			addAxiom(df.getOWLDeclarationAxiom(e));
-			addAxioms(ISFUtil.getDefiningAxioms(e, module.getSourceOntology(), true));
+			addAxioms(getDefiningAxioms(e, module.getSource(), true));
 		}
 
 	}
 
 	public void removeExcludes() {
-		Set<OWLEntity> entities = ISFUtil.getExcludeEntities(module.getAnnotationOntology(), true);
+		Set<OWLEntity> entities = ISFTUtil.getExcludeEntities(module.getModuleConfiguration(),
+				false);
 		for (OWLEntity entity : entities)
 		{
 			removeAxiom(df.getOWLDeclarationAxiom(entity));
-			removeAxioms(ISFUtil.getDefiningAxioms(entity, module.getSourceOntology(), true));
+			removeAxioms(getDefiningAxioms(entity, module.getSource(), true));
 
 			if (entity instanceof OWLClass)
 			{
 				OWLClass c = (OWLClass) entity;
-				Set<OWLClass> subs = module.getReasoner().getSubClasses(c, true).getFlattened();
+				Set<OWLClass> subs = module.getSourceReasoned().getSubClasses(c, true)
+						.getFlattened();
 				for (OWLClass sub : subs)
 				{
 					OWLSubClassOfAxiom subAxiom = df.getOWLSubClassOfAxiom(sub, c);
-					if (module.getOntology().containsAxiom(subAxiom))
+					if (module.getGeneratedModule().containsAxiom(subAxiom))
 					{
 						removeAxiom(subAxiom);
 						;
-						for (OWLClass supr : module.getReasoner().getSuperClasses(c, true)
+						for (OWLClass supr : module.getSourceReasoned().getSuperClasses(c, true)
 								.getFlattened())
 						{
-							if (module.getOntology().containsClassInSignature(supr.getIRI()))
+							if (module.getGeneratedModule().containsClassInSignature(supr.getIRI()))
 							{
 								addAxiom(df.getOWLSubClassOfAxiom(sub, supr));
 							}
@@ -161,42 +149,32 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 	}
 
 	public void removeExcludeSubs() {
-		Set<OWLEntity> entities = ISFUtil.getExcludeSubsEntities(module.getAnnotationOntology(),
-				true);
+		Set<OWLEntity> entities = ISFTUtil.getExcludeSubsEntities(module.getModuleConfiguration(),
+				false);
 		// report.info("Excluding class: " + entities);
 		Set<OWLEntity> entityiesClosure = new HashSet<OWLEntity>();
 		for (OWLEntity entity : entities)
 		{
-			entityiesClosure.addAll(ISFUtil.getSubs(entity, true, module.getReasoner()));
+			entityiesClosure.addAll(ISFTUtil.getSubs(entity, true, module.getSourceReasoned()));
 		}
 		// report.info("Excluding class closure: " + entityiesClosure);
 		for (OWLEntity entity : entityiesClosure)
 		{
 			removeAxiom(df.getOWLDeclarationAxiom(entity));
-			removeAxioms(ISFUtil.getDefiningAxioms(entity, module.getSourceOntology(), true));
+			removeAxioms(getDefiningAxioms(entity, module.getSource(), true));
 		}
 
 	}
 
-	public void mergeModuleInclude() {
-		// we have to do this manually but first exclude
-		// addAxioms(moduleOntologyInclude.getAxioms());
-		Set<OWLAxiom> axioms = module.getIncludeOntology().getAxioms();
-		axioms.removeAll(module.getExcludeOntology().getAxioms());
-		module.getGeneratedManager().addAxioms(module.getOntology(), axioms);
-
-	}
-
 	public void addClosureToBfo() {
-		for (OWLEntity entity : module.getOntology().getSignature())
+		for (OWLEntity entity : module.getGeneratedModule().getSignature())
 		{
-			Set<OWLEntity> supers = ISFUtil.getSupers(entity, true, module.getReasoner());
+			Set<OWLEntity> supers = ISFTUtil.getSupers(entity, true, module.getSourceReasoned());
 			for (final OWLEntity supr : supers)
 			{
 				if (!supr.getIRI().toString().contains("BFO_"))
 				{
-					Set<OWLAxiom> axioms = ISFUtil.getDefiningAxioms(supr,
-							module.getSourceOntology(), true);
+					Set<OWLAxiom> axioms = getDefiningAxioms(supr, module.getSource(), true);
 					for (OWLAxiom axiom : axioms)
 					{
 						axiom.accept(new OWLAxiomVisitorAdapter() {
@@ -225,7 +203,7 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 
 	public void addAnnotations() {
 		Set<OWLEntity> entitiesToAnnotate = new HashSet<OWLEntity>();
-		entitiesToAnnotate.addAll(module.getOntology().getSignature());
+		entitiesToAnnotate.addAll(module.getGeneratedModule().getSignature());
 
 		Set<OWLEntity> annotatedEntities = new HashSet<OWLEntity>();
 
@@ -238,8 +216,8 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 				OWLEntity entity = i.next();
 				i.remove();
 				annotatedEntities.add(entity);
-				Set<OWLAnnotationAssertionAxiom> axioms = ISFUtil.getSubjectAnnotationAxioms(
-						module.getSourceOntology(), true, entity.getIRI());
+				Set<OWLAnnotationAssertionAxiom> axioms = ISFTUtil.getSubjectAnnotationAxioms(
+						module.getSource(), true, entity.getIRI());
 				addAxioms(axioms);
 				for (OWLAnnotationAssertionAxiom a : axioms)
 				{
@@ -255,7 +233,7 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 	}
 
 	public void typeAllEntities() {
-		for (OWLEntity e : module.getOntology().getSignature())
+		for (OWLEntity e : module.getGeneratedModule().getSignature())
 		{
 			addAxiom(df.getOWLDeclarationAxiom(e));
 		}
@@ -278,15 +256,9 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 				return;
 			}
 		}
-		if (!module.getExcludeOntology().containsAxiom(axiom)
-		// && !moduleOntologyInclude.containsAxiom(axiom) // TODO: check
-		// if commenting this out will cause problems. It was preventing
-		// the
-		// includes.
-				&& !removedAxioms.contains(axiom) && !module.getOntology().containsAxiom(axiom))
+		if (!removedAxioms.contains(axiom))
 		{
-			// report.info("\t" + axiom.toString());
-			module.getGeneratedManager().addAxiom(module.getOntology(), axiom);
+			module.addAxiomInferred(axiom);
 		}
 	}
 
@@ -300,7 +272,7 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 	Set<OWLAxiom> removedAxioms = new HashSet<OWLAxiom>();
 
 	private void removeAxiom(OWLAxiom axiom) {
-		module.getGeneratedManager().removeAxiom(module.getOntology(), axiom);
+		module.removeAxiomInferred(axiom);
 		removedAxioms.add(axiom);
 	}
 
@@ -315,5 +287,26 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 					+ module.getName(), e);
 		}
 
+	}
+
+	@Override
+	public void buildFinished(Module module) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public String getName() {
+		return "simple-inferred";
+	}
+
+	@Override
+	public String getDescription() {
+		return "A simple inferred builder factory.";
+	}
+
+	@Override
+	public ModuleBuilder createBuilder(Module module) {
+		return new InferredSimpleModuleBuilder(module);
 	}
 }
