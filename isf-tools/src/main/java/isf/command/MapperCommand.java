@@ -34,8 +34,6 @@ public class MapperCommand extends AbstractCommand {
 	// ================================================================================
 	// The IRIs to map
 	// ================================================================================
-	public List<IRI> iris = new ArrayList<IRI>();
-	public boolean irisSet = false;
 
 	@Parameter(names = "-fromIris", description = "The IRIs to map from. If not set, all "
 			+ "possible mappings will be applied.", converter = IriConverter.class)
@@ -48,12 +46,16 @@ public class MapperCommand extends AbstractCommand {
 		return iris;
 	}
 
+	public boolean isIrisSet() {
+		return irisSet;
+	}
+
+	private List<IRI> iris = null;
+	private boolean irisSet = false;
+
 	// ================================================================================
 	// The IRI prefixs to map
 	// ================================================================================
-
-	public List<String> prefixes = new ArrayList<String>();
-	public boolean prefixesSet = false;
 
 	@Parameter(names = "-iriPrefixes", description = "The IRI prefixes to find IRIs to map.")
 	public void setPrefixes(List<String> prefixes) {
@@ -65,12 +67,16 @@ public class MapperCommand extends AbstractCommand {
 		return prefixes;
 	}
 
+	public boolean isPrefixesSet() {
+		return prefixesSet;
+	}
+
+	private List<String> prefixes = null;
+	private boolean prefixesSet = false;
+
 	// ================================================================================
 	// IRI patterns
 	// ================================================================================
-
-	public List<String> patterns = new ArrayList<String>();
-	public boolean patternsSet = false;
 
 	@Parameter(names = "-iriPatterns", description = "Regex patterns for finding IRIs to map.")
 	public void setPatterns(List<String> patterns) {
@@ -82,12 +88,16 @@ public class MapperCommand extends AbstractCommand {
 		return patterns;
 	}
 
+	public boolean isPatternsSet() {
+		return patternsSet;
+	}
+
+	private List<String> patterns = null;
+	private boolean patternsSet = false;
+
 	// ================================================================================
 	// Transitive mapping?
 	// ================================================================================
-
-	public boolean mapTransitively = true;
-	public boolean mapTransitivelySet = false;
 
 	@Parameter(names = "-transitive", arity = 1,
 			description = "If a mapping iriA -> iriB -> iriC exists "
@@ -101,29 +111,38 @@ public class MapperCommand extends AbstractCommand {
 		return mapTransitively;
 	}
 
+	public boolean isMapTransitivelySet() {
+		return mapTransitivelySet;
+	}
+
+	private boolean mapTransitively = true;
+	private boolean mapTransitivelySet = false;
+
 	// ================================================================================
 	// The ontology IRIs that have the mapping definitions
 	// ================================================================================
 
-	public List<IRI> mappingIris = new ArrayList<IRI>();
-	public boolean mappingIrisSet = false;
-
 	@Parameter(names = "-mapIris", description = "The IRIs for the  OWL files that "
 			+ "define the mappings. ", converter = IriConverter.class)
-	public void setMappingOntologyIris(List<IRI> mappingOntologyIris) {
-		this.mappingIris = mappingOntologyIris;
+	public void setMappingIris(List<IRI> mappingIris) {
+		this.mappingIris = mappingIris;
 		this.mappingIrisSet = true;
 	}
 
-	public List<IRI> getMappingOntologyIris() {
+	public List<IRI> getMappingIris() {
 		return mappingIris;
 	}
+
+	public boolean isMappingIrisSet() {
+		return mappingIrisSet;
+	}
+
+	private List<IRI> mappingIris = null;
+	private boolean mappingIrisSet = false;
 
 	// ================================================================================
 	// Mapping files and/or folders
 	// ================================================================================
-	public List<File> mappingFiles = new ArrayList<File>();
-	public boolean mappingFilesSet = false;
 
 	@Parameter(names = "-mapFiles", description = "The paths to mapping files and/or folders.",
 			converter = CanonicalFileConverter.class)
@@ -136,12 +155,16 @@ public class MapperCommand extends AbstractCommand {
 		return mappingFiles;
 	}
 
+	public boolean isMappingFilesSet() {
+		return mappingFilesSet;
+	}
+
+	private List<File> mappingFiles = new ArrayList<File>();
+	private boolean mappingFilesSet = false;
+
 	// ================================================================================
 	// Manual mappings
 	// ================================================================================
-
-	public List<ManualIriMapping> manualMappings = new ArrayList<ManualIriMapping>();
-	public boolean manualMappingsSet = false;
 
 	@Parameter(names = "-mappings",
 			description = "Manual mappings in the form of someIri => someOtherIri. "
@@ -155,6 +178,13 @@ public class MapperCommand extends AbstractCommand {
 		return manualMappings;
 	}
 
+	public boolean isManualMappingsSet() {
+		return manualMappingsSet;
+	}
+
+	private List<ManualIriMapping> manualMappings = new ArrayList<ManualIriMapping>();
+	private boolean manualMappingsSet = false;
+
 	// ================================================================================
 	// The ontologies that will be mapped
 	// ================================================================================
@@ -163,9 +193,6 @@ public class MapperCommand extends AbstractCommand {
 			description = "The IRIs of ontologies that will be modified. "
 					+ "If not set, all OWL files in any specified folders will be mapped.",
 			converter = IriConverter.class)
-	public List<IRI> ontologyIris = new ArrayList<IRI>();
-	public boolean ontologyIrisSet = false;
-
 	public void setOntologyIris(List<IRI> ontologyIris) {
 		this.ontologyIris = ontologyIris;
 		this.ontologyIrisSet = true;
@@ -175,6 +202,13 @@ public class MapperCommand extends AbstractCommand {
 		return ontologyIris;
 	}
 
+	public boolean isOntologyIrisSet() {
+		return ontologyIrisSet;
+	}
+
+	private List<IRI> ontologyIris = new ArrayList<IRI>();
+	private boolean ontologyIrisSet = false;
+
 	// ================================================================================
 	// The files and/or folders for the OWL files that will be mapped.
 	// ================================================================================
@@ -183,9 +217,6 @@ public class MapperCommand extends AbstractCommand {
 			description = "The files and/or folders to OWL files that will be modified. "
 					+ "If not set, all OWL files in any specified folders will be mapped.",
 			required = true, converter = CanonicalFileConverter.class)
-	public List<File> ontologyFiles = new ArrayList<File>();
-	public boolean ontologyFilesSet = false;
-
 	public void setOntologyFiles(List<File> ontologyFiles) {
 		this.ontologyFiles = ontologyFiles;
 		this.ontologyFilesSet = true;
@@ -195,13 +226,16 @@ public class MapperCommand extends AbstractCommand {
 		return ontologyFiles;
 	}
 
+	public boolean isOntologyFilesSet() {
+		return ontologyFilesSet;
+	}
+
+	private List<File> ontologyFiles = new ArrayList<File>();
+	private boolean ontologyFilesSet = false;
+
 	// ================================================================================
 	// ontology subfiles
 	// ================================================================================
-
-	public boolean ontologySubFiles = true;
-
-	public boolean ontologySubFilesSet = false;
 
 	@Parameter(names = "-ontologySubFiles", arity = 1,
 			description = "If a file from the -ontologyFiles is a directory, "
@@ -215,12 +249,28 @@ public class MapperCommand extends AbstractCommand {
 		return ontologySubFiles;
 	}
 
+	public boolean isOntologySubFilesSet() {
+		return ontologySubFilesSet;
+	}
+
+	private boolean ontologySubFiles = true;
+	private boolean ontologySubFilesSet = false;
+
+	// ================================================================================
+	// Initialization
+	// ================================================================================
+
+	@Override
+	protected void configure() {
+
+	}
+
 	// ================================================================================
 	// Implementation
 	// ================================================================================
 	public MapperCommand(Main main) {
 		super(main);
-		preConfigure();
+		configure();
 	}
 
 	@Override
@@ -235,7 +285,7 @@ public class MapperCommand extends AbstractCommand {
 
 	@Override
 	public void run() {
-		man = main.getNewBaseManager();
+		man = getMain().getNewBaseManager();
 
 		ontologyFilesFinder = new OntologyFiles(ontologyFiles, ontologySubFiles);
 
@@ -379,18 +429,6 @@ public class MapperCommand extends AbstractCommand {
 		};
 
 		abstract public void execute(MapperCommand command);
-	}
-
-	@Override
-	protected void preConfigure() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected void init() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

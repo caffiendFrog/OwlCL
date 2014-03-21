@@ -18,14 +18,12 @@ import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveImport;
-import org.semanticweb.owlapi.model.SetOntologyID;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
@@ -38,8 +36,8 @@ public class NewModuleCommand extends AbstractCommand {
 	// ================================================================================
 	// The module name
 	// ================================================================================
-	public String moduleName;
-	public boolean moduleNameSet;
+	private String moduleName;
+	private boolean moduleNameSet;
 
 	@Parameter(
 			names = "-name",
@@ -57,24 +55,26 @@ public class NewModuleCommand extends AbstractCommand {
 	// The output directory
 	// ================================================================================
 
-	public File directory;
-
-	public File getDirectory() {
-		return directory;
-	}
+	private File directory;
+	private boolean directorySet;
 
 	@Parameter(names = "-directory",
 			description = "The directory where the module will be created.",
 			converter = FileConverter.class)
 	public void setDirectory(File directory) {
 		this.directory = directory;
+		this.directorySet = true;
+	}
+
+	public File getDirectory() {
+		return directory;
 	}
 
 	// ================================================================================
 	// The source IRIs for the module
 	// ================================================================================
-	public List<IRI> sourceIris;
-	public boolean sourceIrisSet;
+	private List<IRI> sourceIris;
+	private boolean sourceIrisSet;
 
 	@Parameter(names = "-sourceIris", converter = IriConverter.class,
 			description = "The source IRIs that will be used for this module.")
@@ -90,8 +90,8 @@ public class NewModuleCommand extends AbstractCommand {
 	// ================================================================================
 	// The final IRI of the module
 	// ================================================================================
-	public IRI iri;
-	public boolean iriSet;
+	private IRI iri;
+	private boolean iriSet;
 
 	@Parameter(names = "-iri", description = "The generated module's IRI",
 			converter = IriConverter.class)
@@ -107,8 +107,8 @@ public class NewModuleCommand extends AbstractCommand {
 	// ================================================================================
 	// The final IRI of the module inferred
 	// ================================================================================
-	public IRI iriInferred;
-	public boolean iriInferredSet;
+	private IRI iriInferred;
+	private boolean iriInferredSet;
 
 	@Parameter(names = "-iriInferred", description = "The generated inferred module's IRI",
 			converter = IriConverter.class)
@@ -124,8 +124,8 @@ public class NewModuleCommand extends AbstractCommand {
 	// ================================================================================
 	// The final filename of the module
 	// ================================================================================
-	public String fileName;
-	public boolean fileNameSet;
+	private String fileName;
+	private boolean fileNameSet;
 
 	@Parameter(names = "-fileName", description = "The generated module's file name.")
 	public void setFileName(String fileName) {
@@ -140,8 +140,8 @@ public class NewModuleCommand extends AbstractCommand {
 	// ================================================================================
 	// The final filename of the module inferred
 	// ================================================================================
-	public String fileInferredName;
-	public boolean fileInferredNameSet;
+	private String fileInferredName;
+	private boolean fileInferredNameSet;
 
 	@Parameter(names = "-fileNameInferred",
 			description = "The generated inferred module's file name.")
@@ -157,9 +157,8 @@ public class NewModuleCommand extends AbstractCommand {
 	// ================================================================================
 	// The IRI prefix of the module's files
 	// ================================================================================
-	public String iriPrefix;
-	public boolean iriPrefixSet;
-	private boolean inited;
+	private String iriPrefix;
+	private boolean iriPrefixSet;
 
 	@Parameter(
 			names = "-iriPrefix",
@@ -177,16 +176,13 @@ public class NewModuleCommand extends AbstractCommand {
 	}
 
 	// ================================================================================
-	// Implementation
+	// Initialization
 	// ================================================================================
 
-	public NewModuleCommand(Main main) {
-		super(main);
-		preConfigure();
-	}
+	private boolean inited;
 
 	@Override
-	protected void preConfigure() {
+	protected void configure() {
 		moduleName = "_unnamed";
 		if (main.project == null)
 		{
@@ -244,7 +240,15 @@ public class NewModuleCommand extends AbstractCommand {
 		legacyIri = IRI.create(iriPrefix + moduleName + ISFT.MODULE_LEGACY_IRI_SUFFIX);
 		legacyRemovedIri = IRI.create(iriPrefix + moduleName
 				+ ISFT.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
+	}
 
+	// ================================================================================
+	// Implementation
+	// ================================================================================
+
+	public NewModuleCommand(Main main) {
+		super(main);
+		configure();
 	}
 
 	OWLOntologyManager man;
@@ -300,6 +304,9 @@ public class NewModuleCommand extends AbstractCommand {
 			configurationOntology = ISFTUtil.getOrLoadOrCreateOntology(configurationIri, man);
 			if (annotationOntology != null)
 			{
+				// until I see how to change xmlns and xml:base, otherwise those
+				// will not be updated.
+				// TODO: fix
 				man.addAxioms(configurationOntology, annotationOntology.getAxioms());
 				for (OWLAnnotation a : annotationOntology.getAnnotations())
 				{
@@ -409,6 +416,31 @@ public class NewModuleCommand extends AbstractCommand {
 		{
 			man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
 					ModuleVocab.module_generate_inferred.getAP(), df.getOWLLiteral(""))));
+		}
+
+		// check/add the builders annotation
+		axioms = ISFTUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_builders.getAP(),
+				configurationOntology, false);
+		if (axioms.size() > 1)
+		{
+			logger.warn("Found multiple module builders annotations for module: " + getModuleName());
+		} else if (axioms.size() == 0)
+		{
+			man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+					ModuleVocab.module_builders.getAP(), df.getOWLLiteral(""))));
+		}
+
+		// check/add the inferred builders annotation
+		axioms = ISFTUtil.getOntologyAnnotationLiteralValues(
+				ModuleVocab.module_inferred_builders.getAP(), configurationOntology, false);
+		if (axioms.size() > 1)
+		{
+			logger.warn("Found multiple module inferred builders annotations for module: "
+					+ getModuleName());
+		} else if (axioms.size() == 0)
+		{
+			man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+					ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral(""))));
 		}
 
 		// top

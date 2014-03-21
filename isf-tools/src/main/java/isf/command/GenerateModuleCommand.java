@@ -9,8 +9,6 @@ import java.util.List;
 
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -19,14 +17,9 @@ import com.beust.jcommander.Parameters;
 		commandDescription = "Generate the named module. The module has to be already created.")
 public class GenerateModuleCommand extends AbstractCommand {
 
-	private static Logger logger = LoggerFactory.getLogger(GenerateModuleCommand.class
-			.getSimpleName());
-
 	// ================================================================================
 	// The module name
 	// ================================================================================
-	public String moduleName = null;
-	public boolean moduleNameSet;
 
 	@Parameter(
 			names = "-name",
@@ -40,12 +33,17 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return moduleName;
 	}
 
+	public boolean isModuleNameSet() {
+		return moduleNameSet;
+	}
+
+	private String moduleName = null;
+	private boolean moduleNameSet;
+
 	// ================================================================================
 	// The directory where the module files are located (not the generated
 	// files)
 	// ================================================================================
-	public File directory = null;
-	public boolean directorySet;
 
 	@Parameter(names = "-directory", converter = CanonicalFileConverter.class,
 			description = "The location where the module defining files.")
@@ -58,11 +56,16 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return directory;
 	}
 
+	public boolean isDirectorySet() {
+		return directorySet;
+	}
+
+	private File directory = null;
+	private boolean directorySet;
+
 	// ================================================================================
 	// The directory where the module output will go
 	// ================================================================================
-	public File output = null;
-	public boolean outputSet;
 
 	@Parameter(names = "-output", converter = CanonicalFileConverter.class,
 			description = "The location where the module output will go.")
@@ -75,11 +78,16 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return output;
 	}
 
+	public boolean isOutputSet() {
+		return outputSet;
+	}
+
+	private File output = null;
+	private boolean outputSet;
+
 	// ================================================================================
 	// do unreasoned
 	// ================================================================================
-	public boolean unReasoned = false;
-	public boolean unReasonedSet = false;
 
 	@Parameter(names = "-unReasoned", arity = 1,
 			description = "Set the module to generate the un-reasoned version. "
@@ -95,11 +103,16 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return unReasoned;
 	}
 
+	public boolean isUnReasonedSet() {
+		return unReasonedSet;
+	}
+
+	private boolean unReasoned = false;
+	private boolean unReasonedSet = false;
+
 	// ================================================================================
 	// do reasoned
 	// ================================================================================
-	public boolean reasoned = false;
-	public boolean reasonedSet = false;
 
 	@Parameter(names = "-reasoned", arity = 1,
 			description = "Set the module to generate the reasoned version. "
@@ -115,11 +128,16 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return reasoned;
 	}
 
+	public boolean isReasonedSet() {
+		return reasonedSet;
+	}
+
+	private boolean reasoned = false;
+	private boolean reasonedSet = false;
+
 	// ================================================================================
 	// Add legacy
 	// ================================================================================
-	public boolean addLegacy = false;
-	public boolean addLegacySet;
 
 	@Parameter(names = "-addLegacy",
 			description = "If this option is set, legacy content will be added.")
@@ -132,13 +150,16 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return addLegacy;
 	}
 
+	public boolean isAddLegacySet() {
+		return addLegacySet;
+	}
+
+	private boolean addLegacy = false;
+	private boolean addLegacySet;
+
 	// ================================================================================
 	// clean legacy
 	// ================================================================================
-	public boolean cleanLegacy = false;
-	public boolean cleanLegacySet;
-
-	private boolean inited;
 
 	@Parameter(names = "-cleanLegacy",
 			description = "If this option is set, legacy content will be cleaned.")
@@ -151,76 +172,32 @@ public class GenerateModuleCommand extends AbstractCommand {
 		return cleanLegacy;
 	}
 
+	public boolean isCleanLegacySet() {
+		return cleanLegacySet;
+	}
+
+	private boolean cleanLegacy = false;
+	private boolean cleanLegacySet;
+
 	// ================================================================================
 	// Initialization
 	// ================================================================================
 
 	@Override
-	protected void preConfigure() {
-		this.moduleName = "_unnamed";
-		if (main.project == null)
-		{
-			directory = new File(main.outputDirectory, "module/" + moduleName);
-			output = new File(main.outputDirectory + "module-output/" + moduleName);
-		} else
-		{
-			directory = new File(main.project, "module/" + moduleName);
-			output = new File(main.project, "module-output/" + moduleName);
-		}
-	}
+	protected void configure() {
 
-	@Override
-	public void init() {
-		if (inited)
+		if (!moduleNameSet)
 		{
-			return;
+			this.moduleName = "_unnamed";
+		}
+		if (!directorySet)
+		{
+			directory = new File(getMain().getProject(), "module/" + moduleName);
 		}
 
-		this.inited = true;
-
-		if (main.project == null)
+		if (!outputSet)
 		{
-			if (!directorySet)
-			{
-				directory = new File(main.outputDirectory, "module/" + moduleName);
-			}
-			if (!outputSet)
-			{
-				output = new File(main.outputDirectory + "module-output/" + moduleName);
-			}
-		} else
-		{
-			if (!directorySet)
-			{
-				directory = new File(main.project, "module/" + moduleName);
-			}
-			if (!outputSet)
-			{
-				output = new File(main.project, "module-output/" + moduleName);
-			}
-		}
-
-		output.mkdirs();
-
-		if (sourceOntology != null && sourceReasoner != null)
-		{
-			module = new DefaultModule(moduleName, directory, sourceOntology, sourceReasoner,
-					output, addLegacy, cleanLegacy);
-		} else
-		{
-			module = new DefaultModule(this.moduleName, this.directory,
-					main.getSharedBaseManager(), this.output, addLegacy, cleanLegacy);
-		}
-		module.loadConfiguration();
-
-		if (reasonedSet)
-		{
-			module.setGenerateInferred(reasoned);
-		}
-
-		if (unReasonedSet)
-		{
-			module.setGenerateInferred(unReasoned);
+			output = new File(getMain().getProject(), "module-output/" + moduleName);
 		}
 
 	}
@@ -231,7 +208,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 
 	public GenerateModuleCommand(Main main) {
 		super(main);
-		preConfigure();
+		configure();
 	}
 
 	OWLReasoner sourceReasoner;
@@ -240,7 +217,33 @@ public class GenerateModuleCommand extends AbstractCommand {
 
 	@Override
 	public void run() {
-		init();
+		configure();
+		output.mkdirs();
+
+		if (sourceOntology != null && sourceReasoner != null)
+		{
+			module = new DefaultModule(moduleName, directory, sourceOntology, sourceReasoner,
+					output, addLegacy, cleanLegacy);
+		} else
+		{
+			module = new DefaultModule(this.moduleName, this.directory, getMain()
+					.getSharedBaseManager(), output, addLegacy, cleanLegacy);
+		}
+
+		// load the owl configuration
+		module.loadConfiguration();
+
+		// override the configuration from command line
+		if (reasonedSet)
+		{
+			module.setGenerateInferred(reasoned);
+		}
+
+		if (unReasonedSet)
+		{
+			module.setGenerateInferred(unReasoned);
+		}
+
 		module.generateModule();
 		module.saveGeneratedModule();
 		module.saveModuleConfiguration();

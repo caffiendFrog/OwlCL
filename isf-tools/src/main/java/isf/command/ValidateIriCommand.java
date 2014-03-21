@@ -73,7 +73,7 @@ public class ValidateIriCommand extends AbstractCommand {
 
 	public ValidateIriCommand(Main main) {
 		super(main);
-		preConfigure();
+		configure();
 	}
 
 	@Override
@@ -232,7 +232,7 @@ public class ValidateIriCommand extends AbstractCommand {
 	}
 
 	@Override
-	protected void preConfigure() {
+	protected void configure() {
 		// TODO Auto-generated method stub
 
 	}

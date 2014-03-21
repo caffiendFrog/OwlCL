@@ -4,6 +4,7 @@ import isf.command.cli.CanonicalFileConverter;
 import isf.command.cli.IriConverter;
 import isf.util.ISFTUtil;
 import isf.util.OntologyFiles;
+import isf.util.Report;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -39,9 +40,6 @@ public class CompareCommand extends AbstractCommand {
 	// from files
 	// ================================================================================
 
-	public List<File> fromFiles = new ArrayList<File>();
-	public boolean fromFilesSet;
-
 	@Parameter(names = "-fromFiles", description = "Starting/from files or directories.",
 			converter = CanonicalFileConverter.class)
 	public void setFromFiles(List<File> fromFiles) {
@@ -53,12 +51,16 @@ public class CompareCommand extends AbstractCommand {
 		return fromFiles;
 	}
 
+	public boolean isFromFilesSet() {
+		return fromFilesSet;
+	}
+
+	private List<File> fromFiles = new ArrayList<File>();
+	private boolean fromFilesSet;
+
 	// ================================================================================
 	// from IRI
 	// ================================================================================
-
-	public IRI fromIri;
-	public boolean fromIriSet;
 
 	@Parameter(names = "-fromIri", description = "The IRI for the from ontology.",
 			converter = IriConverter.class)
@@ -71,12 +73,16 @@ public class CompareCommand extends AbstractCommand {
 		return fromIri;
 	}
 
+	public boolean isFromIriSet() {
+		return fromIriSet;
+	}
+
+	private IRI fromIri;
+	private boolean fromIriSet;
+
 	// ================================================================================
 	// to files
 	// ================================================================================
-
-	public List<File> toFiles = new ArrayList<File>();
-	public boolean toFilesSet;
 
 	@Parameter(names = "-toFiles", description = "The to/end files or directories for the diff.",
 			converter = CanonicalFileConverter.class)
@@ -89,12 +95,16 @@ public class CompareCommand extends AbstractCommand {
 		return toFiles;
 	}
 
+	public boolean isToFilesSet() {
+		return toFilesSet;
+	}
+
+	private List<File> toFiles = new ArrayList<File>();
+	private boolean toFilesSet;
+
 	// ================================================================================
 	// to IRI
 	// ================================================================================
-
-	public IRI toIri;
-	public boolean toIriSet;
 
 	@Parameter(names = "-toIri", description = "IRI for right side of the diff.",
 			converter = IriConverter.class)
@@ -107,20 +117,40 @@ public class CompareCommand extends AbstractCommand {
 		return toIri;
 	}
 
-	// ================================================================================
-	// itemized
-	// ================================================================================
+	public boolean isToIriSet() {
+		return toIriSet;
+	}
 
-	@Parameter(names = "-itemized", arity = 1,
-			description = "If the diff should be itemized by IRI/File.")
-	public boolean itemized = true;
+	private IRI toIri;
+	private boolean toIriSet;
+
+	// //
+	// ================================================================================
+	// // itemized
+	// //
+	// ================================================================================
+	//
+	// @Parameter(names = "-itemized", arity = 1,
+	// description = "If the diff should be itemized by IRI/File.")
+	// public void setItemized(boolean itemized) {
+	// this.itemized = itemized;
+	// this.itemizedSet = true;
+	// }
+	//
+	// public boolean isItemized() {
+	// return itemized;
+	// }
+	//
+	// public boolean isItemizedSet() {
+	// return itemizedSet;
+	// }
+	//
+	// private boolean itemized = true;
+	// private boolean itemizedSet = false;
 
 	// ================================================================================
 	// Include sub directories?
 	// ================================================================================
-
-	public boolean subDir = true;
-	public boolean subDirSet;
 
 	@Parameter(names = "-subdir", arity = 1, description = "Include sub directories? "
 			+ "True by default.")
@@ -133,11 +163,42 @@ public class CompareCommand extends AbstractCommand {
 		return subDir;
 	}
 
+	public boolean isSubDirSet() {
+		return subDirSet;
+	}
+
+	private boolean subDir = true;
+	private boolean subDirSet;
+
 	// ================================================================================
 	// Custom relative path for the report
 	// ================================================================================
 	@Parameter(names = "-report", description = "A relative path for the generated report.")
-	public String reportPath = "CompareCommandReport+" + System.currentTimeMillis() + ".txt";
+	public void setReportPath(String reportPath) {
+		this.reportPath = reportPath;
+		this.reportPathSet = true;
+	}
+
+	public String getReportPath() {
+		return reportPath;
+	}
+
+	public boolean isReportPathSet() {
+		return reportPathSet;
+	}
+
+	private String reportPath = "CompareCommandReport+" + System.currentTimeMillis() + ".txt";
+	private boolean reportPathSet;
+
+	// ================================================================================
+	// Initialization
+	// ================================================================================
+
+	@Override
+	protected void configure() {
+		// TODO Auto-generated method stub
+
+	}
 
 	// ================================================================================
 	// Implementation
@@ -175,21 +236,22 @@ public class CompareCommand extends AbstractCommand {
 
 	public CompareCommand(Main main) {
 		super(main);
-		preConfigure();
+		configure();
 	}
 
 	@Override
 	public void run() {
+		configure();
 
 		if (fromIriSet ^ toIriSet)
 		{
 			throw new IllegalStateException("Called with one IRI set but not the other.");
 		}
 
-		report = new Report(reportPath);
+		report = new Report(this, reportPath);
 
 		fromOntologyFiles = new OntologyFiles(fromFiles, subDir);
-		fromManager = main.getNewBaseManager();
+		fromManager = getMain().getNewBaseManager();
 		fromOntologyFiles.setupManager(fromManager, null);
 		if (fromIri != null)
 		{
@@ -220,7 +282,7 @@ public class CompareCommand extends AbstractCommand {
 		}
 
 		toOntologyFiles = new OntologyFiles(toFiles, subDir);
-		toManager = main.getNewBaseManager();
+		toManager = getMain().getNewBaseManager();
 		toOntologyFiles.setupManager(toManager, null);
 		if (toIri != null)
 		{
@@ -848,18 +910,6 @@ public class CompareCommand extends AbstractCommand {
 			return fromPath.isEmpty() && fromPaths.get(0).isEmpty() && toPath.isEmpty()
 					&& toPaths.get(0).isEmpty();
 		}
-	}
-
-	@Override
-	protected void preConfigure() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected void init() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

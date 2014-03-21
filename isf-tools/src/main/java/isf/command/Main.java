@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -112,9 +113,6 @@ public class Main {
 	 * default the output directory will be a sub directory named "isft-output".
 	 * This default output location can be overridden.
 	 */
-	public File workingDirectory = new File(System.getProperty("user.dir"));
-	public boolean workingDirectorySet = false;
-
 	@Parameter(names = "-work", description = "The working directory, where a configuration "
 			+ "file might be located", converter = CanonicalFileConverter.class,
 			validateValueWith = FileValueExistsValidator.class)
@@ -127,16 +125,16 @@ public class Main {
 		return workingDirectory;
 	}
 
+	public boolean isWorkingDirectorySet() {
+		return workingDirectorySet;
+	}
+
+	private File workingDirectory = null;
+	private boolean workingDirectorySet = false;
+
 	// ================================================================================
 	// Ontology project directory
 	// ================================================================================
-
-	public File project = null;
-	public boolean projectSet = false;
-
-	public File getProject() {
-		return project;
-	}
 
 	@Parameter(names = "-project", description = "The location of the ontology project. "
 			+ "If this is set, certain commands will will work with files under this "
@@ -148,12 +146,20 @@ public class Main {
 		this.projectSet = true;
 	}
 
+	public File getProject() {
+		return project;
+	}
+
+	public boolean isProjectSet() {
+		return projectSet;
+	}
+
+	private File project = null;
+	private boolean projectSet = false;
+
 	// ================================================================================
 	// Ontology files and directories
 	// ================================================================================
-
-	public List<File> ontologyFiles = new ArrayList<File>();
-	public boolean ontologyFilesSet = false;
 
 	@Parameter(names = "-ontologyFiles", converter = CanonicalFileConverter.class,
 			validateValueWith = FileListValueValidator.class, description = "")
@@ -166,12 +172,16 @@ public class Main {
 		return ontologyFiles;
 	}
 
+	public boolean isOntologyFilesSet() {
+		return ontologyFilesSet;
+	}
+
+	private List<File> ontologyFiles = null;
+	private boolean ontologyFilesSet = false;
+
 	// ================================================================================
 	// ontology subs?
 	// ================================================================================
-
-	public boolean ontologySubs = true;
-	public boolean ontologySubsSet = false;
 
 	@Parameter(names = "-ontologySubs", arity = 1,
 			description = "If ontology subfolders should be considered. " + "True by default.")
@@ -184,12 +194,16 @@ public class Main {
 		return ontologySubs;
 	}
 
+	public boolean isOntologySubsSet() {
+		return ontologySubsSet;
+	}
+
+	private boolean ontologySubs = true;
+	private boolean ontologySubsSet = false;
+
 	// ================================================================================
 	// Import files.
 	// ================================================================================
-
-	public List<File> importFiles = new ArrayList<File>();
-	public boolean importFilesSet = false;
 
 	@Parameter(names = "-importFiles", converter = CanonicalFileConverter.class,
 			validateValueWith = FileListValueValidator.class, description = "")
@@ -202,12 +216,16 @@ public class Main {
 		return importFiles;
 	}
 
+	public boolean isImportFilesSet() {
+		return importFilesSet;
+	}
+
+	private List<File> importFiles = null;
+	private boolean importFilesSet = false;
+
 	// ================================================================================
 	// import subs?
 	// ================================================================================
-
-	public boolean importSubs = true;
-	public boolean importSubsSet = false;
 
 	@Parameter(names = "-importSubs", arity = 1,
 			description = "If import subfolders should be considered. " + "True by default.")
@@ -220,12 +238,16 @@ public class Main {
 		return importSubs;
 	}
 
+	public boolean isImportSubsSet() {
+		return importSubsSet;
+	}
+
+	private boolean importSubs = true;
+	private boolean importSubsSet = false;
+
 	// ================================================================================
 	// The output directory location
 	// ================================================================================
-
-	public File outputDirectory = null;
-	public boolean outputDirectorySet = false;
 
 	@Parameter(names = "-output", converter = CanonicalFileConverter.class,
 			description = "The top directory for output.")
@@ -238,12 +260,16 @@ public class Main {
 		return outputDirectory;
 	}
 
+	public boolean isOutputDirectorySet() {
+		return outputDirectorySet;
+	}
+
+	private File outputDirectory = null;
+	private boolean outputDirectorySet = false;
+
 	// ================================================================================
 	// Logging level for this run
 	// ================================================================================
-
-	public String logLevel = null;
-	public boolean logLevelSet = false;
 
 	@Parameter(names = "-loglevel",
 			description = "The logging level. Valid values include warn, info, and debug.")
@@ -256,19 +282,38 @@ public class Main {
 		return this.logLevel;
 	}
 
+	public boolean isLogLevelSet() {
+		return logLevelSet;
+	}
+
+	private String logLevel = null;
+	private boolean logLevelSet = false;
+
 	// ================================================================================
 	// Detailed reports
 	// ================================================================================
 
 	@Parameter(names = "-details", arity = 1,
 			description = "If any generated reports should be detailed.")
-	public boolean detailedReport = true;
+	public void setDetailedReport(boolean detailedReport) {
+		this.detailedReport = detailedReport;
+		this.detailedReportSet = true;
+	}
+
+	public boolean isDetailedReport() {
+		return detailedReport;
+	}
+
+	public boolean isDetailedReportSet() {
+		return detailedReportSet;
+	}
+
+	private boolean detailedReport = true;
+	private boolean detailedReportSet = false;
 
 	// ================================================================================
 	// A job name that will be prefix the job's folder name.
 	// ================================================================================
-	public String jobName = null;
-	public boolean jobNameSet = false;
 
 	@Parameter(
 			names = "-jobName",
@@ -285,11 +330,16 @@ public class Main {
 		return this.jobName;
 	}
 
+	public boolean isJobNameSet() {
+		return jobNameSet;
+	}
+
+	private String jobName = null;
+	private boolean jobNameSet = false;
+
 	// ================================================================================
 	// A job name qualifier that will qualify the job's folder name.
 	// ================================================================================
-	public String jobQualifier = null;
-	public boolean jobQualifierSet = false;
 
 	@Parameter(names = "-jobQualifier",
 			description = "A job qualifier that will make the job's directory name unique. "
@@ -303,12 +353,16 @@ public class Main {
 		return this.jobQualifier;
 	}
 
+	public boolean isJobQualifierSet() {
+		return jobQualifierSet;
+	}
+
+	private String jobQualifier = null;
+	private boolean jobQualifierSet = false;
+
 	// ================================================================================
 	// Offline mode?
 	// ================================================================================
-
-	public boolean offline = true;
-	public boolean offlineSet = false;
 
 	@Parameter(
 			names = "-offline",
@@ -324,6 +378,13 @@ public class Main {
 		return offline;
 	}
 
+	public boolean isOfflineSet() {
+		return offlineSet;
+	}
+
+	private boolean offline = true;
+	private boolean offlineSet = false;
+
 	// ================================================================================
 	// Quiet?
 	// ================================================================================
@@ -333,7 +394,21 @@ public class Main {
 			arity = 1,
 			description = "Suppress default console output. By default "
 					+ "warn or higher level logging, and generate reports are alos shown on console.")
-	public boolean quiet = false;
+	public void setQuiet(boolean quiet) {
+		this.quiet = quiet;
+		this.quietSet = true;
+	}
+
+	public boolean isQuiet() {
+		return quiet;
+	}
+
+	public boolean isQuietSet() {
+		return quietSet;
+	}
+
+	private boolean quiet = false;
+	private boolean quietSet = false;
 
 	// ================================================================================
 	// Overwrite output
@@ -341,13 +416,26 @@ public class Main {
 
 	@Parameter(names = "-overwrite", arity = 1,
 			description = "Should the job's output directory be overwritten if it exists?")
+	public void setOverwrite(boolean overwrite) {
+		this.overwrite = overwrite;
+	}
+
+	public boolean isOverwrite() {
+		return overwrite;
+	}
+
+	public boolean isOverwriteSet() {
+		return overwriteSet;
+	}
+
 	public boolean overwrite = false;
+	private boolean overwriteSet = false;
 
 	// ================================================================================
 	// Initialization
 	// ================================================================================
 
-	public Properties configProperties;
+	private Properties configProperties;
 
 	/**
 	 * This preconfigures the Main object before JCommander. The working
@@ -361,13 +449,13 @@ public class Main {
 	 * The values specified in the property files are used to pre-configure this
 	 * instance.
 	 */
-	public void preConfigure() {
+	public void configure() {
 
-		// working directory is not set here. It has to be set before calling
-		// preConfigure()
+		// working directory is not set here. It comes either from the
+		// constructor or the commandline after parsing.
 
 		// load properties (after the working directory is set if needed.)
-		if (configProperties == null)
+		if (configProperties == null || workingDirectorySet)
 		{
 			Properties homeProperties = getProperties(new File(System.getProperty("user.home")),
 					null);
@@ -382,171 +470,219 @@ public class Main {
 			}
 		}
 
-		// project directory
-		String projectPath = configProperties.getProperty(PROJECT_PROPERTY);
-		if (projectPath != null)
+		// job name
+		if (!jobNameSet)
 		{
-			try
+			String jobName = configProperties.getProperty(JOB_NAME_PROPERTY);
+			if (jobName != null)
 			{
-				File project = new File(projectPath).getCanonicalFile();
-				if (project.isDirectory())
+				this.jobName = jobName.trim().replace(' ', '_');
+			} else
+			{
+				this.jobName = "_isft_job";
+			}
+		}
+
+		// job qualifier
+		if (!jobQualifierSet)
+		{
+			String jobQualifier = configProperties.getProperty(JOB_QUALIFIER_PROPERTY);
+			if (jobQualifier != null)
+			{
+				this.jobQualifier = jobQualifier.trim().replace(' ', '_');
+			} else
+			{
+				SimpleDateFormat df = new SimpleDateFormat("yy.MM.dd-HH.mm.ss");
+				this.jobQualifier = df.format(new Date());
+			}
+		}
+
+		// project directory
+		if (!projectSet)
+		{
+			String projectPath = configProperties.getProperty(PROJECT_PROPERTY);
+			if (projectPath != null)
+			{
+				try
 				{
-					this.project = project;
-				} else
+					File project = new File(projectPath).getCanonicalFile();
+					if (project.isDirectory())
+					{
+						this.project = project;
+					} else
+					{
+						throw new IllegalStateException(
+								"Project directory does not exist. Directory: " + projectPath);
+					}
+				} catch (IOException e)
 				{
-					throw new IllegalStateException("Project directory does not exist. Directory: "
-							+ projectPath);
+					throw new RuntimeException(
+							"Failed to get canonical File to project directory + " + projectPath, e);
 				}
-			} catch (IOException e)
+			} else
 			{
-				throw new RuntimeException("Failed to get canonical File to project directory + "
-						+ projectPath, e);
+				this.project = getJobDirectory();
 			}
 		}
 
 		// ontology files
-		String ontologyFileNames = configProperties.getProperty(ONTOLOGY_FILES_PROPERTY);
-		if (ontologyFileNames != null)
+		if (!ontologyFilesSet)
 		{
-			for (String fileName : ontologyFileNames.split(","))
+			String ontologyFileNames = configProperties.getProperty(ONTOLOGY_FILES_PROPERTY);
+			if (ontologyFileNames != null)
 			{
-				File file = new File(fileName.trim());
-				if (file.exists())
+				this.ontologyFiles = new ArrayList<File>();
+				for (String fileName : ontologyFileNames.split(","))
 				{
-					ontologyFiles.add(file);
-				} else
-				{
-					throw new IllegalStateException("File: " + file
-							+ " listed as ontolog file in Main "
-							+ "configuration properties but it does not exist.");
+					File file = new File(fileName.trim());
+					if (file.exists())
+					{
+						ontologyFiles.add(file);
+					} else
+					{
+						throw new IllegalStateException("File: " + file
+								+ " listed as ontolog file in Main "
+								+ "configuration properties but it does not exist.");
+					}
 				}
 			}
 		}
 
 		// ontology subs
-		String ontologyFileSubs = configProperties.getProperty(ONTOLOGY_SUBS_PROPERTY);
-		if (ontologyFileSubs != null)
+		if (!ontologySubsSet)
 		{
-			ontologySubs = Boolean.valueOf(ontologyFileSubs.trim());
-		} else
-		{
-			ontologySubs = true;
+			String ontologyFileSubs = configProperties.getProperty(ONTOLOGY_SUBS_PROPERTY);
+			if (ontologyFileSubs != null)
+			{
+				ontologySubs = Boolean.valueOf(ontologyFileSubs.trim());
+			} else
+			{
+				ontologySubs = true;
+			}
 		}
 
 		// import files
-		String importFileNames = configProperties.getProperty(IMPORT_FILES_PROPERTY);
-		if (importFileNames != null)
+		if (!importFilesSet)
 		{
-			for (String fileName : importFileNames.split(","))
+			String importFileNames = configProperties.getProperty(IMPORT_FILES_PROPERTY);
+			if (importFileNames != null)
 			{
-				File file = new File(fileName.trim());
-				if (file.exists())
+				this.importFiles = new ArrayList<File>();
+				for (String fileName : importFileNames.split(","))
 				{
-					importFiles.add(file);
-				} else
-				{
-					throw new IllegalStateException("File: " + file
-							+ " listed as import file in Main "
-							+ "configuration properties but it does not exist.");
+					File file = new File(fileName.trim());
+					if (file.exists())
+					{
+						importFiles.add(file);
+					} else
+					{
+						throw new IllegalStateException("File: " + file
+								+ " listed as import file in Main "
+								+ "configuration properties but it does not exist.");
+					}
 				}
 			}
 		}
 
-		// ontology subs
-		String importFileSubs = configProperties.getProperty(IMPORT_SUBS_PROPERTY);
-		if (importFileSubs != null)
+		// import subs
+		if (!importSubsSet)
 		{
-			importSubs = Boolean.valueOf(importFileSubs.trim());
-		} else
-		{
-			importSubs = true;
+			String importFileSubs = configProperties.getProperty(IMPORT_SUBS_PROPERTY);
+			if (importFileSubs != null)
+			{
+				importSubs = Boolean.valueOf(importFileSubs.trim());
+			} else
+			{
+				importSubs = true;
+			}
 		}
 
 		// output directory
-		String output = configProperties.getProperty(OUTPUT_DIRECTORY_PROPERTY);
-		if (output != null)
+		if (!outputDirectorySet)
 		{
-			try
+			String output = configProperties.getProperty(OUTPUT_DIRECTORY_PROPERTY);
+			if (output != null)
 			{
-				outputDirectory = new File(output).getCanonicalFile();
-			} catch (IOException e)
+				try
+				{
+					outputDirectory = new File(output).getCanonicalFile();
+				} catch (IOException e)
+				{
+					throw new RuntimeException("Error while creating output directory.", e);
+				}
+			} else
 			{
-				throw new RuntimeException("Error while creating output directory.", e);
+				outputDirectory = new File(getWorkingDirectory(), "isft-output");
 			}
-		} else
-		{
-			outputDirectory = new File(getWorkingDirectory(), "isft-output");
-		}
-
-		// job name
-		String jobName = configProperties.getProperty(JOB_NAME_PROPERTY);
-		if (jobName != null)
-		{
-			this.jobName = jobName.trim().replace(' ', '_');
-		} else
-		{
-			this.jobName = "_isft_job";
-		}
-
-		// job qualifier
-		String jobQualifier = configProperties.getProperty(JOB_QUALIFIER_PROPERTY);
-		if (jobQualifier != null)
-		{
-			this.jobQualifier = jobQualifier.trim().replace(' ', '_');
-		} else
-		{
-			SimpleDateFormat df = new SimpleDateFormat("yy.MM.dd-HH.mm.ss");
-			this.jobQualifier = df.format(new Date());
 		}
 
 		// quiet
-		String quiet = configProperties.getProperty(QUIET_PROPERTY);
-		if (quiet != null)
+		if (!quietSet)
 		{
-			this.quiet = Boolean.valueOf(quiet.trim());
-		} else
-		{
-			this.quiet = false;
+			String quiet = configProperties.getProperty(QUIET_PROPERTY);
+			if (quiet != null)
+			{
+				this.quiet = Boolean.valueOf(quiet.trim());
+			} else
+			{
+				this.quiet = false;
+			}
 		}
 
 		// offline
-		String offline = configProperties.getProperty(OFFLINE_PROPERTY);
-		if (offline != null)
+		if (!offlineSet)
 		{
-			this.offline = Boolean.valueOf(offline.trim());
-		} else
-		{
-			this.offline = true;
+			String offline = configProperties.getProperty(OFFLINE_PROPERTY);
+			if (offline != null)
+			{
+				this.offline = Boolean.valueOf(offline.trim());
+			} else
+			{
+				this.offline = true;
+			}
 		}
 
 		// overwrite
-		String overwrite = configProperties.getProperty(OVERWRITE_PROPERTY);
-		if (overwrite != null)
+		if (!overwriteSet)
 		{
-			this.overwrite = Boolean.valueOf(overwrite.trim());
-		} else
-		{
-			this.overwrite = false;
+			String overwrite = configProperties.getProperty(OVERWRITE_PROPERTY);
+			if (overwrite != null)
+			{
+				this.overwrite = Boolean.valueOf(overwrite.trim());
+			} else
+			{
+				this.overwrite = false;
+			}
 		}
 
 		// loglevel
-		String loglevel = configProperties.getProperty(LOG_LEVEL_PROPERTY);
-		if (loglevel != null)
+		if (!logLevelSet)
 		{
-			this.logLevel = loglevel.trim().toLowerCase();
-		} else
-		{
-			this.logLevel = "debug";
+
+			String loglevel = configProperties.getProperty(LOG_LEVEL_PROPERTY);
+			if (loglevel != null)
+			{
+				this.logLevel = loglevel.trim().toLowerCase();
+			} else
+			{
+				this.logLevel = "debug";
+			}
 		}
 
 	}
 
 	private LoggerContext context;
 
+	private boolean initWithLogging;
+
 	/**
 	 * To setup logging backend. SLF4J is the API and logback is the backend.
 	 */
 	public void initWithLogging() {
+		configure();
+		getJobDirectory().mkdirs();
+
+		this.initWithLogging = true;
 		context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
 		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
@@ -623,38 +759,25 @@ public class Main {
 		init();
 	}
 
-	Logger logger = null;
+	private Logger logger = null;
 
 	public void init() {
+		if (!initWithLogging)
+		{
+			configure();
+			getJobDirectory().mkdirs();
+		}
 		logger = LoggerFactory.getLogger(this.getClass());
-		getJobDirectory().mkdirs();
 
 		logger.info("Started job at " + new Date());
 		logger.info("Working directory: " + getWorkingDirectory().getAbsolutePath());
 		logger.info("Job's directory: " + getJobDirectory().getAbsolutePath());
 
-		ifiles = new OntologyFiles(importFiles, importSubs);
+		// ifiles = new OntologyFiles(importFiles, importSubs);
 		logger.info("Use import sub directories: " + importSubs);
 		for (File file : importFiles)
 		{
 			logger.info("Import file: " + file);
-		}
-		logger.info("Main import count: " + ifiles.getLocalOntologyFiles(null).size());
-		for (java.util.Map.Entry<File, IRI> entry : ifiles.getLocalOntologyFiles(null).entrySet())
-		{
-			logger.debug("\t" + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
-		}
-
-		ofiles = new OntologyFiles(ontologyFiles, ontologySubs);
-		logger.info("Use ontology sub directories: " + ontologySubs);
-		for (File file : ontologyFiles)
-		{
-			logger.info("Ontology file: " + file);
-		}
-		logger.info("Main ontology count: " + ofiles.getLocalOntologyFiles(null).size());
-		for (java.util.Map.Entry<File, IRI> entry : ofiles.getLocalOntologyFiles(null).entrySet())
-		{
-			logger.debug("\t" + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
 		}
 
 		// ================================================================================
@@ -689,6 +812,9 @@ public class Main {
 		} else if (command.equalsIgnoreCase("map"))
 		{
 			mc.run();
+		} else if (command.equalsIgnoreCase("updateModule"))
+		{
+			um.run();
 		}
 
 	}
@@ -696,6 +822,18 @@ public class Main {
 	// ================================================================================
 	// Implementation
 	// ================================================================================
+
+	/**
+	 * Pass in a working directory that possibly has configuration properties.
+	 * This constructor is to force a client to make a choise instead of just
+	 * getting the current directory.
+	 * 
+	 * @param workingDirectory
+	 */
+	public Main(File workingDirectory) {
+		this.workingDirectory = workingDirectory;
+		configure();
+	}
 
 	public File getJobDirectory() {
 		return new File(getOutputDirectory(), jobName + "_" + jobQualifier);
@@ -710,7 +848,43 @@ public class Main {
 		{
 			man.clearIRIMappers();
 		}
+
+		// add the imports first, they have lower priority
+		if (ifiles == null)
+		{
+			logger.info("Loading base import files");
+			for (File file : importFiles)
+			{
+				logger.info("\tFile: " + file.getAbsolutePath());
+			}
+
+			ifiles = new OntologyFiles(importFiles, importSubs);
+			logger.debug("Found base imports: ");
+			for (Entry<File, IRI> entry : ifiles.getLocalOntologyFiles(null).entrySet())
+			{
+				logger.debug("\tIRI: " + entry.getValue() + "  <--  "
+						+ entry.getKey().getAbsolutePath());
+			}
+
+		}
 		ifiles.setupManager(man, null);
+
+		if (ofiles == null)
+		{
+			logger.info("Loading base ontology files");
+			for (File file : ontologyFiles)
+			{
+				logger.info("\tFile: " + file.getAbsolutePath());
+			}
+
+			ofiles = new OntologyFiles(ontologyFiles, ontologySubs);
+			logger.debug("Found base ontologies: ");
+			for (Entry<File, IRI> entry : ofiles.getLocalOntologyFiles(null).entrySet())
+			{
+				logger.debug("\tIRI: " + entry.getValue() + "  <--  "
+						+ entry.getKey().getAbsolutePath());
+			}
+		}
 		ofiles.setupManager(man, null);
 		return man;
 	}
@@ -752,16 +926,18 @@ public class Main {
 		return null;
 	}
 
-	JCommander jc = new JCommander();
-	NewModuleCommand newModule;
-	GenerateModuleCommand module;
-	EroCommand ero;
-	CatalogCommand catalog;
-	ValidateIriCommand validate;
-	CompareCommand cc;
-	TypecheckCommand typescheck;
-	RewriteCommand rw;
-	MapperCommand mc;
+	private JCommander jc = new JCommander();
+	private NewModuleCommand newModule;
+	private GenerateModuleCommand module;
+	private EroCommand ero;
+	private CatalogCommand catalog;
+	private ValidateIriCommand validate;
+	private CompareCommand cc;
+	private TypecheckCommand typescheck;
+	private RewriteCommand rw;
+	private MapperCommand mc;
+
+	private UpdateModuleCommand um;
 
 	public void parseArgs(String[] args) {
 		jc.setAllowAbbreviatedOptions(true);
@@ -797,6 +973,9 @@ public class Main {
 		mc = new MapperCommand(this);
 		jc.addCommand("map", mc);
 
+		um = new UpdateModuleCommand(this);
+		jc.addCommand("updateModule", um);
+
 		if (args.length == 0)
 		{
 			System.out.println(PROGRAM_DESC);
@@ -817,8 +996,7 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		Main main = new Main();
-		main.preConfigure();
+		Main main = new Main(new File(System.getProperty("user.dir")));
 		main.parseArgs(args);
 		main.initWithLogging();
 

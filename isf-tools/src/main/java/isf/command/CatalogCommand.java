@@ -32,40 +32,42 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 
 @Parameters(commandNames = "catalog", commandDescription = "Creates catalog files based on the "
-		+ "existing OWL files in the specified directory and optionally its subs.")
+		+ "existing OWL files in the specified directory and optionally its sub directories. "
+		+ "It is important that this directory does not contain multiple ontology files with "
+		+ "same ontology IRI. Otherwise, the catalog will only point to one of the files and this "
+		+ "could lead to unexpected results.")
 public class CatalogCommand extends AbstractCommand {
 
 	// ================================================================================
 	// The top directory to catalog from
 	// ================================================================================
 
-	// public String directory = ISFUtil.getTrunkDirectory().getAbsolutePath() +
-	// "/src/ontology";
-	public File directory = null;
-	public boolean directorySet;
-
 	@Parameter(names = "-directory", description = "The top directory to start cataloging from.",
 			converter = CanonicalFileConverter.class,
 			validateValueWith = DirectoryExistsValueValidator.class)
 	public void setDirectory(File directory) {
 		this.directory = directory;
-		directorySet = true;
+		this.directorySet = true;
 	}
 
 	public File getDirectory() {
 		return directory;
 	}
 
+	public boolean isDirectorySet() {
+		return directorySet;
+	}
+
+	private File directory = null;
+	private boolean directorySet;
+
 	// ================================================================================
 	// Do subdirectories?
 	// ================================================================================
 
-	public boolean subs = true;
-	public boolean subsSet;
-
 	@Parameter(names = "-subs", arity = 1,
 			description = "Set to false if you only want the specified "
-					+ "directory cataloged without doing the subs.")
+					+ "directory cataloged without doing the sub directories.")
 	public void setSubs(boolean subs) {
 		this.subs = subs;
 		this.subsSet = true;
@@ -75,15 +77,22 @@ public class CatalogCommand extends AbstractCommand {
 		return subs;
 	}
 
+	public boolean isSubsSet() {
+		return subsSet;
+	}
+
+	private boolean subs = true;
+	private boolean subsSet;
+
 	// ================================================================================
 	// Which directories to catalog, all or just *.owl ones
-	// ================================================================================
-	public boolean all = false;
-	public boolean allSet = false;
 
-	@Parameter(names = "-all",
-			description = "Catalog all directories. Otherwise, only directories with "
-					+ "*.owl files will be cataloged.")
+	// ================================================================================
+
+	@Parameter(
+			names = "-all",
+			description = "Create catalog files in all directories. Otherwise, only directories with "
+					+ "*.owl files will be cataloged. Default is only for *.owl directories.")
 	public void setAll(boolean all) {
 		this.all = all;
 		this.allSet = true;
@@ -93,31 +102,50 @@ public class CatalogCommand extends AbstractCommand {
 		return all;
 	}
 
+	public boolean isAllSet() {
+		return allSet;
+	}
+
+	private boolean all = false;
+	private boolean allSet = false;
+
 	// ================================================================================
 	// Catalog file name
 	// ================================================================================
 
-	public String catalogName = "catalog-v001.xml";
-	public boolean cagtalogNameSet;
+	private String catalogName = "catalog-v001.xml";
+	private boolean catalogNameSet;
 
-	@Parameter(names = "-name", description = "The file name for generated catalog files.")
+	@Parameter(names = "-name", description = "The file name for generated catalog files. "
+			+ "The protege catalog name is the default value.")
 	public void setCatalogName(String catalogName) {
 		this.catalogName = catalogName;
-		this.cagtalogNameSet = true;
+		this.catalogNameSet = true;
 	}
 
 	public String getCatalogName() {
 		return catalogName;
 	}
 
+	public boolean isCatalogNameSet() {
+		return catalogNameSet;
+	}
+
+	// ================================================================================
+	// Initialization
+	// ================================================================================
 	@Override
-	protected void preConfigure() {
-		if (main.project != null)
+	protected void configure() {
+
+		if (!directorySet)
 		{
-			directory = main.project;
-		} else
-		{
-			directory = main.getJobDirectory();
+			if (getMain().getProject() != null)
+			{
+				directory = getMain().getProject();
+			} else
+			{
+				directory = getMain().getJobDirectory();
+			}
 		}
 
 	}
@@ -126,27 +154,9 @@ public class CatalogCommand extends AbstractCommand {
 	// Implementation
 	// ================================================================================
 
-	@Override
-	protected void init() {
-		if (main.project != null)
-		{
-			if (!directorySet)
-			{
-				directory = main.project;
-			}
-		} else
-		{
-			if (!directorySet)
-			{
-				directory = main.getJobDirectory();
-			}
-		}
-
-	}
-
 	public CatalogCommand(Main main) {
 		super(main);
-		preConfigure();
+		configure();
 	}
 
 	@Override
@@ -156,7 +166,7 @@ public class CatalogCommand extends AbstractCommand {
 
 	@Override
 	public void run() {
-		init();
+		configure();
 
 		for (String action : getAllActions())
 		{
@@ -169,7 +179,7 @@ public class CatalogCommand extends AbstractCommand {
 
 			@Override
 			public void execute(CatalogCommand command) {
-				System.out.println("Running create action");
+				command.logger.info("Creating catalogs.");
 				AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), true);
 
 				File topDirectory = command.getDirectory();
@@ -179,8 +189,6 @@ public class CatalogCommand extends AbstractCommand {
 						DirectoryFileFilter.INSTANCE, command.isSubs() ? TrueFileFilter.INSTANCE
 								: null))
 				{
-					System.out.println(FileUtils.listFiles(d, new SuffixFileFilter(".owl"), null)
-							.size() + "  " + d);
 
 					// if we have any owl files
 					boolean createCatalog = false;

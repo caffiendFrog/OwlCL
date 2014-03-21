@@ -365,7 +365,6 @@ public class ISFTUtil {
 
 	}
 
-
 	// TODO: where is this used?
 	public static Set<LabelInfo> getLabels(IRI iri, Set<OWLOntology> ontologies) {
 		Set<LabelInfo> infos = new HashSet<ISFTUtil.LabelInfo>();
@@ -558,6 +557,23 @@ public class ISFTUtil {
 			}
 		}
 		return o;
+	}
+
+	static public OWLOntology loadOntology(File file, OWLOntologyManager man) throws RuntimeOntologyLoadingException {
+		OWLOntology o = null;
+		if (o == null)
+		{
+			try
+			{
+				o = man.loadOntologyFromOntologyDocument(file);
+			} catch (OWLOntologyCreationException e)
+			{
+				throw new RuntimeOntologyLoadingException("Failed while loadOntology File: "
+						+ file.getAbsolutePath(), e);
+			}
+		}
+		return o;
+
 	}
 
 	static public OWLOntology createOntology(IRI iri, OWLOntologyManager man)
