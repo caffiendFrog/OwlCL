@@ -1,5 +1,6 @@
 /bin
-/src/main/java/isf/local
+/src/main/java/com/essaid/owlcl/local
 /target
 /isft-output
 /temp
+/owlcl-extensions

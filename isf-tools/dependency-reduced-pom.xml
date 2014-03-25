@@ -20,7 +20,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>isf.command.cli.Main</mainClass>
+              <mainClass>com.essaid.owlcl.core.cli.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -48,5 +48,8 @@
       <url>file:${project.basedir}/m2-repo</url>
     </repository>
   </repositories>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
 </project>
 

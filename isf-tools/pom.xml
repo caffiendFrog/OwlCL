@@ -4,6 +4,11 @@
   <groupId>com.googlecode.connect-isf</groupId>
   <artifactId>isf-tools</artifactId>
   <version>0.1.0-SNAPSHOT</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
   <repositories>
     <repository>
       <id>local-m2-repo</id>
@@ -35,7 +40,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>isf.command.cli.Main</mainClass>
+              <mainClass>com.essaid.owlcl.core.cli.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -116,6 +121,16 @@
       <groupId>fact-plus-plus</groupId>
       <artifactId>fact-plus-plus</artifactId>
       <version>1.6.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <version>4.0-beta</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
+      <version>4.0-beta</version>
     </dependency>
   </dependencies>
 </project>
