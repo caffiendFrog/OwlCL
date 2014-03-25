@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,15 +49,16 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.ReasonerInternalException;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
-import com.essaid.owlcl.module.builder.simple.MBSimpleVocab;
-
 import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
+
+import com.essaid.owlcl.core.util.INativeLibraryLoader;
+import com.essaid.owlcl.module.builder.simple.MBSimpleVocab;
 
 /**
  * @author Shahim Essaid
  * 
  */
-public class OwlclUtil {
+public class OwlclUtil implements INativeLibraryLoader {
 
   private static final OwlclUtil instance = new OwlclUtil();
 
@@ -75,199 +77,209 @@ public class OwlclUtil {
   private File workDirectory;
   private File workExtDirectory;
 
-  private boolean directoriesInited;
+  private Path temporaryDirectory;
 
   private Object lock = new Object();
-  private boolean classpathInited;
+
+  private boolean initted;
 
   public void init() {
     synchronized (lock)
     {
+      if (!initted)
+      {
+        return;
+      }
       initDirectories();
       initClasspath();
+      initTemporaryDirectory();
     }
+
+  }
+
+  private void initTemporaryDirectory() {
+    try
+    {
+      temporaryDirectory = Files.createTempDirectory("owlcl-tmp-directory");
+    } catch (IOException e)
+    {
+      throw new RuntimeException("Error creating temporary directory", e);
+    }
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+
+      public void run() {
+        delete(temporaryDirectory.toFile());
+      }
+
+      void delete(File f) {
+        if (f.isDirectory())
+        {
+          for (File c : f.listFiles())
+            delete(c);
+        }
+        if (!f.delete())
+          throw new RuntimeException("Failed to delete file: " + f);
+      }
+    });
+
   }
 
   private void initDirectories() {
-    synchronized (lock)
+
+    // find code directory
+    codeUrl = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+    File codeSource = null;
+
+    try
     {
-
-      if (directoriesInited)
-      {
-        return;
-      }
-      directoriesInited = true;
-
-      // find code directory
-      codeUrl = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-      File codeSource = null;
-
-      try
-      {
-        codeSource = new File(codeUrl.toURI()).getCanonicalFile();
-      } catch (URISyntaxException e1)
-      {
-        throw new RuntimeException("Error getting code source URI from invalide URL:" + codeUrl, e1);
-      } catch (IOException e)
-      {
-        throw new RuntimeException("Error getting canonical code source File from URL:" + codeUrl,
-            e);
-      }
-
-      if (codeSource.isDirectory())
-      {
-        codeDirectory = codeSource;
-
-      } else
-      {
-        if (codeSource.getPath().endsWith(".jar"))
-        {
-          codeJar = codeSource;
-          codeDirectory = codeSource.getParentFile();
-        } else
-        {
-          throw new RuntimeException("Code source is not a directory or a *.jar file.");
-        }
-      }
-      codeExtDirectory = new File(codeDirectory, Owlcl.OWLCL_EXT_DIR);
-
-      // find caller's current directory;
-      try
-      {
-        currentDirectory = new File(System.getProperty("user.dir")).getCanonicalFile();
-      } catch (IOException e)
-      {
-        throw new RuntimeException("Error getting current directory.", e);
-      }
-
-      // find caller's home directory;
-      try
-      {
-        homeDirectory = new File(System.getProperty("user.home")).getCanonicalFile();
-      } catch (IOException e)
-      {
-        throw new RuntimeException("Error getting home directory.", e);
-      }
-
-      // first find working directory
-      String workDir = System.getProperty(Owlcl.OWLCL_WORK_DIR_PROPERTY);
-      if (workDir == null)
-      {
-        for (Entry<String, String> envEntry : System.getenv().entrySet())
-        {
-          if (envEntry.getKey().toUpperCase()
-              .equals(Owlcl.OWLCL_WORK_DIR_PROPERTY.toUpperCase().replace(".", "_")))
-          {
-            workDir = envEntry.getValue();
-            break;
-          }
-        }
-      }
-      if (workDir != null)
-      {
-        try
-        {
-          workDirectory = new File(workDir).getCanonicalFile();
-          if (!workDirectory.exists())
-          {
-            throw new IllegalStateException("The work directory: " + workDirectory
-                + " does not exist.");
-          }
-        } catch (IOException e)
-        {
-          throw new RuntimeException("Error getting canonical work directory for path: " + workDir,
-              e);
-        }
-      } else
-      {
-        workDirectory = currentDirectory;
-      }
-
-      workExtDirectory = new File(workDirectory, Owlcl.OWLCL_EXT_DIR);
-      //
-      System.out.println("Home directory: " + homeDirectory);
-      System.out.println("Current directory: " + currentDirectory);
-
-      System.out.println("Code URL: " + codeUrl);
-      System.out.println("Code Jar: " + codeJar);
-      System.out.println("Code ext: " + codeExtDirectory);
-      System.out.println("Code directory: " + codeDirectory);
-
-      System.out.println("Work directory: " + workDirectory);
-      System.out.println("Work ext directory: " + workExtDirectory);
+      codeSource = new File(codeUrl.toURI()).getCanonicalFile();
+    } catch (URISyntaxException e1)
+    {
+      throw new RuntimeException("Error getting code source URI from invalide URL:" + codeUrl, e1);
+    } catch (IOException e)
+    {
+      throw new RuntimeException("Error getting canonical code source File from URL:" + codeUrl, e);
     }
+
+    if (codeSource.isDirectory())
+    {
+      codeDirectory = codeSource;
+
+    } else
+    {
+      if (codeSource.getPath().endsWith(".jar"))
+      {
+        codeJar = codeSource;
+        codeDirectory = codeSource.getParentFile();
+      } else
+      {
+        throw new RuntimeException("Code source is not a directory or a *.jar file.");
+      }
+    }
+    codeExtDirectory = new File(codeDirectory, Owlcl.OWLCL_EXT_DIR);
+
+    // find caller's current directory;
+    try
+    {
+      currentDirectory = new File(System.getProperty("user.dir")).getCanonicalFile();
+    } catch (IOException e)
+    {
+      throw new RuntimeException("Error getting current directory.", e);
+    }
+
+    // find caller's home directory;
+    try
+    {
+      homeDirectory = new File(System.getProperty("user.home")).getCanonicalFile();
+    } catch (IOException e)
+    {
+      throw new RuntimeException("Error getting home directory.", e);
+    }
+
+    // first find working directory
+    String workDir = System.getProperty(Owlcl.OWLCL_WORK_DIR_PROPERTY);
+    if (workDir == null)
+    {
+      for (Entry<String, String> envEntry : System.getenv().entrySet())
+      {
+        if (envEntry.getKey().toUpperCase()
+            .equals(Owlcl.OWLCL_WORK_DIR_PROPERTY.toUpperCase().replace(".", "_")))
+        {
+          workDir = envEntry.getValue();
+          break;
+        }
+      }
+    }
+    if (workDir != null)
+    {
+      try
+      {
+        workDirectory = new File(workDir).getCanonicalFile();
+        if (!workDirectory.exists())
+        {
+          throw new IllegalStateException("The work directory: " + workDirectory
+              + " does not exist.");
+        }
+      } catch (IOException e)
+      {
+        throw new RuntimeException("Error getting canonical work directory for path: " + workDir, e);
+      }
+    } else
+    {
+      workDirectory = currentDirectory;
+    }
+
+    workExtDirectory = new File(workDirectory, Owlcl.OWLCL_EXT_DIR);
+    //
+    System.out.println("Home directory: " + homeDirectory);
+    System.out.println("Current directory: " + currentDirectory);
+
+    System.out.println("Code URL: " + codeUrl);
+    System.out.println("Code Jar: " + codeJar);
+    System.out.println("Code ext: " + codeExtDirectory);
+    System.out.println("Code directory: " + codeDirectory);
+
+    System.out.println("Work directory: " + workDirectory);
+    System.out.println("Work ext directory: " + workExtDirectory);
   }
 
   @SuppressWarnings("resource")
-  public void initClasspath() {
-    synchronized (lock)
+  private void initClasspath() {
+
+    ClassLoader systemLoader = getClass().getClassLoader().getSystemClassLoader();
+    if (systemLoader instanceof URLClassLoader)
     {
-      if (!directoriesInited)
+      URLClassLoader urlcl = (URLClassLoader) systemLoader;
+      Method addURL = null;
+      try
       {
-        initDirectories();
-      }
-
-      if (classpathInited)
-      {
-        return;
-      }
-      classpathInited = true;
-
-      ClassLoader systemLoader = getClass().getClassLoader().getSystemClassLoader();
-      if (systemLoader instanceof URLClassLoader)
-      {
-        URLClassLoader urlcl = (URLClassLoader) systemLoader;
-        Method addURL = null;
-        try
+        Class current = urlcl.getClass();
+        while (current != ClassLoader.class)
         {
-          Class current = urlcl.getClass();
-          while (current != ClassLoader.class)
+          for (Method method : current.getDeclaredMethods())
           {
-            for (Method method : current.getDeclaredMethods())
+            if (method.getName().equals("addURL"))
             {
-              if (method.getName().equals("addURL"))
-              {
-                addURL = method;
-                break;
-              }
+              addURL = method;
+              break;
             }
-            current = current.getSuperclass();
-
           }
-        } catch (SecurityException e)
-        {
-          throw new RuntimeException("Could not setup classpath due to security enforced.", e);
-        }
-        if (addURL != null)
-        {
-          addURL.setAccessible(true);
-        } else
-        {
-          throw new RuntimeException("Failed to find addURL Method in URL classloader. Giving up.");
-        }
+          current = current.getSuperclass();
 
-        if (codeExtDirectory.exists())
-        {
-          for (File file : codeExtDirectory.listFiles())
-          {
-            addFileToClasspath(file, urlcl, addURL);
-          }
         }
-        if (workExtDirectory.exists())
-        {
-          for (File file : workExtDirectory.listFiles())
-          {
-            addFileToClasspath(file, urlcl, addURL);
-          }
-        }
-
+      } catch (SecurityException e)
+      {
+        throw new RuntimeException("Could not setup classpath due to security enforced.", e);
+      }
+      if (addURL != null)
+      {
+        addURL.setAccessible(true);
       } else
       {
-        throw new IllegalStateException(
-            "System class loader is not a URL class loader. Can't load application.");
+        throw new RuntimeException("Failed to find addURL Method in URL classloader. Giving up.");
       }
 
+      if (codeExtDirectory.exists())
+      {
+        for (File file : codeExtDirectory.listFiles())
+        {
+          addFileToClasspath(file, urlcl, addURL);
+        }
+      }
+      if (workExtDirectory.exists())
+      {
+        for (File file : workExtDirectory.listFiles())
+        {
+          addFileToClasspath(file, urlcl, addURL);
+        }
+      }
+
+    } else
+    {
+      throw new IllegalStateException(
+          "System class loader is not a URL class loader. Can't load application.");
     }
+
   }
 
   private void addFileToClasspath(File file, ClassLoader urlcl, Method addURL) {
@@ -284,6 +296,7 @@ public class OwlclUtil {
       }
       try
       {
+        System.out.println("Adding URL to classpath: " + fileUrl);
         addURL.invoke(urlcl, fileUrl);
       } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
       {
@@ -298,6 +311,17 @@ public class OwlclUtil {
         }
       }
     }
+
+  }
+
+  public Path getTemporaryDirectory() {
+
+    if (!initted)
+    {
+      init();
+    }
+
+    return temporaryDirectory;
   }
 
   // ================================================================================
@@ -674,6 +698,14 @@ public class OwlclUtil {
     return axioms;
   }
 
+  public static String getOsName() {
+    return System.getProperty("os.name");
+  }
+
+  public static String getOsArch() {
+    return System.getProperty("os.arch");
+  }
+
   // ================================================================================
   // Load Fact++ native library
   // ================================================================================
@@ -885,4 +917,81 @@ public class OwlclUtil {
     reasoner.dispose();
     reasoners.remove(iri);
   }
+
+  @Override
+  public void loadNativeLibrary(InputStream stream) {
+    Path tmp;
+    try
+    {
+      tmp = Files.createTempFile(getTemporaryDirectory(), "nativelib-", null);
+      OutputStream fos = new FileOutputStream(tmp.toFile());
+      byte[] buffer = new byte[1024];
+      int bytesRead = 0;
+      while ((bytesRead = stream.read(buffer)) != -1)
+      {
+        fos.write(buffer, 0, bytesRead);
+      }
+      stream.close();
+      fos.close();
+    } catch (IOException e1)
+    {
+      throw new RuntimeException("Failed while loading native library", e1);
+    }
+
+    String libPath = System.getProperty("java.library.path");
+    libPath += File.pathSeparatorChar + tmp.toAbsolutePath().toString();
+    System.setProperty("java.library.path", libPath);
+
+    Field fieldSysPath;
+    try
+    {
+      fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+      fieldSysPath.setAccessible(true);
+      fieldSysPath.set(null, null);
+    } catch (NoSuchFieldException | SecurityException | IllegalArgumentException
+        | IllegalAccessException e)
+    {
+      throw new RuntimeException("Error resetting java library path", e);
+    }
+
+  }
+
+  public String getNativeResourcePrefix(String resourceGroupName) {
+    String path = "/native/" + resourceGroupName;
+
+    String osName = getOsName();
+    String osArch = getOsArch();
+
+    if (osName.toLowerCase().startsWith("windows"))
+    {
+      if (osArch.contains("64"))
+      {
+        path += "/windows/64/";
+      } else
+      {
+        path += "/windows/32/";
+      }
+    } else if (osName.toLowerCase().startsWith("linux"))
+    {
+      if (osArch.contains("64"))
+      {
+        path += "/linux/64/";
+      } else
+      {
+        path += "/linux/32/";
+      }
+    } else if (osName.toLowerCase().contains("mac"))
+    {
+      if (osArch.contains("64"))
+      {
+        path += "/macos/64/";
+      } else
+      {
+        path += "/macos/32/";
+      }
+    }
+
+    return path;
+  }
+
 }
