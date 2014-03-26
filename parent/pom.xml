@@ -84,6 +84,10 @@
   <modules>
     <module>../core</module>
     <module>../fact.plus.plus</module>
-    <module>../package</module>
+    <module>../assemble</module>
+    <module>../command</module>
+    <module>../module</module>
+    <module>module</module>
+    <module>command</module>
   </modules>
 </project>
