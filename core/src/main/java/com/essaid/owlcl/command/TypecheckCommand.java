@@ -20,11 +20,9 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
-import com.essaid.owlcl.core.annotation.MainCommandQualifier;
 import com.essaid.owlcl.util.OntologyFiles;
 import com.essaid.owlcl.util.Report;
 import com.google.inject.Inject;
@@ -33,7 +31,7 @@ import com.google.inject.Inject;
 		+ "one type in the files, directories, and any of their imports."
 		+ " Imports are loaded from local files when possible, otherwise, loaded online. "
 		+ "All ontologies are loaded from/into a single manager.")
-public class TypecheckCommand extends AbstractCommand<CommandResult> {
+public class TypecheckCommand extends AbstractCommand {
 
 	// ================================================================================
 	// Files and directories to check types
@@ -88,10 +86,6 @@ public class TypecheckCommand extends AbstractCommand<CommandResult> {
 	// ================================================================================
 	// Implementation
 	// ================================================================================
-
-	@Inject
-	@MainCommandQualifier
-	private MainCommand main;
 	
 	// Map<File, OWLOntology> ontologies = new HashMap<File, OWLOntology>();
 
@@ -116,7 +110,7 @@ public class TypecheckCommand extends AbstractCommand<CommandResult> {
 		{
 			// need new managers to make sure we can load duplicate ontology
 			// IRIs
-			OWLOntologyManager man = main.getNewBaseManager();
+			OWLOntologyManager man = getMain().getNewBaseManager();
 			ontologyFiles.setupManager(man, null);
 			try
 			{
@@ -334,7 +328,7 @@ public class TypecheckCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

@@ -2,12 +2,12 @@ package com.essaid.owlcl.core.reasoner.fact;
 
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
-import com.essaid.owlcl.core.IsftGM;
+import com.essaid.owlcl.core.IOwlclGuiceModule;
 import com.essaid.owlcl.util.OwlclUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 
-public class FactGM extends AbstractModule implements IsftGM {
+public class FactGM extends AbstractModule implements IOwlclGuiceModule {
 
   @SuppressWarnings("unchecked")
   @Override

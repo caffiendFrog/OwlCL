@@ -6,11 +6,10 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
-import com.essaid.owlcl.core.IsftCommand;
+import com.essaid.owlcl.core.OwlclCommand;
 
-public abstract class AbstractCommand<R extends CommandResult> extends IsftCommand<R> {
+public abstract class AbstractCommand extends OwlclCommand {
 
   // ================================================================================
   // Actions
@@ -58,20 +57,19 @@ public abstract class AbstractCommand<R extends CommandResult> extends IsftComma
 
   public final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-  private MainCommand main;
-
   public MainCommand getMain() {
-    return main;
+    return (MainCommand) parent;
   }
 
-  public AbstractCommand() {
-
+  public AbstractCommand(OwlclCommand main) {
+    super(main);
+    if (main == null || !(main instanceof MainCommand))
+    {
+      throw new IllegalStateException(
+          "AbstractCommand needs an OwlclCommand of type MainCommand but was passed " + main == null ? null
+              : main.getClass().getName());
+    }
   }
-
-  public AbstractCommand(MainCommand main) {
-    this.main = main;
-  }
-
 
   /**
    * Returns a list of string values that represent the execution steps with any
@@ -87,7 +85,6 @@ public abstract class AbstractCommand<R extends CommandResult> extends IsftComma
     addCommandActions(actions);
     return actions;
   }
-
 
   protected List<String> getAllActions() {
     List<String> allActions = new ArrayList<String>();

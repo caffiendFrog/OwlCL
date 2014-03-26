@@ -4,20 +4,6 @@
   <artifactId>core</artifactId>
 
 
-  <repositories>
-    <repository>
-      <id>local-m2-repo</id>
-      <layout>default</layout>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <url>file:${project.basedir}/m2-repo</url>
-    </repository>
-  </repositories>
-
   <build>
     <plugins>
       <plugin>
@@ -32,34 +18,34 @@
           </archive>
         </configuration>
       </plugin>
-<!--       <plugin> -->
-<!--         <groupId>org.apache.maven.plugins</groupId> -->
-<!--         <artifactId>maven-shade-plugin</artifactId> -->
-<!--         <version>1.7.1</version> -->
-<!--         <executions> -->
-<!--           <execution> -->
-<!--             <id>isf.shade</id> -->
-<!--             <phase>package</phase> -->
-<!--             <goals> -->
-<!--               <goal>shade</goal> -->
-<!--             </goals> -->
-<!--           </execution> -->
-<!--         </executions> -->
-<!--         <configuration> -->
-<!--         <relocations> -->
-<!--         <relocation> -->
-<!--         <pattern>uk</pattern> -->
-<!--         <shadedPattern>isf.shaded.uk</shadedPattern> -->
-<!--         <includes> -->
-<!--         <include>org.apache.maven.*</include> -->
-<!--         </includes> -->
-<!--         <excludes> -->
-<!--         <exclude>org.apache.maven.Public*</exclude> -->
-<!--         </excludes> -->
-<!--         </relocation> -->
-<!--         </relocations> -->
-<!--         </configuration> -->
-<!--       </plugin> -->
+      <!-- <plugin> -->
+      <!-- <groupId>org.apache.maven.plugins</groupId> -->
+      <!-- <artifactId>maven-shade-plugin</artifactId> -->
+      <!-- <version>1.7.1</version> -->
+      <!-- <executions> -->
+      <!-- <execution> -->
+      <!-- <id>isf.shade</id> -->
+      <!-- <phase>package</phase> -->
+      <!-- <goals> -->
+      <!-- <goal>shade</goal> -->
+      <!-- </goals> -->
+      <!-- </execution> -->
+      <!-- </executions> -->
+      <!-- <configuration> -->
+      <!-- <relocations> -->
+      <!-- <relocation> -->
+      <!-- <pattern>uk</pattern> -->
+      <!-- <shadedPattern>isf.shaded.uk</shadedPattern> -->
+      <!-- <includes> -->
+      <!-- <include>org.apache.maven.*</include> -->
+      <!-- </includes> -->
+      <!-- <excludes> -->
+      <!-- <exclude>org.apache.maven.Public*</exclude> -->
+      <!-- </excludes> -->
+      <!-- </relocation> -->
+      <!-- </relocations> -->
+      <!-- </configuration> -->
+      <!-- </plugin> -->
     </plugins>
   </build>
   <dependencies>
@@ -95,11 +81,30 @@
       <version>1.36-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>fact-plus-plus</groupId>
-      <artifactId>fact-plus-plus</artifactId>
-      <version>1.6.2</version>
+      <groupId>net.sourceforge.owlapi</groupId>
+      <artifactId>owlapi-apibinding</artifactId>
+      <version>3.4.9</version>
     </dependency>
-
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+      <version>${guice.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-multibindings</artifactId>
+      <version>${guice.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject.extensions</groupId>
+      <artifactId>guice-assistedinject</artifactId>
+      <version>${guice.version}</version>
+    </dependency>
   </dependencies>
   <parent>
     <groupId>com.essaid.owlcl</groupId>

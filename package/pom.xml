@@ -9,9 +9,16 @@
   </parent>
   <artifactId>package</artifactId>
   <packaging>pom</packaging>
+  <properties>
+    <project.build.directory>
+
+    </project.build.directory>
+  </properties>
 
   <build>
+    <directory>../distribution</directory>
     <plugins>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -28,7 +35,6 @@
             </goals>
           </execution>
         </executions>
-
       </plugin>
     </plugins>
   </build>

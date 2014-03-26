@@ -1,4 +1,4 @@
-package com.essaid.owlcl.util;
+package com.essaid.owlcl.core.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,19 +16,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map.Entry;
 
-import com.essaid.owlcl.core.util.INativeLibraryLoader;
+import com.essaid.owlcl.util.Owlcl;
 
 /**
  * @author Shahim Essaid
  * 
  */
-public class OwlclUtil2 implements INativeLibraryLoader {
-
-  private static final OwlclUtil2 instance = new OwlclUtil2();
-
-  public static OwlclUtil2 instance() {
-    return instance;
-  }
+public class DefaultOwlclManager implements IOwlclManager {
 
   private URL codeUrl;
   private File codeJar;
@@ -46,6 +40,25 @@ public class OwlclUtil2 implements INativeLibraryLoader {
   private Object lock = new Object();
 
   private boolean initted;
+
+  public DefaultOwlclManager() {
+    init();
+  }
+
+  DefaultOwlclManager(URL codeUrl, File codeJar, File codeDirectory, File codeExtDirectory,
+      File homeDirectory, File currentDirectory, File workDirectory, File workExtDirectory,
+      Path temporaryDirectory) {
+    this.codeUrl = codeUrl;
+    this.codeJar = codeJar;
+    this.codeDirectory = codeDirectory;
+    this.codeExtDirectory = codeExtDirectory;
+    this.homeDirectory = homeDirectory;
+    this.currentDirectory = currentDirectory;
+    this.workDirectory = workDirectory;
+    this.workExtDirectory = workExtDirectory;
+    this.temporaryDirectory = temporaryDirectory;
+
+  }
 
   public void init() {
     synchronized (lock)
@@ -293,6 +306,12 @@ public class OwlclUtil2 implements INativeLibraryLoader {
 
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getTemporaryDirectory()
+   */
+  @Override
   public Path getTemporaryDirectory() {
 
     if (!initted)
@@ -303,6 +322,12 @@ public class OwlclUtil2 implements INativeLibraryLoader {
     return temporaryDirectory;
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * com.essaid.owlcl.util.IOwlclManager#loadNativeLibrary(java.io.InputStream)
+   */
   @Override
   public void loadNativeLibrary(InputStream stream) {
     Path tmp;
@@ -341,6 +366,14 @@ public class OwlclUtil2 implements INativeLibraryLoader {
 
   }
 
+  /*
+   * (non-Javadoc)
+   * 
+   * @see
+   * com.essaid.owlcl.util.IOwlclManager#getNativeResourcePrefix(java.lang.String
+   * )
+   */
+  @Override
   public String getNativeResourcePrefix(String resourceGroupName) {
     String path = "/native/" + resourceGroupName;
 
@@ -804,6 +837,7 @@ public class OwlclUtil2 implements INativeLibraryLoader {
   public static String getOsArch() {
     return System.getProperty("os.arch");
   }
+
   //
   // //
   // ================================================================================
@@ -1030,5 +1064,85 @@ public class OwlclUtil2 implements INativeLibraryLoader {
   // reasoner.dispose();
   // reasoners.remove(iri);
   // }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getCodeUrl()
+   */
+  @Override
+  public URL getCodeUrl() {
+    return codeUrl;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getCodeJar()
+   */
+  @Override
+  public File getCodeJar() {
+    return codeJar;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getCodeDirectory()
+   */
+  @Override
+  public File getCodeDirectory() {
+    return codeDirectory;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getCodeExtDirectory()
+   */
+  @Override
+  public File getCodeExtDirectory() {
+    return codeExtDirectory;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getHomeDirectory()
+   */
+  @Override
+  public File getHomeDirectory() {
+    return homeDirectory;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getCurrentDirectory()
+   */
+  @Override
+  public File getCurrentDirectory() {
+    return currentDirectory;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getWorkDirectory()
+   */
+  @Override
+  public File getWorkDirectory() {
+    return workDirectory;
+  }
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.essaid.owlcl.util.IOwlclManager#getWorkExtDirectory()
+   */
+  @Override
+  public File getWorkExtDirectory() {
+    return workExtDirectory;
+  }
 
 }

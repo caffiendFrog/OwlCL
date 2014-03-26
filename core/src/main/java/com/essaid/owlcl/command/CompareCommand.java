@@ -23,18 +23,17 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.IriConverter;
-import com.essaid.owlcl.util.OwlclUtil;
 import com.essaid.owlcl.util.OntologyFiles;
+import com.essaid.owlcl.util.OwlclUtil;
 import com.essaid.owlcl.util.Report;
 
 @Parameters(commandNames = "compare",
 		commandDescription = "Shows a axiom diff summary between files or directories. ")
-public class CompareCommand extends AbstractCommand<CommandResult> {
+public class CompareCommand extends AbstractCommand {
 
 	// ================================================================================
 	// from files
@@ -911,7 +910,7 @@ public class CompareCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

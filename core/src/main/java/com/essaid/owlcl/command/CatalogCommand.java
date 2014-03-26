@@ -25,235 +25,236 @@ import org.protege.xmlcatalog.write.XMLCatalogWriter;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.DirectoryExistsValueValidator;
+import com.essaid.owlcl.core.OwlclCommand;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 @Parameters(commandNames = "catalog", commandDescription = "Creates catalog files based on the "
-		+ "existing OWL files in the specified directory and optionally its sub directories. "
-		+ "It is important that this directory does not contain multiple ontology files with "
-		+ "same ontology IRI. Otherwise, the catalog will only point to one of the files and this "
-		+ "could lead to unexpected results.")
-public class CatalogCommand extends AbstractCommand<CommandResult> {
+    + "existing OWL files in the specified directory and optionally its sub directories. "
+    + "It is important that this directory does not contain multiple ontology files with "
+    + "same ontology IRI. Otherwise, the catalog will only point to one of the files and this "
+    + "could lead to unexpected results.")
+public class CatalogCommand extends AbstractCommand {
 
-	// ================================================================================
-	// The top directory to catalog from
-	// ================================================================================
+  // ================================================================================
+  // The top directory to catalog from
+  // ================================================================================
 
-	@Parameter(names = "-directory", description = "The top directory to start cataloging from.",
-			converter = CanonicalFileConverter.class,
-			validateValueWith = DirectoryExistsValueValidator.class)
-	public void setDirectory(File directory) {
-		this.directory = directory;
-		this.directorySet = true;
-	}
+  @Parameter(names = "-directory", description = "The top directory to start cataloging from.",
+      converter = CanonicalFileConverter.class,
+      validateValueWith = DirectoryExistsValueValidator.class)
+  public void setDirectory(File directory) {
+    this.directory = directory;
+    this.directorySet = true;
+  }
 
-	public File getDirectory() {
-		return directory;
-	}
+  public File getDirectory() {
+    return directory;
+  }
 
-	public boolean isDirectorySet() {
-		return directorySet;
-	}
+  public boolean isDirectorySet() {
+    return directorySet;
+  }
 
-	private File directory = null;
-	private boolean directorySet;
+  private File directory = null;
+  private boolean directorySet;
 
-	// ================================================================================
-	// Do subdirectories?
-	// ================================================================================
+  // ================================================================================
+  // Do subdirectories?
+  // ================================================================================
 
-	@Parameter(names = "-subs", arity = 1,
-			description = "Set to false if you only want the specified "
-					+ "directory cataloged without doing the sub directories.")
-	public void setSubs(boolean subs) {
-		this.subs = subs;
-		this.subsSet = true;
-	}
+  @Parameter(names = "-subs", arity = 1,
+      description = "Set to false if you only want the specified "
+          + "directory cataloged without doing the sub directories.")
+  public void setSubs(boolean subs) {
+    this.subs = subs;
+    this.subsSet = true;
+  }
 
-	public boolean isSubs() {
-		return subs;
-	}
+  public boolean isSubs() {
+    return subs;
+  }
 
-	public boolean isSubsSet() {
-		return subsSet;
-	}
+  public boolean isSubsSet() {
+    return subsSet;
+  }
 
-	private boolean subs = true;
-	private boolean subsSet;
+  private boolean subs = true;
+  private boolean subsSet;
 
-	// ================================================================================
-	// Which directories to catalog, all or just *.owl ones
+  // ================================================================================
+  // Which directories to catalog, all or just *.owl ones
 
-	// ================================================================================
+  // ================================================================================
 
-	@Parameter(
-			names = "-all",
-			description = "Create catalog files in all directories. Otherwise, only directories with "
-					+ "*.owl files will be cataloged. Default is only for *.owl directories.")
-	public void setAll(boolean all) {
-		this.all = all;
-		this.allSet = true;
-	}
+  @Parameter(names = "-all",
+      description = "Create catalog files in all directories. Otherwise, only directories with "
+          + "*.owl files will be cataloged. Default is only for *.owl directories.")
+  public void setAll(boolean all) {
+    this.all = all;
+    this.allSet = true;
+  }
 
-	public boolean isAll() {
-		return all;
-	}
+  public boolean isAll() {
+    return all;
+  }
 
-	public boolean isAllSet() {
-		return allSet;
-	}
+  public boolean isAllSet() {
+    return allSet;
+  }
 
-	private boolean all = false;
-	private boolean allSet = false;
+  private boolean all = false;
+  private boolean allSet = false;
 
-	// ================================================================================
-	// Catalog file name
-	// ================================================================================
+  // ================================================================================
+  // Catalog file name
+  // ================================================================================
 
-	private String catalogName = "catalog-v001.xml";
-	private boolean catalogNameSet;
+  private String catalogName = "catalog-v001.xml";
+  private boolean catalogNameSet;
 
-	@Parameter(names = "-name", description = "The file name for generated catalog files. "
-			+ "The protege catalog name is the default value.")
-	public void setCatalogName(String catalogName) {
-		this.catalogName = catalogName;
-		this.catalogNameSet = true;
-	}
+  @Parameter(names = "-name", description = "The file name for generated catalog files. "
+      + "The protege catalog name is the default value.")
+  public void setCatalogName(String catalogName) {
+    this.catalogName = catalogName;
+    this.catalogNameSet = true;
+  }
 
-	public String getCatalogName() {
-		return catalogName;
-	}
+  public String getCatalogName() {
+    return catalogName;
+  }
 
-	public boolean isCatalogNameSet() {
-		return catalogNameSet;
-	}
+  public boolean isCatalogNameSet() {
+    return catalogNameSet;
+  }
 
-	// ================================================================================
-	// Initialization
-	// ================================================================================
-	protected void configure() {
+  // ================================================================================
+  // Initialization
+  // ================================================================================
+  protected void configure() {
 
-		if (!directorySet)
-		{
-			if (getMain().getProject() != null)
-			{
-				directory = getMain().getProject();
-			} else
-			{
-				directory = getMain().getJobDirectory();
-			}
-		}
+    if (!directorySet)
+    {
+      if (getMain().getProject() != null)
+      {
+        directory = getMain().getProject();
+      } else
+      {
+        directory = getMain().getJobDirectory();
+      }
+    }
 
-	}
+  }
 
-	// ================================================================================
-	// Implementation
-	// ================================================================================
+  // ================================================================================
+  // Implementation
+  // ================================================================================
 
-	public CatalogCommand(MainCommand main) {
-		super(main);
-		configure();
-	}
-
-	@Override
-	protected void addCommandActions(List<String> actionsList) {
-		actionsList.add(Action.create.name());
-	}
-
-	public void run() {
-		configure();
-
-		for (String action : getAllActions())
-		{
-			Action.valueOf(action).execute(this);
-		}
-	}
-
-	enum Action {
-		create {
-
-			@Override
-			public void execute(CatalogCommand command) {
-				command.logger.info("Creating catalogs.");
-				AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), true);
-
-				File topDirectory = command.getDirectory();
-
-				// for all directories
-				for (File d : FileUtils.listFilesAndDirs(topDirectory,
-						DirectoryFileFilter.INSTANCE, command.isSubs() ? TrueFileFilter.INSTANCE
-								: null))
-				{
-
-					// if we have any owl files
-					boolean createCatalog = false;
-					if (command.isAll())
-					{
-						createCatalog = true;
-					} else
-					{
-						if (FileUtils.listFiles(d, new SuffixFileFilter(".owl"), null).size() > 0)
-						{
-							createCatalog = true;
-						}
-					}
-					try
-					{
-						if (createCatalog)
-						{
-							Path directoryPath = Paths.get(d.toURI());
-							XMLCatalog catalog = new XMLCatalog(directoryPath.toUri());
-							Set<IRI> iris = new TreeSet<IRI>(mapper.getOntologyIRIs());
-							for (IRI iri : iris)
-							{
-								Path iriPath = Paths.get(mapper.getDocumentIRI(iri).toURI());
-
-								UriEntry entry = new UriEntry("User Entered Import Resolution",
-										catalog, iri.toString(), new URI(null, directoryPath
-												.relativize(iriPath).toString(), null), null);
-								catalog.addEntry(entry);
-
-							}
-							FileWriter fw = new FileWriter(new File(d, command.catalogName));
-							XMLCatalogWriter writer = new XMLCatalogWriter(catalog, fw);
-							writer.write();
-							fw.close();
-
-						}
-					} catch (URISyntaxException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ParserConfigurationException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (TransformerFactoryConfigurationError e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (TransformerException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-
-			}
-		};
-
-		public abstract void execute(CatalogCommand command);
-	}
+  @Inject
+  public CatalogCommand(@Assisted OwlclCommand main) {
+    super(main);
+    configure();
+  }
 
   @Override
-  public CommandResult call() throws Exception {
+  protected void addCommandActions(List<String> actionsList) {
+    actionsList.add(Action.create.name());
+  }
+
+  public void run() {
+    configure();
+
+    for (String action : getAllActions())
+    {
+      Action.valueOf(action).execute(this);
+    }
+  }
+
+  enum Action {
+    create {
+
+      @Override
+      public void execute(CatalogCommand command) {
+        command.logger.info("Creating catalogs.");
+        AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), true);
+
+        File topDirectory = command.getDirectory();
+
+        // for all directories
+        for (File d : FileUtils.listFilesAndDirs(topDirectory, DirectoryFileFilter.INSTANCE,
+            command.isSubs() ? TrueFileFilter.INSTANCE : null))
+        {
+
+          // if we have any owl files
+          boolean createCatalog = false;
+          if (command.isAll())
+          {
+            createCatalog = true;
+          } else
+          {
+            if (FileUtils.listFiles(d, new SuffixFileFilter(".owl"), null).size() > 0)
+            {
+              createCatalog = true;
+            }
+          }
+          try
+          {
+            if (createCatalog)
+            {
+              Path directoryPath = Paths.get(d.toURI());
+              XMLCatalog catalog = new XMLCatalog(directoryPath.toUri());
+              Set<IRI> iris = new TreeSet<IRI>(mapper.getOntologyIRIs());
+              for (IRI iri : iris)
+              {
+                Path iriPath = Paths.get(mapper.getDocumentIRI(iri).toURI());
+
+                UriEntry entry = new UriEntry("User Entered Import Resolution", catalog,
+                    iri.toString(), new URI(null, directoryPath.relativize(iriPath).toString(),
+                        null), null);
+                catalog.addEntry(entry);
+
+              }
+              FileWriter fw = new FileWriter(new File(d, command.catalogName));
+              XMLCatalogWriter writer = new XMLCatalogWriter(catalog, fw);
+              writer.write();
+              fw.close();
+
+            }
+          } catch (URISyntaxException e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          } catch (IOException e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          } catch (ParserConfigurationException e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          } catch (TransformerFactoryConfigurationError e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          } catch (TransformerException e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }
+        }
+
+      }
+    };
+
+    public abstract void execute(CatalogCommand command);
+  }
+
+  @Override
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

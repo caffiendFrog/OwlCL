@@ -14,14 +14,13 @@ import org.semanticweb.owlapi.model.OWLOntologyFormat;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.util.OntologyFiles;
 
 @Parameters(commandNames = "rewrite", commandDescription = "Rewrites the OWL files.")
-public class RewriteCommand extends AbstractCommand<CommandResult> {
+public class RewriteCommand extends AbstractCommand {
 
 	// ================================================================================
 	// Format
@@ -119,7 +118,7 @@ public class RewriteCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

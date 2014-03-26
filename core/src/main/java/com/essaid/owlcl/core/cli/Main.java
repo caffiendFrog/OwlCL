@@ -1,15 +1,14 @@
 package com.essaid.owlcl.core.cli;
 
-import com.essaid.owlcl.util.OwlclUtil2;
+import com.essaid.owlcl.core.util.DefaultOwlclManager;
 
 public class Main {
 
   public static void main(String[] args) throws Exception {
-    OwlclUtil2.instance().init();
+    DefaultOwlclManager dm = new DefaultOwlclManager();
 
     // need this to avoid class not found
-    DoMain domain = new DoMain();
-    domain.run(args);
+    new DoMain(dm, args);
 
   }
 }

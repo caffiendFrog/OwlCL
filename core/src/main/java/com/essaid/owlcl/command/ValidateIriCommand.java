@@ -16,7 +16,6 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
@@ -34,7 +33,7 @@ import com.essaid.owlcl.util.Report;
 				+ "tools could have problems resolving those IRIs. The last check is to check that all imports"
 				+ " can be resolved locally and reports which ones can't. For the ones not locally resolvable, it"
 				+ "report the URL they will be actually resolved from.")
-public class ValidateIriCommand extends AbstractCommand<CommandResult> {
+public class ValidateIriCommand extends AbstractCommand {
 
 	// ================================================================================
 	// the directory to validate
@@ -242,7 +241,7 @@ public class ValidateIriCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

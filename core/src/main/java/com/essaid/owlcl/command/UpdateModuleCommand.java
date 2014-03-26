@@ -24,21 +24,18 @@ import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.DirectoryExistsValueValidator;
-import com.essaid.owlcl.core.annotation.MainCommandQualifier;
 import com.essaid.owlcl.module.ModuleVocab;
 import com.essaid.owlcl.util.Owlcl;
 import com.essaid.owlcl.util.OwlclUtil;
 import com.essaid.owlcl.util.RuntimeOntologyLoadingException;
-import com.google.inject.Inject;
 
 @Parameters(commandNames = "updateModule",
     commandDescription = "Updates one or more module directories.")
-public class UpdateModuleCommand extends AbstractCommand<CommandResult> {
+public class UpdateModuleCommand extends AbstractCommand {
 
   // ================================================================================
   // name
@@ -91,13 +88,13 @@ public class UpdateModuleCommand extends AbstractCommand<CommandResult> {
 
     this.moduleName = "_unnamed";
 
-    if (main.getProject() != null)
+    if (getMain().getProject() != null)
     {
-      this.directory = new File(main.getProject(), "module");
+      this.directory = new File(getMain().getProject(), "module");
       this.root = true;
     } else
     {
-      this.directory = new File(main.getJobDirectory() + "module/" + this.moduleName);
+      this.directory = new File(getMain().getJobDirectory() + "module/" + this.moduleName);
     }
   }
 
@@ -106,9 +103,9 @@ public class UpdateModuleCommand extends AbstractCommand<CommandResult> {
     // opposed to getting it from properties) and this command didn't have a
     // custom directory, we need to update the default with the new
     // main.project.
-    if (main.isProjectSet() && this.directorySet == false)
+    if (getMain().isProjectSet() && this.directorySet == false)
     {
-      this.directory = new File(main.getProject(), "module");
+      this.directory = new File(getMain().getProject(), "module");
     }
 
   }
@@ -116,10 +113,6 @@ public class UpdateModuleCommand extends AbstractCommand<CommandResult> {
   // ================================================================================
   //
   // ================================================================================
-
-  @Inject
-  @MainCommandQualifier
-  private MainCommand main;
 
   Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -431,7 +424,7 @@ public class UpdateModuleCommand extends AbstractCommand<CommandResult> {
   }
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

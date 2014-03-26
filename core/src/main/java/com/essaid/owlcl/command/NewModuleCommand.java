@@ -20,20 +20,17 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.FileConverter;
 import com.essaid.owlcl.command.cli.IriConverter;
-import com.essaid.owlcl.core.annotation.MainCommandQualifier;
 import com.essaid.owlcl.module.ModuleVocab;
 import com.essaid.owlcl.util.Owlcl;
 import com.essaid.owlcl.util.OwlclUtil;
 import com.essaid.owlcl.util.RuntimeOntologyLoadingException;
-import com.google.inject.Inject;
 
 @Parameters(commandNames = "newModule", commandDescription = "The command to create a new module.")
-public class NewModuleCommand extends AbstractCommand<CommandResult> {
+public class NewModuleCommand extends AbstractCommand {
 
 	// ================================================================================
 	// The module name
@@ -180,21 +177,17 @@ public class NewModuleCommand extends AbstractCommand<CommandResult> {
 	// ================================================================================
 	// Initialization
 	// ================================================================================
-
-	@Inject
-	@MainCommandQualifier
-	private MainCommand main;
 	
 	private boolean inited;
 
 	protected void configure() {
 		moduleName = "_unnamed";
-		if (main.getProject() == null)
+		if (getMain().getProject() == null)
 		{
-			directory = new File(main.getOutputDirectory(), "module/" + moduleName);
+			directory = new File(getMain().getOutputDirectory(), "module/" + moduleName);
 		} else
 		{
-			directory = new File(main.getProject(), "module/" + moduleName);
+			directory = new File(getMain().getProject(), "module/" + moduleName);
 		}
 		sourceIris = new ArrayList<IRI>();
 		sourceIris.add(Owlcl.ISF_DEV_IRI);
@@ -214,12 +207,12 @@ public class NewModuleCommand extends AbstractCommand<CommandResult> {
 		}
 		inited = true;
 
-		if (main.getProject() == null)
+		if (getMain().getProject() == null)
 		{
-			directory = new File(main.getOutputDirectory(), "module/" + moduleName);
+			directory = new File(getMain().getOutputDirectory(), "module/" + moduleName);
 		} else
 		{
-			directory = new File(main.getProject(), "module/" + moduleName);
+			directory = new File(getMain().getProject(), "module/" + moduleName);
 		}
 
 		directory.mkdirs();
@@ -481,7 +474,7 @@ public class NewModuleCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

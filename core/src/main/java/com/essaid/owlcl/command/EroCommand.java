@@ -11,18 +11,17 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.DirectoryExistsValueValidator;
 import com.essaid.owlcl.module.Module;
+import com.essaid.owlcl.util.ModuleNames;
 import com.essaid.owlcl.util.Owlcl;
 import com.essaid.owlcl.util.OwlclUtil;
-import com.essaid.owlcl.util.ModuleNames;
 
 @Parameters(commandNames = { "ero" }, commandDescription = "Creates the ERO modules.")
-public class EroCommand extends AbstractCommand<CommandResult> {
+public class EroCommand extends AbstractCommand {
 
 	// ================================================================================
 	// If any legacy files should be cleaned from the axioms the module is now
@@ -336,7 +335,7 @@ public class EroCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

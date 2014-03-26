@@ -6,7 +6,6 @@ import java.util.List;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
@@ -15,7 +14,7 @@ import com.essaid.owlcl.module.Module;
 
 @Parameters(commandNames = "module",
 		commandDescription = "Generate the named module. The module has to be already created.")
-public class GenerateModuleCommand extends AbstractCommand<CommandResult> {
+public class GenerateModuleCommand extends AbstractCommand {
 
 	// ================================================================================
 	// The module name
@@ -254,7 +253,7 @@ public class GenerateModuleCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

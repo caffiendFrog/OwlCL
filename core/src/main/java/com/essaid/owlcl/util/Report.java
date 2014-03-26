@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
-import com.beust.jcommander.CommandResult;
 import com.essaid.owlcl.command.AbstractCommand;
 
 public class Report {
@@ -14,7 +13,7 @@ public class Report {
 	private int counter = 0;
 	private AbstractCommand command;
 
-	public Report(AbstractCommand<CommandResult> command, String relativeFilePath) {
+	public Report(AbstractCommand command, String relativeFilePath) {
 
 		this.command = command;
 		try

@@ -16,7 +16,6 @@ import org.semanticweb.owlapi.model.OWLOntologyChangeListener;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import com.beust.jcommander.CommandResult;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
@@ -25,11 +24,11 @@ import com.essaid.owlcl.command.cli.ManualIriMapping;
 import com.essaid.owlcl.mapping.DefaultMapping;
 import com.essaid.owlcl.mapping.Mapper;
 import com.essaid.owlcl.mapping.Mapping;
-import com.essaid.owlcl.util.OwlclUtil;
 import com.essaid.owlcl.util.OntologyFiles;
+import com.essaid.owlcl.util.OwlclUtil;
 
 @Parameters(commandNames = "map", commandDescription = "Mapps IRIs from one IRI to another.")
-public class MapperCommand extends AbstractCommand<CommandResult> {
+public class MapperCommand extends AbstractCommand{
 
 	// ================================================================================
 	// The IRIs to map
@@ -430,7 +429,7 @@ public class MapperCommand extends AbstractCommand<CommandResult> {
 	}
 
   @Override
-  public CommandResult call() throws Exception {
+  public Object call() throws Exception {
     // TODO Auto-generated method stub
     return null;
   }

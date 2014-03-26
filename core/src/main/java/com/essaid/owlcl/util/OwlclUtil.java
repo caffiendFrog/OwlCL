@@ -49,16 +49,15 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.ReasonerInternalException;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
-import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
+//import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
 
-import com.essaid.owlcl.core.util.INativeLibraryLoader;
 import com.essaid.owlcl.module.builder.simple.MBSimpleVocab;
 
 /**
  * @author Shahim Essaid
  * 
  */
-public class OwlclUtil implements INativeLibraryLoader {
+public class OwlclUtil  {
 
   private static final OwlclUtil instance = new OwlclUtil();
 
@@ -900,13 +899,13 @@ public class OwlclUtil implements INativeLibraryLoader {
   }
 
   private static Map<IRI, OWLReasoner> reasoners = new HashMap<IRI, OWLReasoner>();
-  private static FaCTPlusPlusReasonerFactory rf = new FaCTPlusPlusReasonerFactory();
+//  private static FaCTPlusPlusReasonerFactory rf = new FaCTPlusPlusReasonerFactory();
 
   static public OWLReasoner getReasoner(OWLOntology ontology) {
     OWLReasoner r = reasoners.get(ontology.getOntologyID().getOntologyIRI());
     if (r == null)
     {
-      r = rf.createNonBufferingReasoner(ontology);
+//      r = rf.createNonBufferingReasoner(ontology);
       reasoners.put(ontology.getOntologyID().getOntologyIRI(), r);
     }
     return r;
@@ -918,7 +917,6 @@ public class OwlclUtil implements INativeLibraryLoader {
     reasoners.remove(iri);
   }
 
-  @Override
   public void loadNativeLibrary(InputStream stream) {
     Path tmp;
     try

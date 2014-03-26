@@ -24,18 +24,16 @@ import ch.qos.logback.core.FileAppender;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
 
-import com.beust.jcommander.CommandResult;
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.DirectoryExistsValueValidator;
 import com.essaid.owlcl.command.cli.FileListValueValidator;
 import com.essaid.owlcl.command.cli.FileValueExistsValidator;
-import com.essaid.owlcl.core.IsftCommand;
-import com.essaid.owlcl.core.annotation.TopCommandQualifier;
+import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.util.IOwlclManager;
 import com.essaid.owlcl.util.OntologyFiles;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 // @formatter:off
 /**
@@ -61,7 +59,7 @@ import com.google.inject.Inject;
  * 
  */
 // @formatter:on
-public class MainCommand extends IsftCommand<CommandResult> {
+public class MainCommand extends OwlclCommand {
 
   public static final String PROGRAM_DESC = "This is the ISF Tools program with various "
       + "(in development) commands and options.\n";
@@ -448,8 +446,10 @@ public class MainCommand extends IsftCommand<CommandResult> {
    */
   public void configure() {
 
-    // working directory is not set here. It comes either from the
-    // constructor or the commandline after parsing.
+    if (!workingDirectorySet)
+    {
+      workingDirectory = mananger.getWorkDirectory();
+    }
 
     // load properties (after the working directory is set if needed.)
     if (configProperties == null || workingDirectorySet)
@@ -774,72 +774,27 @@ public class MainCommand extends IsftCommand<CommandResult> {
       logger.info("Import file: " + file);
     }
 
-    // ================================================================================
-    // Run the command
-    // ================================================================================
-    // String command = jc.getParsedCommand();
-    //
-    // if (command.equalsIgnoreCase("newModule"))
-    // {
-    // newModule.run();
-    // } else if (command.equalsIgnoreCase("module"))
-    // {
-    // module.run();
-    // } else if (command.equalsIgnoreCase("ero"))
-    // {
-    // ero.run();
-    // } else if (command.equalsIgnoreCase("catalog"))
-    // {
-    // catalog.run();
-    // } else if (command.equalsIgnoreCase("validate"))
-    // {
-    // validate.run();
-    // } else if (command.equalsIgnoreCase("compare"))
-    // {
-    // cc.run();
-    // } else if (command.equalsIgnoreCase("typecheck"))
-    // {
-    // typescheck.run();
-    // } else if (command.equalsIgnoreCase("rewrite"))
-    // {
-    // rw.run();
-    // } else if (command.equalsIgnoreCase("map"))
-    // {
-    // mc.run();
-    // } else if (command.equalsIgnoreCase("updateModule"))
-    // {
-    // um.run();
-    // }
-
   }
 
   // ================================================================================
   // Implementation
   // ================================================================================
 
-  @Inject(optional = true)
-  @TopCommandQualifier
-  List<IsftCommand<? extends CommandResult>> commands = new ArrayList<IsftCommand<? extends CommandResult>>();
+  @Inject
+  IOwlclManager mananger;
 
-  @Override
-  public void initialize() {
-
-    for (IsftCommand<? extends CommandResult> command : commands)
-    {
-      this.addCommand(command);
-      command.initialize();
-    }
-
+  @Inject
+  public MainCommand(@Assisted OwlclCommand parent) {
+    super(parent);
   }
 
   @Override
-  public CommandResult call() throws Exception {
+  public void initialize() {
+    configure();
+  }
 
-    for (IsftCommand<? extends Object> command : commands)
-    {
-      System.out.println("Command: " + command);
-    }
-    System.out.println("Finished printing commands:" + commands.size());
+  @Override
+  public Object call() throws Exception {
 
     System.out.println("\nDynamic parameters:");
     this.getDynamicParameters().entrySet();
@@ -859,7 +814,7 @@ public class MainCommand extends IsftCommand<CommandResult> {
 
     return null;
   }
-  
+
   /**
    * Pass in a working directory that possibly has configuration properties.
    * This constructor is to force a client to make a choise instead of just
@@ -867,13 +822,20 @@ public class MainCommand extends IsftCommand<CommandResult> {
    * 
    * @param workingDirectory
    */
-//  public Main(File workingDirectory) {
-//    this.workingDirectory = workingDirectory;
-//    configure();
-//  }
+  // public Main(File workingDirectory) {
+  // this.workingDirectory = workingDirectory;
+  // configure();
+  // }
+
+  private File jobDirectory = null;
 
   public File getJobDirectory() {
-    return new File(getOutputDirectory(), jobName + "_" + jobQualifier);
+    if (jobDirectory == null)
+    {
+      jobDirectory = new File(getOutputDirectory(), jobName + "_" + jobQualifier);
+      jobDirectory.mkdirs();
+    }
+    return jobDirectory;
   }
 
   private OntologyFiles ifiles = null;
@@ -960,86 +922,80 @@ public class MainCommand extends IsftCommand<CommandResult> {
     return null;
   }
 
-//  private IJCommander jc = new JCommander();
-//  private NewModuleCommand newModule;
-//  private GenerateModuleCommand module;
-//  private EroCommand ero;
-//  private CatalogCommand catalog;
-//  private ValidateIriCommand validate;
-//  private CompareCommand cc;
-//  private TypecheckCommand typescheck;
-//  private RewriteCommand rw;
-//  private MapperCommand mc;
-//
-//  private UpdateModuleCommand um;
-//
-//  public void parseArgs(String[] args) {
-//    jc.setAllowAbbreviatedOptions(true);
-//    jc.setCaseSensitiveOptions(false);
-//    jc.setProgramName("java -jar isf-tools-*.jar");
-//
-//    jc.addObject(this);
-//
-//    newModule = new NewModuleCommand(this);
-//    jc.addCommand("newModule", newModule);
-//
-//    module = new GenerateModuleCommand(this);
-//    jc.addCommand("module", module);
-//
-//    ero = new EroCommand(this);
-//    jc.addCommand("ero", ero);
-//
-//    catalog = new CatalogCommand(this);
-//    jc.addCommand("catalog", catalog);
-//
-//    validate = new ValidateIriCommand(this);
-//    jc.addCommand("validate", validate);
-//
-//    cc = new CompareCommand(this);
-//    jc.addCommand("compare", cc);
-//
-//    typescheck = new TypecheckCommand(this);
-//    jc.addCommand("typecheck", typescheck);
-//
-//    rw = new RewriteCommand(this);
-//    jc.addCommand("rewrite", rw);
-//
-//    mc = new MapperCommand(this);
-//    jc.addCommand("map", mc);
-//
-//    um = new UpdateModuleCommand(this);
-//    jc.addCommand("updateModule", um);
-//
-//    if (args.length == 0)
-//    {
-//      System.out.println(PROGRAM_DESC);
-//      jc.usage();
-//      return;
-//    }
-//
-//    try
-//    {
-//      jc.parse(args);
-//    } catch (ParameterException e)
-//    {
-//      System.err.println(e.getMessage());
-//      System.out.println(PROGRAM_DESC);
-//      jc.usage();
-//    }
-//
-//  }
+  // private IJCommander jc = new JCommander();
+  // private NewModuleCommand newModule;
+  // private GenerateModuleCommand module;
+  // private EroCommand ero;
+  // private CatalogCommand catalog;
+  // private ValidateIriCommand validate;
+  // private CompareCommand cc;
+  // private TypecheckCommand typescheck;
+  // private RewriteCommand rw;
+  // private MapperCommand mc;
+  //
+  // private UpdateModuleCommand um;
+  //
+  // public void parseArgs(String[] args) {
+  // jc.setAllowAbbreviatedOptions(true);
+  // jc.setCaseSensitiveOptions(false);
+  // jc.setProgramName("java -jar isf-tools-*.jar");
+  //
+  // jc.addObject(this);
+  //
+  // newModule = new NewModuleCommand(this);
+  // jc.addCommand("newModule", newModule);
+  //
+  // module = new GenerateModuleCommand(this);
+  // jc.addCommand("module", module);
+  //
+  // ero = new EroCommand(this);
+  // jc.addCommand("ero", ero);
+  //
+  // catalog = new CatalogCommand(this);
+  // jc.addCommand("catalog", catalog);
+  //
+  // validate = new ValidateIriCommand(this);
+  // jc.addCommand("validate", validate);
+  //
+  // cc = new CompareCommand(this);
+  // jc.addCommand("compare", cc);
+  //
+  // typescheck = new TypecheckCommand(this);
+  // jc.addCommand("typecheck", typescheck);
+  //
+  // rw = new RewriteCommand(this);
+  // jc.addCommand("rewrite", rw);
+  //
+  // mc = new MapperCommand(this);
+  // jc.addCommand("map", mc);
+  //
+  // um = new UpdateModuleCommand(this);
+  // jc.addCommand("updateModule", um);
+  //
+  // if (args.length == 0)
+  // {
+  // System.out.println(PROGRAM_DESC);
+  // jc.usage();
+  // return;
+  // }
+  //
+  // try
+  // {
+  // jc.parse(args);
+  // } catch (ParameterException e)
+  // {
+  // System.err.println(e.getMessage());
+  // System.out.println(PROGRAM_DESC);
+  // jc.usage();
+  // }
+  //
+  // }
 
-//  public static void main(String[] args) {
-//    Main main = new Main(new File(System.getProperty("user.dir")));
-//    main.parseArgs(args);
-//    main.initWithLogging();
-//
-//  }
-
-
-
-
-  
-
+  // public static void main(String[] args) {
+  // Main main = new Main(new File(System.getProperty("user.dir")));
+  // main.parseArgs(args);
+  // main.initWithLogging();
+  //
+  // }
 
 }
