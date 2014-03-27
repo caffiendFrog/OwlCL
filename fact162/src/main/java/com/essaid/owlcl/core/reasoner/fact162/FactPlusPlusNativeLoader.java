@@ -1,4 +1,4 @@
-package com.essaid.owlcl.core.reasoner.fact;
+package com.essaid.owlcl.core.reasoner.fact162;
 
 import java.io.InputStream;
 
@@ -29,7 +29,7 @@ public class FactPlusPlusNativeLoader {
       throw new IllegalStateException("Could not find native library path for Fact++");
     }
 
-    String libPath = manager.getNativeResourcePrefix("fact.plus.plus") + libName;
+    String libPath = manager.getNativeResourcePrefix("fact162") + libName;
 
     ClassLoader cl = this.getClass().getClassLoader();
 

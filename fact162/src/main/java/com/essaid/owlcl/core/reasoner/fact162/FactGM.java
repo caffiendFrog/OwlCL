@@ -1,4 +1,4 @@
-package com.essaid.owlcl.core.reasoner.fact;
+package com.essaid.owlcl.core.reasoner.fact162;
 
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
