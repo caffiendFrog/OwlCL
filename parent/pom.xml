@@ -41,7 +41,7 @@
         <configuration>
           <filesets>
             <fileset>
-              <directory>package.dependencies</directory>
+              <directory>assemble.dependencies</directory>
             </fileset>
           </filesets>
         </configuration>

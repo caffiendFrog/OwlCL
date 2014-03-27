@@ -6,7 +6,7 @@ import com.beust.jcommander.DefaultUsage;
 import com.essaid.owlcl.command.NullCommand;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
 import com.essaid.owlcl.core.OwlclCommand;
-import com.essaid.owlcl.core.OwlclGuiceModule;
+import com.essaid.owlcl.core.OwlclCoreGModule;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
 import com.essaid.owlcl.core.util.DefaultOwlclManager;
 import com.essaid.owlcl.core.util.IOwlclManager;
@@ -14,8 +14,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
-import com.google.inject.internal.RehashableKeys.Keys;
 import com.google.inject.name.Names;
 
 public class DoMain {
@@ -26,7 +24,7 @@ public class DoMain {
 
   private void run(final DefaultOwlclManager dm, String[] args) {
 
-    Injector injector = Guice.createInjector(new OwlclGuiceModule(), new AbstractModule() {
+    Injector injector = Guice.createInjector(new OwlclCoreGModule(), new AbstractModule() {
 
       @Override
       protected void configure() {

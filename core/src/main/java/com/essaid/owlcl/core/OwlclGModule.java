@@ -8,6 +8,6 @@ import com.google.inject.Module;
  * @param <T>
  *          the type (class or interface) of extension
  */
-public interface IOwlclGuiceModule extends Module {
+public interface OwlclGModule extends Module {
 
 }

@@ -38,4 +38,26 @@
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+    <dependency>
+      <groupId>com.essaid.owlcl</groupId>
+      <artifactId>command</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.essaid.owlcl</groupId>
+      <artifactId>core</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.essaid.owlcl</groupId>
+      <artifactId>module</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.essaid.owlcl</groupId>
+      <artifactId>fact.plus.plus.native</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
 </project>
