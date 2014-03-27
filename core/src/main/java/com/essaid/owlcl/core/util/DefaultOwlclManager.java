@@ -16,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map.Entry;
 
-import com.essaid.owlcl.util.Owlcl;
+import com.essaid.owlcl.core.IOwlclManager;
 
 /**
  * @author Shahim Essaid
@@ -35,7 +35,7 @@ public class DefaultOwlclManager implements IOwlclManager {
   private File workDirectory;
   private File workExtDirectory;
 
-  private Path temporaryDirectory;
+  private File temporaryDirectory;
 
   private Object lock = new Object();
 
@@ -47,7 +47,7 @@ public class DefaultOwlclManager implements IOwlclManager {
 
   DefaultOwlclManager(URL codeUrl, File codeJar, File codeDirectory, File codeExtDirectory,
       File homeDirectory, File currentDirectory, File workDirectory, File workExtDirectory,
-      Path temporaryDirectory) {
+      File temporaryDirectory) {
     this.codeUrl = codeUrl;
     this.codeJar = codeJar;
     this.codeDirectory = codeDirectory;
@@ -78,7 +78,10 @@ public class DefaultOwlclManager implements IOwlclManager {
   private void initTemporaryDirectory() {
     try
     {
-      temporaryDirectory = Files.createTempDirectory("owlcl-tmp-directory");
+      Path tmpPath = Files.createTempDirectory("owlcl-tmp-directory");
+      temporaryDirectory = tmpPath.toFile();
+      temporaryDirectory.mkdirs();
+      temporaryDirectory.deleteOnExit();
     } catch (IOException e)
     {
       throw new RuntimeException("Error creating temporary directory", e);
@@ -86,17 +89,23 @@ public class DefaultOwlclManager implements IOwlclManager {
     Runtime.getRuntime().addShutdownHook(new Thread() {
 
       public void run() {
-        delete(temporaryDirectory.toFile());
+
+        delete(temporaryDirectory);
       }
 
       void delete(File f) {
         if (f.isDirectory())
         {
           for (File c : f.listFiles())
+          {
             delete(c);
+          }
+          f.delete();
+        } else
+        {
+          f.delete();
         }
-        if (!f.delete())
-          throw new RuntimeException("Failed to delete file: " + f);
+
       }
     });
 
@@ -134,7 +143,7 @@ public class DefaultOwlclManager implements IOwlclManager {
         throw new RuntimeException("Code source is not a directory or a *.jar file.");
       }
     }
-    codeExtDirectory = new File(codeDirectory, Owlcl.OWLCL_EXT_DIR);
+    codeExtDirectory = new File(codeDirectory, IOwlclManager.OWLCL_EXT_DIR);
 
     // find caller's current directory;
     try
@@ -155,13 +164,13 @@ public class DefaultOwlclManager implements IOwlclManager {
     }
 
     // first find working directory
-    String workDir = System.getProperty(Owlcl.OWLCL_WORK_DIR_PROPERTY);
+    String workDir = System.getProperty(IOwlclManager.OWLCL_WORK_DIR_PROPERTY);
     if (workDir == null)
     {
       for (Entry<String, String> envEntry : System.getenv().entrySet())
       {
         if (envEntry.getKey().toUpperCase()
-            .equals(Owlcl.OWLCL_WORK_DIR_PROPERTY.toUpperCase().replace(".", "_")))
+            .equals(IOwlclManager.OWLCL_WORK_DIR_PROPERTY.toUpperCase().replace(".", "_")))
         {
           workDir = envEntry.getValue();
           break;
@@ -187,7 +196,7 @@ public class DefaultOwlclManager implements IOwlclManager {
       workDirectory = currentDirectory;
     }
 
-    workExtDirectory = new File(workDirectory, Owlcl.OWLCL_EXT_DIR);
+    workExtDirectory = new File(workDirectory, IOwlclManager.OWLCL_EXT_DIR);
     //
     System.out.println("Home directory: " + homeDirectory);
     System.out.println("Current directory: " + currentDirectory);
@@ -201,47 +210,64 @@ public class DefaultOwlclManager implements IOwlclManager {
     System.out.println("Work ext directory: " + workExtDirectory);
   }
 
-  @SuppressWarnings("resource")
   private void initClasspath() {
 
-    ClassLoader systemLoader = getClass().getClassLoader().getSystemClassLoader();
+    ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
+
+    Method addUrlMethod = null;
+    try
+    {
+      addUrlMethod = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+      addUrlMethod.setAccessible(true);
+    } catch (NoSuchMethodException | SecurityException e1)
+    {
+      throw new RuntimeException("Error trying to get the addURL ClassLoader method "
+          + "to augment classpath.", e1);
+    }
+
     if (systemLoader instanceof URLClassLoader)
     {
-      URLClassLoader urlcl = (URLClassLoader) systemLoader;
-      Method addURL = null;
-      try
+
+      // load core jars first, they have higher priority.
+      File coreJars = new File(codeExtDirectory, "core");
+      if (codeJar != null) // running in packaged mode, not in IDE.
       {
-        Class current = urlcl.getClass();
-        while (current != ClassLoader.class)
+        if (coreJars.exists()) // they should exist.
         {
-          for (Method method : current.getDeclaredMethods())
+          for (File file : coreJars.listFiles())
           {
-            if (method.getName().equals("addURL"))
+            addFileToClasspath(file, systemLoader, addUrlMethod);
+            // look one directory deep for addition jar files
+            if (file.isDirectory())
             {
-              addURL = method;
-              break;
+              for (File subFile : file.listFiles())
+              {
+                if (subFile.isFile() && subFile.getPath().endsWith(".jar"))
+                {
+                  addFileToClasspath(subFile, systemLoader, addUrlMethod);
+                }
+              }
             }
           }
-          current = current.getSuperclass();
-
+        } else
+        // give up
+        {
+          throw new IllegalStateException("Core jar files are missing from "
+              + coreJars.getAbsolutePath());
         }
-      } catch (SecurityException e)
-      {
-        throw new RuntimeException("Could not setup classpath due to security enforced.", e);
-      }
-      if (addURL != null)
-      {
-        addURL.setAccessible(true);
-      } else
-      {
-        throw new RuntimeException("Failed to find addURL Method in URL classloader. Giving up.");
       }
 
+      // load any other extensions
       if (codeExtDirectory.exists())
       {
         for (File file : codeExtDirectory.listFiles())
         {
-          addFileToClasspath(file, urlcl, addURL);
+          if (file.equals(coreJars))
+          {
+            // already loaded
+            continue;
+          }
+          addFileToClasspath(file, systemLoader, addUrlMethod);
           // look one directory deep for addition jar files
           if (file.isDirectory())
           {
@@ -249,7 +275,7 @@ public class DefaultOwlclManager implements IOwlclManager {
             {
               if (subFile.isFile() && subFile.getPath().endsWith(".jar"))
               {
-                addFileToClasspath(subFile, urlcl, addURL);
+                addFileToClasspath(subFile, systemLoader, addUrlMethod);
               }
             }
           }
@@ -259,7 +285,7 @@ public class DefaultOwlclManager implements IOwlclManager {
       {
         for (File file : workExtDirectory.listFiles())
         {
-          addFileToClasspath(file, urlcl, addURL);
+          addFileToClasspath(file, systemLoader, addUrlMethod);
           // look one directory deep for addition jar files
           if (file.isDirectory())
           {
@@ -267,7 +293,7 @@ public class DefaultOwlclManager implements IOwlclManager {
             {
               if (subFile.isFile() && subFile.getPath().endsWith(".jar"))
               {
-                addFileToClasspath(subFile, urlcl, addURL);
+                addFileToClasspath(subFile, systemLoader, addUrlMethod);
               }
             }
           }
@@ -312,7 +338,7 @@ public class DefaultOwlclManager implements IOwlclManager {
    * @see com.essaid.owlcl.util.IOwlclManager#getTemporaryDirectory()
    */
   @Override
-  public Path getTemporaryDirectory() {
+  public File getTemporaryDirectory() {
 
     if (!initted)
     {
@@ -333,8 +359,10 @@ public class DefaultOwlclManager implements IOwlclManager {
     Path tmp;
     try
     {
-      tmp = Files.createTempFile(getTemporaryDirectory(), "nativelib-", null);
-      OutputStream fos = new FileOutputStream(tmp.toFile());
+      tmp = Files.createTempFile(getTemporaryDirectory().toPath(), "nativelib-", null);
+      File tmpFile = tmp.toFile();
+      // tmpFile.deleteOnExit();
+      OutputStream fos = new FileOutputStream(tmpFile);
       byte[] buffer = new byte[1024];
       int bytesRead = 0;
       while ((bytesRead = stream.read(buffer)) != -1)
@@ -375,32 +403,29 @@ public class DefaultOwlclManager implements IOwlclManager {
    */
   @Override
   public String getNativeResourcePrefix(String resourceGroupName) {
-    String path = "/native/" + resourceGroupName;
+    String path = "native/" + resourceGroupName;
 
-    String osName = getOsName();
-    String osArch = getOsArch();
-
-    if (osName.toLowerCase().startsWith("windows"))
+    if (isWindows())
     {
-      if (osArch.contains("64"))
+      if (is64Arch())
       {
         path += "/windows/64/";
       } else
       {
         path += "/windows/32/";
       }
-    } else if (osName.toLowerCase().startsWith("linux"))
+    } else if (isLinux())
     {
-      if (osArch.contains("64"))
+      if (is64Arch())
       {
         path += "/linux/64/";
       } else
       {
         path += "/linux/32/";
       }
-    } else if (osName.toLowerCase().contains("mac"))
+    } else if (isMacOs())
     {
-      if (osArch.contains("64"))
+      if (is64Arch())
       {
         path += "/macos/64/";
       } else
@@ -830,13 +855,9 @@ public class DefaultOwlclManager implements IOwlclManager {
   // return axioms;
   // }
   //
-  public static String getOsName() {
-    return System.getProperty("os.name");
-  }
 
-  public static String getOsArch() {
-    return System.getProperty("os.arch");
-  }
+  private String osName = System.getProperty("os.name");
+  private String osArch = System.getProperty("os.arch");
 
   //
   // //
@@ -1143,6 +1164,31 @@ public class DefaultOwlclManager implements IOwlclManager {
   @Override
   public File getWorkExtDirectory() {
     return workExtDirectory;
+  }
+
+  @Override
+  public boolean isWindows() {
+    return osName.toLowerCase().startsWith("windows");
+  }
+
+  @Override
+  public boolean isMacOs() {
+    return osName.toLowerCase().contains("mac");
+  }
+
+  @Override
+  public boolean isLinux() {
+    return osName.toLowerCase().startsWith("linux");
+  }
+
+  @Override
+  public boolean is32Arch() {
+    return osArch.contains("32");
+  }
+
+  @Override
+  public boolean is64Arch() {
+    return osArch.contains("64");
   }
 
 }

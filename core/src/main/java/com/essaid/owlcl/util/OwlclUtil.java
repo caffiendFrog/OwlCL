@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,10 +47,9 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.ReasonerInternalException;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
-
 //import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
 
-import com.essaid.owlcl.module.builder.simple.MBSimpleVocab;
+import com.essaid.owlcl.core.IOwlclManager;
 
 /**
  * @author Shahim Essaid
@@ -155,7 +153,7 @@ public class OwlclUtil  {
         throw new RuntimeException("Code source is not a directory or a *.jar file.");
       }
     }
-    codeExtDirectory = new File(codeDirectory, Owlcl.OWLCL_EXT_DIR);
+    codeExtDirectory = new File(codeDirectory, IOwlclManager.OWLCL_EXT_DIR);
 
     // find caller's current directory;
     try
@@ -176,13 +174,13 @@ public class OwlclUtil  {
     }
 
     // first find working directory
-    String workDir = System.getProperty(Owlcl.OWLCL_WORK_DIR_PROPERTY);
+    String workDir = System.getProperty(IOwlclManager.OWLCL_WORK_DIR_PROPERTY);
     if (workDir == null)
     {
       for (Entry<String, String> envEntry : System.getenv().entrySet())
       {
         if (envEntry.getKey().toUpperCase()
-            .equals(Owlcl.OWLCL_WORK_DIR_PROPERTY.toUpperCase().replace(".", "_")))
+            .equals(IOwlclManager.OWLCL_WORK_DIR_PROPERTY.toUpperCase().replace(".", "_")))
         {
           workDir = envEntry.getValue();
           break;
@@ -208,7 +206,7 @@ public class OwlclUtil  {
       workDirectory = currentDirectory;
     }
 
-    workExtDirectory = new File(workDirectory, Owlcl.OWLCL_EXT_DIR);
+    workExtDirectory = new File(workDirectory, IOwlclManager.OWLCL_EXT_DIR);
     //
     System.out.println("Home directory: " + homeDirectory);
     System.out.println("Current directory: " + currentDirectory);
@@ -369,83 +367,7 @@ public class OwlclUtil  {
     return values;
   }
 
-  public static Set<OWLAnnotationAssertionAxiom> getIncludeAxioms(OWLOntology ontology,
-      boolean includeImports) {
 
-    return OwlclUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.include.getAP(),
-        includeImports);
-  }
-
-  public static Set<OWLAnnotationAssertionAxiom> getIncludeInstancesAxioms(OWLOntology ontology,
-      boolean includeImports) {
-
-    return OwlclUtil.getAnnotationAssertionAxioms(ontology,
-        MBSimpleVocab.include_instances.getAP(), includeImports);
-  }
-
-  public static Set<OWLAnnotationAssertionAxiom> getIncludeSubsAxioms(OWLOntology ontology,
-      boolean includeImports) {
-
-    return OwlclUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.include_subs.getAP(),
-        includeImports);
-  }
-
-  public static Set<OWLAnnotationAssertionAxiom> getExcludeAxioms(OWLOntology ontology,
-      boolean includeImports) {
-
-    return OwlclUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.exclude.getAP(),
-        includeImports);
-  }
-
-  public static Set<OWLAnnotationAssertionAxiom> getExcludeSubsAxioms(OWLOntology ontology,
-      boolean includeImports) {
-
-    return OwlclUtil.getAnnotationAssertionAxioms(ontology, MBSimpleVocab.exclude_subs.getAP(),
-        includeImports);
-  }
-
-  public static Set<OWLEntity> getIncludeEntities(OWLOntology ontology, boolean includeImports) {
-    Set<OWLAnnotationAssertionAxiom> axioms = getIncludeAxioms(ontology, includeImports);
-    return getSubjectEntities(ontology, includeImports, axioms);
-  }
-
-  public static Set<OWLEntity> getIncludeInstances(OWLOntology ontology, boolean includeImports) {
-
-    Set<OWLAnnotationAssertionAxiom> axioms = getIncludeInstancesAxioms(ontology, includeImports);
-
-    return getSubjectEntities(ontology, includeImports, axioms);
-
-  }
-
-  public static Set<OWLEntity> getIncludeSubsEntities(OWLOntology ontology, boolean includeImports) {
-    Set<OWLAnnotationAssertionAxiom> axioms = getIncludeSubsAxioms(ontology, includeImports);
-    return getSubjectEntities(ontology, includeImports, axioms);
-  }
-
-  public static Set<OWLEntity> getExcludeEntities(OWLOntology ontology, boolean includeImports) {
-    Set<OWLAnnotationAssertionAxiom> axioms = getExcludeAxioms(ontology, includeImports);
-    return getSubjectEntities(ontology, includeImports, axioms);
-  }
-
-  public static Set<OWLEntity> getExcludeSubsEntities(OWLOntology ontology, boolean includeImports) {
-    Set<OWLAnnotationAssertionAxiom> axioms = getExcludeSubsAxioms(ontology, includeImports);
-    return getSubjectEntities(ontology, includeImports, axioms);
-  }
-
-  private static Set<OWLEntity> getSubjectEntities(OWLOntology ontology, boolean includeImports,
-      Set<OWLAnnotationAssertionAxiom> axioms) {
-    Set<OWLEntity> entities = new HashSet<OWLEntity>();
-    IRI subject;
-    for (OWLAnnotationAssertionAxiom a : axioms)
-    {
-      if (a.getSubject() instanceof IRI)
-      {
-        subject = (IRI) a.getSubject();
-        entities.addAll(ontology.getEntitiesInSignature(subject, includeImports));
-      }
-    }
-    return entities;
-  }
 
   public static Set<OWLAnnotationAssertionAxiom> getAnnotationAssertionAxioms(OWLOntology ontology,
       OWLAnnotationProperty property, boolean includeImports) {
@@ -916,43 +838,43 @@ public class OwlclUtil  {
     reasoner.dispose();
     reasoners.remove(iri);
   }
-
-  public void loadNativeLibrary(InputStream stream) {
-    Path tmp;
-    try
-    {
-      tmp = Files.createTempFile(getTemporaryDirectory(), "nativelib-", null);
-      OutputStream fos = new FileOutputStream(tmp.toFile());
-      byte[] buffer = new byte[1024];
-      int bytesRead = 0;
-      while ((bytesRead = stream.read(buffer)) != -1)
-      {
-        fos.write(buffer, 0, bytesRead);
-      }
-      stream.close();
-      fos.close();
-    } catch (IOException e1)
-    {
-      throw new RuntimeException("Failed while loading native library", e1);
-    }
-
-    String libPath = System.getProperty("java.library.path");
-    libPath += File.pathSeparatorChar + tmp.toAbsolutePath().toString();
-    System.setProperty("java.library.path", libPath);
-
-    Field fieldSysPath;
-    try
-    {
-      fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
-      fieldSysPath.setAccessible(true);
-      fieldSysPath.set(null, null);
-    } catch (NoSuchFieldException | SecurityException | IllegalArgumentException
-        | IllegalAccessException e)
-    {
-      throw new RuntimeException("Error resetting java library path", e);
-    }
-
-  }
+//
+//  public void loadNativeLibrary(InputStream stream) {
+//    Path tmp;
+//    try
+//    {
+//      tmp = Files.createTempFile(getTemporaryDirectory(), "nativelib-", null);
+//      OutputStream fos = new FileOutputStream(tmp.toFile());
+//      byte[] buffer = new byte[1024];
+//      int bytesRead = 0;
+//      while ((bytesRead = stream.read(buffer)) != -1)
+//      {
+//        fos.write(buffer, 0, bytesRead);
+//      }
+//      stream.close();
+//      fos.close();
+//    } catch (IOException e1)
+//    {
+//      throw new RuntimeException("Failed while loading native library", e1);
+//    }
+//
+//    String libPath = System.getProperty("java.library.path");
+//    libPath += File.pathSeparatorChar + tmp.toAbsolutePath().toString();
+//    System.setProperty("java.library.path", libPath);
+//
+//    Field fieldSysPath;
+//    try
+//    {
+//      fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+//      fieldSysPath.setAccessible(true);
+//      fieldSysPath.set(null, null);
+//    } catch (NoSuchFieldException | SecurityException | IllegalArgumentException
+//        | IllegalAccessException e)
+//    {
+//      throw new RuntimeException("Error resetting java library path", e);
+//    }
+//
+//  }
 
   public String getNativeResourcePrefix(String resourceGroupName) {
     String path = "/native/" + resourceGroupName;

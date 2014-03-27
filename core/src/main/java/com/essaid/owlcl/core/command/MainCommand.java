@@ -25,13 +25,14 @@ import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.spi.FilterReply;
 
 import com.beust.jcommander.Parameter;
-import com.essaid.owlcl.command.cli.CanonicalFileConverter;
-import com.essaid.owlcl.command.cli.DirectoryExistsValueValidator;
-import com.essaid.owlcl.command.cli.FileListValueValidator;
-import com.essaid.owlcl.command.cli.FileValueExistsValidator;
+import com.beust.jcommander.internal.Nullable;
+import com.essaid.owlcl.core.IOwlclManager;
 import com.essaid.owlcl.core.OwlclCommand;
-import com.essaid.owlcl.core.util.IOwlclManager;
-import com.essaid.owlcl.util.OntologyFiles;
+import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
+import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
+import com.essaid.owlcl.core.cli.util.FileListValueValidator;
+import com.essaid.owlcl.core.cli.util.FileValueExistsValidator;
+import com.essaid.owlcl.core.util.OntologyFiles;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -784,7 +785,7 @@ public class MainCommand extends OwlclCommand {
   IOwlclManager mananger;
 
   @Inject
-  public MainCommand(@Assisted OwlclCommand parent) {
+  public MainCommand(@Nullable @Assisted OwlclCommand parent) {
     super(parent);
   }
 

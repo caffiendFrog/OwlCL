@@ -1,6 +1,5 @@
 package com.essaid.owlcl.core;
 
-import com.essaid.owlcl.module.Module;
 
 public interface IsftModuleBuilder {
 
@@ -13,7 +12,7 @@ public interface IsftModuleBuilder {
 	 * 
 	 * @param module
 	 */
-	void build(Module module);
+	void build(IModule module);
 
 	/**
 	 * This is called when a module build is finished. The builders are held in
@@ -23,6 +22,6 @@ public interface IsftModuleBuilder {
 	 * 
 	 * @param module
 	 */
-	void buildFinished(Module module);
+	void buildFinished(IModule module);
 
 }

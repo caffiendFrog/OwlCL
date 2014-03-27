@@ -3,13 +3,12 @@ package com.essaid.owlcl.core.cli;
 import java.util.Set;
 
 import com.beust.jcommander.DefaultUsage;
-import com.essaid.owlcl.command.NullCommand;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
+import com.essaid.owlcl.core.IOwlclManager;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.OwlclCoreGModule;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
 import com.essaid.owlcl.core.util.DefaultOwlclManager;
-import com.essaid.owlcl.core.util.IOwlclManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -32,7 +31,7 @@ public class DoMain {
     IOwlclCommandFactory main = injector.getInstance(Key.get(IOwlclCommandFactory.class,
         Names.named(OwlclCommand.CORE_MAIN)));
 
-    OwlclCommand mainCommand = main.getCommand(new NullCommand());
+    OwlclCommand mainCommand = main.getCommand(null);
 
     Key<Set<IOwlclCommandFactory>> topFactoryKey = new Key<Set<IOwlclCommandFactory>>(
         TopCommandQualifier.class) {
