@@ -18,11 +18,7 @@ import com.google.inject.name.Names;
 
 public class DoMain {
 
-  public DoMain(DefaultOwlclManager dm, String[] args) {
-    run(dm, args);
-  }
-
-  private void run(final DefaultOwlclManager dm, String[] args) {
+  static void run(final DefaultOwlclManager dm, String[] args) {
 
     Injector injector = Guice.createInjector(new OwlclCoreGModule(), new AbstractModule() {
 
@@ -33,20 +29,18 @@ public class DoMain {
       }
     });
 
-    IOwlclCommandFactory main = null;
-
-    main = injector.getInstance(Key.get(IOwlclCommandFactory.class,
+    IOwlclCommandFactory main = injector.getInstance(Key.get(IOwlclCommandFactory.class,
         Names.named(OwlclCommand.CORE_MAIN)));
 
     OwlclCommand mainCommand = main.getCommand(new NullCommand());
 
-    Key<Set<IOwlclCommandFactory>> fkey = new Key<Set<IOwlclCommandFactory>>(
+    Key<Set<IOwlclCommandFactory>> topFactoryKey = new Key<Set<IOwlclCommandFactory>>(
         TopCommandQualifier.class) {
     };
 
-    for (IOwlclCommandFactory f : injector.getInstance(fkey))
+    for (IOwlclCommandFactory topFactory : injector.getInstance(topFactoryKey))
     {
-      mainCommand.addCommand(f.getCommand(mainCommand));
+      mainCommand.addCommand(topFactory.getCommand(mainCommand));
 
     }
 
