@@ -1,4 +1,4 @@
-package com.essaid.owlcl.command;
+package com.essaid.owlcl.core.command;
 
 import java.io.File;
 import java.io.FileReader;

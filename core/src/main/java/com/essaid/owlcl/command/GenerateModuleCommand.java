@@ -9,6 +9,7 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
+import com.essaid.owlcl.core.command.MainCommand;
 import com.essaid.owlcl.module.DefaultModule;
 import com.essaid.owlcl.module.Module;
 

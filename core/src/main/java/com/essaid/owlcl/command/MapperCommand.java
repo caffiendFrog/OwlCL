@@ -21,6 +21,7 @@ import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.IriConverter;
 import com.essaid.owlcl.command.cli.ManualIriMapping;
+import com.essaid.owlcl.core.command.MainCommand;
 import com.essaid.owlcl.mapping.DefaultMapping;
 import com.essaid.owlcl.mapping.Mapper;
 import com.essaid.owlcl.mapping.Mapping;

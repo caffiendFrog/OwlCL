@@ -23,6 +23,7 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
+import com.essaid.owlcl.core.command.MainCommand;
 import com.essaid.owlcl.util.OntologyFiles;
 import com.essaid.owlcl.util.Report;
 import com.google.inject.Inject;

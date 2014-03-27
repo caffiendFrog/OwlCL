@@ -1,8 +1,8 @@
 package com.essaid.owlcl.core;
 
 import com.essaid.owlcl.command.CatalogCommand;
-import com.essaid.owlcl.command.MainCommand;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
+import com.essaid.owlcl.core.command.MainCommand;
 import com.essaid.owlcl.core.util.CoreUtils;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;

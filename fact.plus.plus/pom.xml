@@ -10,23 +10,6 @@
   <artifactId>fact.plus.plus.native</artifactId>
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>cp.dependencies</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <includeScope>runtime</includeScope>
-          <outputDirectory>package.dependencies</outputDirectory>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
   <dependencies>

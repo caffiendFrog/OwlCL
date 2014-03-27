@@ -46,6 +46,23 @@
           </filesets>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>cp.dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <includeScope>runtime</includeScope>
+          <outputDirectory>${basedir}/assemble.dependencies</outputDirectory>
+        </configuration>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
@@ -85,9 +102,7 @@
     <module>../core</module>
     <module>../fact.plus.plus</module>
     <module>../assemble</module>
-    <module>../command</module>
     <module>../module</module>
-    <module>module</module>
-    <module>command</module>
+    <module>../command</module>
   </modules>
 </project>

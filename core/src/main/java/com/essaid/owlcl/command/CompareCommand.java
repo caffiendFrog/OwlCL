@@ -27,6 +27,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.IriConverter;
+import com.essaid.owlcl.core.command.MainCommand;
 import com.essaid.owlcl.util.OntologyFiles;
 import com.essaid.owlcl.util.OwlclUtil;
 import com.essaid.owlcl.util.Report;

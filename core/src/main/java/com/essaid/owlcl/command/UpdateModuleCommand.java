@@ -28,6 +28,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.cli.CanonicalFileConverter;
 import com.essaid.owlcl.command.cli.DirectoryExistsValueValidator;
+import com.essaid.owlcl.core.command.MainCommand;
 import com.essaid.owlcl.module.ModuleVocab;
 import com.essaid.owlcl.util.Owlcl;
 import com.essaid.owlcl.util.OwlclUtil;

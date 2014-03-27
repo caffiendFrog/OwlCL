@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.command.MainCommand;
 
 public abstract class AbstractCommand extends OwlclCommand {
 
