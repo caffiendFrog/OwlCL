@@ -7,76 +7,33 @@
   <formats>
     <format>dir</format>
   </formats>
-  <moduleSets>
-
-    <!-- core module -->
-    <moduleSet>
-      <useAllReactorProjects>true</useAllReactorProjects>
-      <includes>
-        <include>com.essaid.owlcl:core</include>
-      </includes>
-      <binaries>
-        <outputDirectory>/</outputDirectory>
-        <unpack>false</unpack>
-        <includes>
-          <include>com.essaid.owlcl:core</include>
-        </includes>
-        <outputFileNameMapping>owlcl.${module.extension}</outputFileNameMapping>
-        <!-- <dependencySets> -->
-        <!-- <dependencySet> -->
-        <!-- <includes></includes> -->
-        <!-- <outputDirectory>owlcl-extensions/core</outputDirectory> -->
-        <!-- <scope>runtime</scope> -->
-        <!-- </dependencySet> -->
-        <!-- </dependencySets> -->
-      </binaries>
-    </moduleSet>
 
 
-
-    <!-- command module -->
-    <moduleSet>
-      <useAllReactorProjects>true</useAllReactorProjects>
-      <includeSubModules>false</includeSubModules>
-      <includes>
-        <include>com.essaid.owlcl:command</include>
-      </includes>
-      <binaries>
-        <outputDirectory>/owlcl/command</outputDirectory>
-        <unpack>false</unpack>
-      </binaries>
-    </moduleSet>
-
-    <!-- core.fact162 -->
-    <moduleSet>
-      <useAllReactorProjects>true</useAllReactorProjects>
-      <includes>
-        <include>com.essaid.owlcl:fact162.native</include>
-      </includes>
-      <binaries>
-        <outputDirectory>owlcl/fact162</outputDirectory>
-        <unpack>false</unpack>
-      </binaries>
-    </moduleSet>
-
-    <!-- core.module -->
-    <!-- <moduleSet> -->
-    <!-- <useAllReactorProjects>true</useAllReactorProjects> -->
-    <!-- <includeSubModules>false</includeSubModules> -->
-    <!-- <includes> -->
-    <!-- <include>com.essaid.owlcl:module</include> -->
-    <!-- </includes> -->
-    <!-- <binaries> -->
-    <!-- <outputDirectory>owlcl-extensions/core.module</outputDirectory> -->
-    <!-- <unpack>false</unpack> -->
-    <!-- </binaries> -->
-    <!-- </moduleSet> -->
-  </moduleSets>
+  <!-- add entry for artifact and then copy runtime dependencies in the fileSets section -->
+  <files>
+    <file>
+      <source>../core/target/core-${owlcl.version}.jar</source>
+      <destName>owlcl.jar</destName>
+      <outputDirectory>/</outputDirectory>
+    </file>
+    <file>
+      <source>../command/target/command-${owlcl.version}.jar</source>
+      <outputDirectory>/owlcl/command</outputDirectory>
+    </file>
+    <file>
+      <source>../module/target/module-${owlcl.version}.jar</source>
+      <outputDirectory>/owlcl/module</outputDirectory>
+    </file>
+    <file>
+      <source>../fact162.native/target/fact162.native-${owlcl.version}.jar</source>
+      <outputDirectory>/owlcl/fact162</outputDirectory>
+    </file>
+  </files>
 
   <fileSets>
     <fileSet>
-      <directory>../fact162.native/assemble.dependencies</directory>
-      <outputDirectory>owlcl/fact162</outputDirectory>
+      <directory>../core/assemble.dependencies</directory>
+      <outputDirectory>/owlcl/core</outputDirectory>
       <includes></includes>
     </fileSet>
     <fileSet>
@@ -85,8 +42,13 @@
       <includes></includes>
     </fileSet>
     <fileSet>
-      <directory>../core/assemble.dependencies</directory>
-      <outputDirectory>/owlcl/core</outputDirectory>
+      <directory>../module/assemble.dependencies</directory>
+      <outputDirectory>/owlcl/module</outputDirectory>
+      <includes></includes>
+    </fileSet>
+    <fileSet>
+      <directory>../fact162.native/assemble.dependencies</directory>
+      <outputDirectory>/owlcl/fact162</outputDirectory>
       <includes></includes>
     </fileSet>
   </fileSets>

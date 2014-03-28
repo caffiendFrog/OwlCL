@@ -12,12 +12,12 @@
   <build>
     <directory>../distribution</directory>
     <plugins>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
           <descriptor>src/assembly/main.xml</descriptor>
+          <attach>false</attach>
         </configuration>
         <executions>
           <execution>
@@ -31,12 +31,7 @@
       </plugin>
     </plugins>
   </build>
-  <dependencies>
-    <dependency>
-      <groupId>com.essaid.owlcl</groupId>
-      <artifactId>core</artifactId>
-      <version>${owlcl.version}</version>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
+  <modules>
+    <module>../build</module>
+  </modules>
 </project>

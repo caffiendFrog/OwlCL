@@ -9,7 +9,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <guice.version>4.0-beta4</guice.version>
-    <owlcl.version>${version}</owlcl.version>
+    <owlcl.version>${project.version}</owlcl.version>
   </properties>
 
   <prerequisites>
@@ -175,12 +175,6 @@
       </plugins>
     </pluginManagement>
   </build>
-  <modules>
-    <module>../core</module>
-    <module>../fact162.native</module>
-    <module>../module</module>
-    <module>../command</module>
-    <module>../assemble</module>
-  </modules>
+
 
 </project>

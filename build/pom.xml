@@ -10,6 +10,11 @@
   <artifactId>build</artifactId>
   <packaging>pom</packaging>
 
-
+  <modules>
+    <module>../core</module>
+    <module>../command</module>
+    <module>../fact162.native</module>
+    <module>../module</module>
+  </modules>
 
 </project>

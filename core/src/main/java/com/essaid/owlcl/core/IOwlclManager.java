@@ -6,7 +6,7 @@ import java.net.URL;
 
 public interface IOwlclManager {
 
-  String OWLCL_EXT_DIR = "owlcl-extensions";
+  String OWLCL_EXT_DIR = "owlcl";
   String OWLCL_WORK_DIR_PROPERTY = "owlcl.work.dir";
 
   public File getTemporaryDirectory();
