@@ -8,38 +8,33 @@
     <format>dir</format>
   </formats>
   <moduleSets>
+
+    <!-- core module -->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
-      <includeSubModules>false</includeSubModules>
       <includes>
         <include>com.essaid.owlcl:core</include>
       </includes>
       <binaries>
-        <outputDirectory>.</outputDirectory>
+        <outputDirectory>/</outputDirectory>
         <unpack>false</unpack>
+        <includes>
+          <include>com.essaid.owlcl:core</include>
+        </includes>
         <outputFileNameMapping>owlcl.${module.extension}</outputFileNameMapping>
-        <dependencySets>
-          <dependencySet>
-            <includes></includes>
-            <outputDirectory>owlcl-extensions/core</outputDirectory>
-            <scope>runtime</scope>
-          </dependencySet>
-        </dependencySets>
-      </binaries>
-    </moduleSet>
-    <moduleSet>
-      <useAllReactorProjects>true</useAllReactorProjects>
-      <includeSubModules>false</includeSubModules>
-      <includes>
-        <include>com.essaid.owlcl:fact.plus.plus.native</include>
-      </includes>
-      <binaries>
-        <outputDirectory>owlcl-extensions/fact-plus-plus</outputDirectory>
-        <unpack>false</unpack>
+        <!-- <dependencySets> -->
+        <!-- <dependencySet> -->
+        <!-- <includes></includes> -->
+        <!-- <outputDirectory>owlcl-extensions/core</outputDirectory> -->
+        <!-- <scope>runtime</scope> -->
+        <!-- </dependencySet> -->
+        <!-- </dependencySets> -->
       </binaries>
     </moduleSet>
 
-    <!-- core.command -->
+
+
+    <!-- command module -->
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
       <includeSubModules>false</includeSubModules>
@@ -47,23 +42,52 @@
         <include>com.essaid.owlcl:command</include>
       </includes>
       <binaries>
-        <outputDirectory>owlcl-extensions/core</outputDirectory>
+        <outputDirectory>/owlcl/command</outputDirectory>
         <unpack>false</unpack>
       </binaries>
     </moduleSet>
+
+    <!-- core.fact162 -->
+    <moduleSet>
+      <useAllReactorProjects>true</useAllReactorProjects>
+      <includes>
+        <include>com.essaid.owlcl:fact162.native</include>
+      </includes>
+      <binaries>
+        <outputDirectory>owlcl/fact162</outputDirectory>
+        <unpack>false</unpack>
+      </binaries>
+    </moduleSet>
+
+    <!-- core.module -->
+    <!-- <moduleSet> -->
+    <!-- <useAllReactorProjects>true</useAllReactorProjects> -->
+    <!-- <includeSubModules>false</includeSubModules> -->
+    <!-- <includes> -->
+    <!-- <include>com.essaid.owlcl:module</include> -->
+    <!-- </includes> -->
+    <!-- <binaries> -->
+    <!-- <outputDirectory>owlcl-extensions/core.module</outputDirectory> -->
+    <!-- <unpack>false</unpack> -->
+    <!-- </binaries> -->
+    <!-- </moduleSet> -->
   </moduleSets>
 
   <fileSets>
     <fileSet>
-      <directory>../fact.plus.plus/package.dependencies</directory>
-      <outputDirectory>owlcl-extensions/fact-plus-plus</outputDirectory>
+      <directory>../fact162.native/assemble.dependencies</directory>
+      <outputDirectory>owlcl/fact162</outputDirectory>
       <includes></includes>
     </fileSet>
     <fileSet>
-      <directory>../core/package.dependencies</directory>
-      <outputDirectory>owlcl-extensions/core</outputDirectory>
+      <directory>../command/assemble.dependencies</directory>
+      <outputDirectory>/owlcl/command</outputDirectory>
       <includes></includes>
     </fileSet>
-
+    <fileSet>
+      <directory>../core/assemble.dependencies</directory>
+      <outputDirectory>/owlcl/core</outputDirectory>
+      <includes></includes>
+    </fileSet>
   </fileSets>
 </assembly>

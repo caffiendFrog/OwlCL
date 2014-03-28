@@ -23,7 +23,7 @@
       <groupId>fact-plus-plus</groupId>
       <artifactId>fact-plus-plus</artifactId>
       <version>1.6.2</version>
-      <scope>runtime</scope>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>
