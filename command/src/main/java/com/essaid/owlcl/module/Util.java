@@ -8,8 +8,8 @@ import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 
+import com.essaid.owlcl.core.util.OwlclUtil;
 import com.essaid.owlcl.module.builder.simple.MBSimpleVocab;
-import com.essaid.owlcl.util.OwlclUtil;
 
 public class Util {
 

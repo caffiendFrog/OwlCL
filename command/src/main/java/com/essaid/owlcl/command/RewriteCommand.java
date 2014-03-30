@@ -16,108 +16,109 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
-import com.essaid.owlcl.core.command.AbstractCommand;
-import com.essaid.owlcl.core.command.MainCommand;
 import com.essaid.owlcl.core.util.OntologyFiles;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 @Parameters(commandNames = "rewrite", commandDescription = "Rewrites the OWL files.")
 public class RewriteCommand extends AbstractCommand {
 
-	// ================================================================================
-	// Format
-	// ================================================================================
-	public String format = "rdfxml";
-	public boolean formatSet;
+  // ================================================================================
+  // Format
+  // ================================================================================
+  public String format = "rdfxml";
+  public boolean formatSet;
 
-	@Parameter(names = "-format", description = "Which formats, valid options include rdfxml ")
-	public void setFormat(String format) {
-		this.format = format;
-		this.formatSet = true;
-	}
+  @Parameter(names = "-format", description = "Which formats, valid options include rdfxml ")
+  public void setFormat(String format) {
+    this.format = format;
+    this.formatSet = true;
+  }
 
-	public String getFormat() {
-		return format;
-	}
+  public String getFormat() {
+    return format;
+  }
 
-	// ================================================================================
-	// Files
-	// ================================================================================
+  // ================================================================================
+  // Files
+  // ================================================================================
 
-	@Parameter(names = "-files", description = "Files or directories to search for files "
-			+ "to rewrite", converter = CanonicalFileConverter.class)
-	public List<File> files;
-	public boolean filesSet;
+  @Parameter(names = "-files", description = "Files or directories to search for files "
+      + "to rewrite", converter = CanonicalFileConverter.class)
+  public List<File> files;
+  public boolean filesSet;
 
-	// ================================================================================
-	// Implementation
-	// ================================================================================
-	public RewriteCommand(MainCommand main) {
-		super(main);
-		configure();
-	}
+  // ================================================================================
+  // Implementation
+  // ================================================================================
 
-	@Override
-	protected void addCommandActions(List<String> actionsList) {
-		// TODO Auto-generated method stub
-	}
+  @Inject
+  public RewriteCommand(@Assisted OwlclCommand main) {
+    super(main);
+    configure();
+  }
 
-	@SuppressWarnings("deprecation")
-	public void run() {
-		OntologyFiles ofu = new OntologyFiles(files, true);
-		Set<Entry<File, IRI>> entries = ofu.getLocalOntologyFiles(null).entrySet();
+  @Override
+  protected void addCommandActions(List<String> actionsList) {
+    // TODO Auto-generated method stub
+  }
 
-		for (Entry<File, IRI> entry : entries)
-		{
-			// if (entry.getValue() == null)
-			// continue;
-			// if (entry.getKey().getPath().endsWith("catalog-v001.xml"))
-			// {
-			// System.out.println("catalog:");
-			// System.out.println(entry.getValue());
-			// }
-			OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-			man.clearIRIMappers();
-			man.setSilentMissingImportsHandling(true);
-			OWLOntology ontology = null;
-			try
-			{
-				ontology = man.loadOntologyFromOntologyDocument(entry.getKey());
-			} catch (OWLOntologyCreationException e)
-			{
-				throw new RuntimeException(
-						"Format: error loading ontology file: " + entry.getKey(), e);
-			}
+  @SuppressWarnings("deprecation")
+  public void run() {
+    OntologyFiles ofu = new OntologyFiles(files, true);
+    Set<Entry<File, IRI>> entries = ofu.getLocalOntologyFiles(null).entrySet();
 
-			OWLOntologyFormat ontologyFormat = null;
-			if (format.equals("rdfxml"))
-			{
-				RDFXMLOntologyFormat rdfformat = new RDFXMLOntologyFormat();
-				rdfformat.setAddMissingTypes(true);
-				ontologyFormat = rdfformat;
-			}
+    for (Entry<File, IRI> entry : entries)
+    {
+      // if (entry.getValue() == null)
+      // continue;
+      // if (entry.getKey().getPath().endsWith("catalog-v001.xml"))
+      // {
+      // System.out.println("catalog:");
+      // System.out.println(entry.getValue());
+      // }
+      OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+      man.clearIRIMappers();
+      man.setSilentMissingImportsHandling(true);
+      OWLOntology ontology = null;
+      try
+      {
+        ontology = man.loadOntologyFromOntologyDocument(entry.getKey());
+      } catch (OWLOntologyCreationException e)
+      {
+        throw new RuntimeException("Format: error loading ontology file: " + entry.getKey(), e);
+      }
 
-			try
-			{
-				man.saveOntology(ontology, ontologyFormat);
-			} catch (OWLOntologyStorageException e)
-			{
-				throw new RuntimeException("Format: error saving ontology file: " + entry.getKey(),
-						e);
-			}
-		}
+      OWLOntologyFormat ontologyFormat = null;
+      if (format.equals("rdfxml"))
+      {
+        RDFXMLOntologyFormat rdfformat = new RDFXMLOntologyFormat();
+        rdfformat.setAddMissingTypes(true);
+        ontologyFormat = rdfformat;
+      }
 
-	}
+      try
+      {
+        man.saveOntology(ontology, ontologyFormat);
+      } catch (OWLOntologyStorageException e)
+      {
+        throw new RuntimeException("Format: error saving ontology file: " + entry.getKey(), e);
+      }
+    }
 
-	protected void configure() {
-		// TODO Auto-generated method stub
-		
-	}
+  }
 
-	protected void init() {
-		// TODO Auto-generated method stub
-		
-	}
+  protected void configure() {
+    // TODO Auto-generated method stub
+
+  }
+
+  protected void init() {
+    // TODO Auto-generated method stub
+
+  }
 
   @Override
   public Object call() throws Exception {

@@ -1,4 +1,4 @@
-package com.essaid.owlcl.util;
+package com.essaid.owlcl.core.util;
 
 import org.semanticweb.owlapi.io.OWLOntologyCreationIOException;
 import org.semanticweb.owlapi.io.OntologyIRIMappingNotFoundException;

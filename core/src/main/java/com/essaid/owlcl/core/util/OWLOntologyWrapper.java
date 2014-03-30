@@ -1,4 +1,4 @@
-package com.essaid.owlcl.util;
+package com.essaid.owlcl.core.util;
 
 import java.util.List;
 import java.util.Set;

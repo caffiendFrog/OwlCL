@@ -26,14 +26,15 @@ import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
-import com.essaid.owlcl.core.command.AbstractCommand;
-import com.essaid.owlcl.core.command.MainCommand;
+import com.essaid.owlcl.core.util.OwlclUtil;
+import com.essaid.owlcl.core.util.RuntimeOntologyLoadingException;
 import com.essaid.owlcl.module.ModuleVocab;
 import com.essaid.owlcl.module.Owlcl;
-import com.essaid.owlcl.util.OwlclUtil;
-import com.essaid.owlcl.util.RuntimeOntologyLoadingException;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 @Parameters(commandNames = "updateModule",
     commandDescription = "Updates one or more module directories.")
@@ -118,7 +119,8 @@ public class UpdateModuleCommand extends AbstractCommand {
 
   Logger logger = LoggerFactory.getLogger(this.getClass());
 
-  public UpdateModuleCommand(MainCommand main) {
+  @Inject
+  public UpdateModuleCommand(@Assisted OwlclCommand main) {
     super(main);
     configure();
   }

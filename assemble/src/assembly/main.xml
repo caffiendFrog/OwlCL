@@ -21,10 +21,6 @@
       <outputDirectory>/owlcl/command</outputDirectory>
     </file>
     <file>
-      <source>../module/target/module-${owlcl.version}.jar</source>
-      <outputDirectory>/owlcl/module</outputDirectory>
-    </file>
-    <file>
       <source>../fact162.native/target/fact162.native-${owlcl.version}.jar</source>
       <outputDirectory>/owlcl/fact162</outputDirectory>
     </file>
@@ -39,11 +35,6 @@
     <fileSet>
       <directory>../command/assemble.dependencies</directory>
       <outputDirectory>/owlcl/command</outputDirectory>
-      <includes></includes>
-    </fileSet>
-    <fileSet>
-      <directory>../module/assemble.dependencies</directory>
-      <outputDirectory>/owlcl/module</outputDirectory>
       <includes></includes>
     </fileSet>
     <fileSet>

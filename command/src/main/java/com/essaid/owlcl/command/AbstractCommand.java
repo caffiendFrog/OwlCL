@@ -1,4 +1,4 @@
-package com.essaid.owlcl.core.command;
+package com.essaid.owlcl.command;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,18 @@ import com.beust.jcommander.Parameter;
 import com.essaid.owlcl.core.OwlclCommand;
 
 public abstract class AbstractCommand extends OwlclCommand {
+
+  public static final String CATALOG = "owlcl.command.catalog";
+  public static final String COMPARE = "owlcl.command.compare";
+  public static final String ERO = "owlcl.command.ero";
+  public static final String MAIN = OwlclCommand.CORE_MAIN;
+  public static final String NEW_MODULE = "owlcl.command.newModule";
+  public static final String GENERATE_MODULE = "owlcl.command.generateModule";
+  public static final String MAPPER = "owlcl.command.map";
+  public static final String REWRITE = "owlcl.command.rewrite";
+  public static final String TYPECHECK = "owlcl.command.typecheck";
+  public static final String UPDATE_MODULE = "owlcl.command.updateModule";
+  public static final String VALIDATE = "owlcl.command.validate";
 
   // ================================================================================
   // Actions

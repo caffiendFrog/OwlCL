@@ -1,4 +1,4 @@
-package com.essaid.owlcl.util;
+package com.essaid.owlcl.core.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,6 +48,8 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.ReasonerInternalException;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 //import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
+
+
 
 import com.essaid.owlcl.core.IOwlclManager;
 

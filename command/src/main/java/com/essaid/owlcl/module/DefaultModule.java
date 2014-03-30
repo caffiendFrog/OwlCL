@@ -33,10 +33,10 @@ import org.slf4j.LoggerFactory;
 
 import com.essaid.owlcl.core.IsftModuleBuilder;
 import com.essaid.owlcl.core.IModule;
+import com.essaid.owlcl.core.util.OWLOntologyWrapper;
+import com.essaid.owlcl.core.util.OwlclUtil;
+import com.essaid.owlcl.core.util.RuntimeOntologyLoadingException;
 import com.essaid.owlcl.module.builder.ModuleBuilderManager;
-import com.essaid.owlcl.util.OWLOntologyWrapper;
-import com.essaid.owlcl.util.OwlclUtil;
-import com.essaid.owlcl.util.RuntimeOntologyLoadingException;
 
 public class DefaultModule implements IModule {
 

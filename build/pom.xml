@@ -14,7 +14,6 @@
     <module>../core</module>
     <module>../command</module>
     <module>../fact162.native</module>
-    <module>../module</module>
   </modules>
 
 </project>

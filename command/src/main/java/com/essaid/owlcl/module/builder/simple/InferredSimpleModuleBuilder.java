@@ -15,8 +15,8 @@ import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
 import com.essaid.owlcl.core.IsftModuleBuilder;
 import com.essaid.owlcl.core.IModule;
+import com.essaid.owlcl.core.util.OwlclUtil;
 import com.essaid.owlcl.module.Util;
-import com.essaid.owlcl.util.OwlclUtil;
 
 public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 

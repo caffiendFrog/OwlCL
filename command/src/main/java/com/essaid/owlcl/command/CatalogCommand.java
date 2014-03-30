@@ -30,7 +30,6 @@ import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
-import com.essaid.owlcl.core.command.AbstractCommand;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 

@@ -10,7 +10,6 @@ public class CommandGModule extends AbstractModule implements OwlclGModule {
   @Override
   protected void configure() {
 
-    GuiceUtils.installCommandFactory(binder(), MainCommand.class, OwlclCommand.CORE_MAIN);
   }
 
 }

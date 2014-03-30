@@ -10,6 +10,8 @@ import com.essaid.owlcl.core.OwlclCoreGModule;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
 import com.essaid.owlcl.core.util.DefaultOwlclManager;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binding;
+import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -28,31 +30,42 @@ public class DoMain {
       }
     });
 
-    IOwlclCommandFactory main = injector.getInstance(Key.get(IOwlclCommandFactory.class,
-        Names.named(OwlclCommand.CORE_MAIN)));
+    Binding<IOwlclCommandFactory> binding = injector.getExistingBinding(Key.get(
+        IOwlclCommandFactory.class, Names.named(OwlclCommand.CORE_MAIN)));
 
-    OwlclCommand mainCommand = main.getCommand(null);
-
-    Key<Set<IOwlclCommandFactory>> topFactoryKey = new Key<Set<IOwlclCommandFactory>>(
-        TopCommandQualifier.class) {
-    };
-
-    for (IOwlclCommandFactory topFactory : injector.getInstance(topFactoryKey))
+    if (binding != null)
     {
-      mainCommand.addCommand(topFactory.getCommand(mainCommand));
+      IOwlclCommandFactory mainFactory = binding.getProvider().get();
+      mainFactory = injector.getInstance(Key.get(IOwlclCommandFactory.class,
+          Names.named(OwlclCommand.CORE_MAIN)));
 
-    }
+      OwlclCommand mainCommand = mainFactory.getCommand(null);
 
-    mainCommand.initialize();
-    DefaultUsage.usage(mainCommand);
-    mainCommand.parse(args);
-    try
+      Key<Set<IOwlclCommandFactory>> topFactoryKey = new Key<Set<IOwlclCommandFactory>>(
+          TopCommandQualifier.class) {
+      };
+
+      for (IOwlclCommandFactory topFactory : injector.getInstance(topFactoryKey))
+      {
+        mainCommand.addCommand(topFactory.getCommand(mainCommand));
+
+      }
+
+      mainCommand.initialize();
+      DefaultUsage.usage(mainCommand);
+      mainCommand.parse(args);
+      try
+      {
+        mainCommand.call();
+      } catch (Exception e)
+      {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+
+    } else
     {
-      mainCommand.call();
-    } catch (Exception e)
-    {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      System.out.println("Could not locate main command, probably not installed.");
     }
   }
 
