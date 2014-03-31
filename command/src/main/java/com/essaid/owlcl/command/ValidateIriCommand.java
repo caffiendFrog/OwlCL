@@ -15,12 +15,15 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
+import org.slf4j.Logger;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
+import com.essaid.owlcl.core.util.IReportFactory;
 import com.essaid.owlcl.core.util.OntologyFiles;
 import com.essaid.owlcl.core.util.Report;
 import com.google.inject.Inject;
@@ -41,10 +44,6 @@ public class ValidateIriCommand extends AbstractCommand {
   // ================================================================================
   // the directory to validate
   // ================================================================================
-  // public File directory = new
-  // File(ISFUtil.getTrunkDirectory().getAbsolutePath(), "src/ontology");
-  public File directory = null;
-  public boolean directorySet;
 
   @Parameter(names = "-directory", converter = CanonicalFileConverter.class,
       validateValueWith = DirectoryExistsValueValidator.class,
@@ -58,26 +57,97 @@ public class ValidateIriCommand extends AbstractCommand {
     return directory;
   }
 
+  public boolean isDirectorySet() {
+    return directorySet;
+  }
+
+  private File directory = null;
+  private boolean directorySet;
+
   // ================================================================================
-  // Report path
+  // Report directory
   // ================================================================================
 
-  @Parameter(names = "-report",
-      description = "Relative path/name for the report file without suffix")
-  public String reportPath = "validateReport";
+  @Parameter(names = "-reportDirectory",
+      description = "A directory that is absolute, or relative to the job's directory.",
+      converter = CanonicalFileConverter.class)
+  public void setReportDirectory(File reportDirectory) {
+    this.reportDirectory = reportDirectory;
+    this.reportDirectorySet = true;
+  }
+
+  public File getReportDirectory() {
+    return reportDirectory;
+  }
+
+  public boolean isReportDirectorySet() {
+    return reportDirectorySet;
+  }
+
+  private File reportDirectory;
+
+  private boolean reportDirectorySet;
+
+  // ================================================================================
+  // Report name
+  // ================================================================================
+
+  @Parameter(names = "-reportName", description = "A custome report name.")
+  public void setReportName(String name) {
+    this.reportName = name;
+    this.reportNameSet = true;
+  }
+
+  public String getReportName() {
+    return reportName;
+  }
+
+  public boolean isReportNameSet() {
+    return reportNameSet;
+  }
+
+  private String reportName;
+  private boolean reportNameSet;
 
   // ================================================================================
   // Implementation
   // ================================================================================
-
   public boolean problemsFound;
   Map<IRI, String> iriToDocMap = new HashMap<IRI, String>();
   public String[] extensions = { "owl" };
 
+  OntologyFiles of;
+  Report report;
+
+  @InjectLogger
+  Logger loigger;
+
+  @Inject
+  IReportFactory reportFactory;
+
   @Inject
   public ValidateIriCommand(@Assisted OwlclCommand main) {
     super(main);
+  }
+
+  @Override
+  protected void doInitialize() {
     configure();
+  }
+
+  protected void configure() {
+    if (!directorySet)
+    {
+      directory = getMain().getProject();
+    }
+    if (!reportNameSet)
+    {
+      reportName = "ValidationReport.txt";
+    }
+    if (!reportDirectorySet)
+    {
+      reportDirectory = getMain().getJobDirectory();
+    }
   }
 
   @Override
@@ -87,15 +157,13 @@ public class ValidateIriCommand extends AbstractCommand {
     actionsList.add(Action.resolve.name());
   }
 
-  OntologyFiles of;
-  Report report;
-
-  public void run() {
+  @Override
+  public Object call() throws Exception {
     List<File> files = new ArrayList<File>();
     files.add(directory);
     of = new OntologyFiles(files, true);
 
-    report = new Report(reportPath);
+    report = reportFactory.createReport(reportName, reportDirectory, this);
 
     for (String action : getAllActions())
     {
@@ -114,6 +182,7 @@ public class ValidateIriCommand extends AbstractCommand {
     }
 
     report.finish();
+    return null;
   }
 
   enum Action {
@@ -230,20 +299,9 @@ public class ValidateIriCommand extends AbstractCommand {
     public abstract void execute(ValidateIriCommand command);
   }
 
-  protected void configure() {
-    // TODO Auto-generated method stub
-
-  }
-
   protected void init() {
     // TODO Auto-generated method stub
 
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 }

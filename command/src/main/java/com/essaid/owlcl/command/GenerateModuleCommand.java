@@ -48,7 +48,7 @@ public class GenerateModuleCommand extends AbstractCommand {
   // ================================================================================
 
   @Parameter(names = "-directory", converter = CanonicalFileConverter.class,
-      description = "The location where the module defining files.")
+      description = "The directory location of the module defining files.")
   public void setDirectory(File directory) {
     this.directory = directory;
     this.directorySet = true;
@@ -62,7 +62,7 @@ public class GenerateModuleCommand extends AbstractCommand {
     return directorySet;
   }
 
-  private File directory = null;
+  private File directory;
   private boolean directorySet;
 
   // ================================================================================
@@ -109,8 +109,8 @@ public class GenerateModuleCommand extends AbstractCommand {
     return unReasonedSet;
   }
 
-  private boolean unReasoned = false;
-  private boolean unReasonedSet = false;
+  private boolean unReasoned;
+  private boolean unReasonedSet;
 
   // ================================================================================
   // do reasoned
@@ -134,8 +134,8 @@ public class GenerateModuleCommand extends AbstractCommand {
     return reasonedSet;
   }
 
-  private boolean reasoned = false;
-  private boolean reasonedSet = false;
+  private boolean reasoned;
+  private boolean reasonedSet;
 
   // ================================================================================
   // Add legacy
@@ -156,7 +156,7 @@ public class GenerateModuleCommand extends AbstractCommand {
     return addLegacySet;
   }
 
-  private boolean addLegacy = false;
+  private boolean addLegacy;
   private boolean addLegacySet;
 
   // ================================================================================
@@ -178,7 +178,7 @@ public class GenerateModuleCommand extends AbstractCommand {
     return cleanLegacySet;
   }
 
-  private boolean cleanLegacy = false;
+  private boolean cleanLegacy;
   private boolean cleanLegacySet;
 
   // ================================================================================
@@ -210,14 +210,19 @@ public class GenerateModuleCommand extends AbstractCommand {
   @Inject
   public GenerateModuleCommand(@Assisted OwlclCommand main) {
     super(main);
-    configure();
   }
+
+  protected void doInitialize() {
+    configure();
+  };
 
   OWLReasoner sourceReasoner;
   OWLOntology sourceOntology;
   IModule module = null;
 
-  public void run() {
+  @Override
+  public Object call() throws Exception {
+
     configure();
     output.mkdirs();
 
@@ -249,17 +254,12 @@ public class GenerateModuleCommand extends AbstractCommand {
     module.saveGeneratedModule();
     module.saveModuleConfiguration();
 
+    return null;
   }
 
   @Override
   protected void addCommandActions(List<String> actionsList) {
 
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 }

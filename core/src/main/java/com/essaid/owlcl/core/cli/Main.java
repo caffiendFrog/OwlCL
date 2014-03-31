@@ -1,5 +1,7 @@
 package com.essaid.owlcl.core.cli;
 
+import org.slf4j.LoggerFactory;
+
 import com.essaid.owlcl.core.util.DefaultOwlclManager;
 
 public class Main {
@@ -7,6 +9,7 @@ public class Main {
   public static void main(String[] args) throws Exception {
     // this sets up default paths. Custom paths can be setup with the other
     // constructor if OwlCL is being used as a library.
+    DefaultOwlclManager.setLogger(LoggerFactory.getLogger(DefaultOwlclManager.class));
     DefaultOwlclManager dm = new DefaultOwlclManager();
 
     // needed to avoid class not found errors

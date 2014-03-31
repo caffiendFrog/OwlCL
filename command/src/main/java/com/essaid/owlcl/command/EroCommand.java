@@ -10,6 +10,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -17,11 +18,13 @@ import com.essaid.owlcl.core.IModule;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
+import com.essaid.owlcl.core.reasoner.IReasonerManager;
 import com.essaid.owlcl.core.util.OwlclUtil;
 import com.essaid.owlcl.module.ModuleNames;
 import com.essaid.owlcl.module.Owlcl;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
 
 @Parameters(commandNames = { "ero" }, commandDescription = "Creates the ERO modules.")
 public class EroCommand extends AbstractCommand {
@@ -34,32 +37,88 @@ public class EroCommand extends AbstractCommand {
       description = "Will clean the legacy ERO files from any axioms the module is "
           + "generating. To enable this, simply add the option without a value "
           + "(i.e. -cleanLegacy without \"true\" as an option value)")
-  boolean cleanLegacy = false;
+  public void setCleanLegacy(boolean cleanLegacy) {
+    this.cleanLegacy = cleanLegacy;
+    this.cleanLegacySet = true;
+  }
+
+  public boolean isCleanLegacy() {
+    return cleanLegacy;
+  }
+
+  public boolean isCleanLegacySet() {
+    return cleanLegacySet;
+  }
+
+  private boolean cleanLegacy = false;
+  private boolean cleanLegacySet = false;
 
   // ================================================================================
   // If legacy content should be added to the module.
   // ================================================================================
-  @Parameter(names = "-addLegacy", arity = 1,
-      description = "Will add the legacy ERO content to the generated module. Use "
-          + "the option with a value (i.e. -addLegacy false) to disable this.")
-  boolean addLegacy = true;
+  @Parameter(names = "-addLegacy",
+      description = "Will add the legacy ERO content to the generated module. ")
+  public void setAddLegacy(boolean addLegacy) {
+    this.addLegacy = addLegacy;
+    this.addLegacySet = true;
+  }
+
+  public boolean isAddLegacy() {
+    return addLegacy;
+  }
+
+  public boolean isAddLegacySet() {
+    return addLegacySet;
+  }
+
+  private boolean addLegacy;
+  private boolean addLegacySet;
 
   // ================================================================================
   // Directory of reference run for diff report.
   // ================================================================================
 
-  @Parameter(names = "-previous", converter = CanonicalFileConverter.class,
+  @Parameter(names = "-previous",
+      description = "The previous version's directory for the diff report",
+      converter = CanonicalFileConverter.class,
       validateValueWith = DirectoryExistsValueValidator.class)
-  public File previousDirectory;
-
-  // ================================================================================
-  // Initialization
-  // ================================================================================
-
-  protected void configure() {
-    // TODO Auto-generated method stub
-
+  public void setPreviousDirectory(File previousDirectory) {
+    this.previousDirectory = previousDirectory;
+    this.previousDirectorySet = true;
   }
+
+  public File getPreviousDirectory() {
+    return previousDirectory;
+  }
+
+  public boolean isPreviousDirectorySet() {
+    return previousDirectorySet;
+  }
+
+  private File previousDirectory;
+  private boolean previousDirectorySet;
+
+  // ================================================================================
+  // Output directory
+  // ================================================================================
+
+  @Parameter(names = "-output", description = "The directory where the generate modules will "
+      + "be saved.")
+  public void setEroOutput(File eroOutput) {
+    this.eroOutput = eroOutput;
+    this.eroOutputSet = true;
+  }
+
+  public File getEroOutput() {
+    return eroOutput;
+  }
+
+  public boolean isEroOutputSet() {
+    return eroOutputSet;
+  }
+
+  private File eroOutput;
+  private boolean eroOutputSet;
 
   // ================================================================================
   // Implementation
@@ -72,13 +131,38 @@ public class EroCommand extends AbstractCommand {
   OWLReasoner reasoner = null;
   File outputDirectory = null;
 
-  protected void init() {
+  @Inject
+  @Named(IReasonerManager.FACT_PLUS_PLUS_FACTORY_BINDING_NAME)
+  OWLReasonerFactory fact;
+
+  @Inject
+  public EroCommand(@Assisted OwlclCommand main) {
+    super(main);
+  }
+
+  @Override
+  protected void doInitialize() {
+    configure();
+
+  }
+
+  protected void configure() {
+    if (!isEroOutputSet())
+    {
+      this.eroOutput = new File(getMain().getJobDirectory(), "ero-release");
+    }
+
+  }
+
+  @Override
+  public Object call() throws Exception {
+    configure();
+
     man = getMain().getSharedBaseManager();
-    outputDirectory = new File(getMain().getJobDirectory(), "ero-release");
 
     isfOntology = OwlclUtil.getOrLoadOntology(Owlcl.ISF_DEV_IRI, man);
 
-    reasoner = OwlclUtil.getReasoner(isfOntology);
+    reasoner = fact.createNonBufferingReasoner(isfOntology);
 
     GenerateModuleCommand eaglei = new GenerateModuleCommand(getMain());
     eaglei.setModuleName(ModuleNames.EAGLEI);
@@ -267,16 +351,10 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedApp.module.importModuleIntoBoth(eagleiExtendedUberonApp.module, null);
 
     topModule = eagleiExtendedApp.module;
-  }
-
-  @Inject
-  public EroCommand(@Assisted OwlclCommand main) {
-    super(main);
-    configure();
+    return null;
   }
 
   public void run() {
-    init();
     for (String action : getAllActions())
     {
       Action.valueOf(action.toLowerCase()).execute(this);
@@ -316,7 +394,13 @@ public class EroCommand extends AbstractCommand {
       public void execute(EroCommand command) {
         CatalogCommand catalog = new CatalogCommand(command.getMain());
         catalog.setDirectory(command.outputDirectory);
-        catalog.run();
+        try
+        {
+          catalog.call();
+        } catch (Exception e)
+        {
+          throw new RuntimeException("Error creating ERO catalog files.", e);
+        }
       }
     },
     compare {
@@ -329,19 +413,19 @@ public class EroCommand extends AbstractCommand {
         cc.getFromFiles().add(command.previousDirectory);
 
         cc.setToIri(IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl"));
-        cc.getToFiles().add(command.getMain().getJobDirectory());
-        cc.setReportPath("ero-diff-with-previous");
-        cc.run();
+        cc.getToFiles().add(command.eroOutput);
+        cc.setReportDirectory(command.eroOutput);
+        try
+        {
+          cc.call();
+        } catch (Exception e)
+        {
+          throw new RuntimeException("Failed to compare the ero versions.", e);
+        }
       }
     };
 
     public abstract void execute(EroCommand command);
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 }

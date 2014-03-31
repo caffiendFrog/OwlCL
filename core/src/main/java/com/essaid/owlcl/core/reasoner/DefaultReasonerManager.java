@@ -2,6 +2,7 @@ package com.essaid.owlcl.core.reasoner;
 
 import javax.inject.Named;
 
+import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -31,6 +32,11 @@ public class DefaultReasonerManager implements IReasonerManager {
 
   @Override
   public OWLReasoner getReasonedOntology(OWLOntology ontology) {
+    return null;
+  }
+
+  @Override
+  public OWLReasoner getReasonedOntology(IRI iri) {
     return null;
   }
 

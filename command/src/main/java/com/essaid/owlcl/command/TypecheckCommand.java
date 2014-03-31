@@ -19,11 +19,14 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.slf4j.Logger;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
+import com.essaid.owlcl.core.util.IReportFactory;
 import com.essaid.owlcl.core.util.OntologyFiles;
 import com.essaid.owlcl.core.util.Report;
 import com.google.inject.Inject;
@@ -39,75 +42,168 @@ public class TypecheckCommand extends AbstractCommand {
   // Files and directories to check types
   // ================================================================================
 
-  public List<File> files;
-  public boolean fileSet;
-
   @Parameter(names = "-files",
       description = "One or more files or directories to check IRI types.",
       converter = CanonicalFileConverter.class)
   public void setFiles(List<File> files) {
     this.files = files;
-    this.fileSet = true;
+    this.filesSet = true;
   }
 
   public List<File> getFiles() {
     return files;
   }
 
+  public boolean isFilesSet() {
+    return filesSet;
+  }
+
+  private List<File> files;
+  private boolean filesSet;
+
   // ================================================================================
   // Subdirectories
   // ================================================================================
 
-  public boolean subDir = true;
-  public boolean subDirSet;
-
-  public boolean isSubDir() {
-    return subDir;
+  @Parameter(names = "-noSubs", description = "Include sub directories when "
+      + "looking for ontology/owl files? true by default.")
+  public void setNoSubDir(boolean noSubDir) {
+    this.noSubDir = noSubDir;
+    this.noSubDirSet = true;
   }
 
-  @Parameter(names = "-subs", arity = 1, description = "Include sub directories when "
-      + "looking for ontology/owl files.")
-  public void setSubDir(boolean subDir) {
-    this.subDir = subDir;
-    this.subDirSet = true;
+  public boolean isNoSubDir() {
+    return noSubDir;
   }
+
+  public boolean isNoSubDirSet() {
+    return noSubDirSet;
+  }
+
+  private boolean noSubDir = true;
+  private boolean noSubDirSet;
 
   // ================================================================================
   // Add typing axioms where needed?
   // ================================================================================
 
   @Parameter(
-      names = "-addTypes",
-      description = "Will add type axioms (declartions) where an IRI is used "
-          + "but its type is not asserted. This helps resolve certain reasoning issues. If an IRI "
-          + "has multiple types as reported by this tool, all types will be asserted by this action so "
+      names = "-noTyping",
+      description = "Will not add type axioms (declartions) where an IRI is used "
+          + "but its type is not asserted. If an IRI "
+          + "has multiple types as reported by this tool, by default all types will be asserted by this action so "
           + "the files should be cleaned up before doing this if needed and checked again after running "
           + "this command.")
-  public boolean addTypes = false;
+  public void setNoTyping(boolean noTyping) {
+    this.noTyping = noTyping;
+    this.noTypingSet = true;
+  }
+
+  public boolean isNoTyping() {
+    return noTyping;
+  }
+
+  public boolean isNoTypingSet() {
+    return noTypingSet;
+  }
+
+  private boolean noTyping;
+  private boolean noTypingSet;
+
+  // ================================================================================
+  // Report directory
+  // ================================================================================
+
+  @Parameter(names = "-reportDirectory",
+      description = "A directory that is absolute, or relative to the job's directory.",
+      converter = CanonicalFileConverter.class)
+  public void setReportDirectory(File reportDirectory) {
+    this.reportDirectory = reportDirectory;
+    this.reportDirectorySet = true;
+  }
+
+  public File getReportDirectory() {
+    return reportDirectory;
+  }
+
+  public boolean isReportDirectorySet() {
+    return reportDirectorySet;
+  }
+
+  private File reportDirectory;
+
+  private boolean reportDirectorySet;
+
+  // ================================================================================
+  // Report name
+  // ================================================================================
+
+  @Parameter(names = "-reportName", description = "A custome report name.")
+  public void setReportName(String name) {
+    this.reportName = name;
+    this.reportNameSet = true;
+  }
+
+  public String getReportName() {
+    return reportName;
+  }
+
+  public boolean isReportNameSet() {
+    return reportNameSet;
+  }
+
+  private String reportName;
+  private boolean reportNameSet;
 
   // ================================================================================
   // Implementation
   // ================================================================================
 
-  // Map<File, OWLOntology> ontologies = new HashMap<File, OWLOntology>();
+  private OntologyFiles ontologyFiles;
+  private Map<IRI, Set<OWLEntity>> iriToEntityMap = new HashMap<IRI, Set<OWLEntity>>();
 
-  OntologyFiles ontologyFiles;
-  Map<IRI, Set<OWLEntity>> iriToEntityMap = new HashMap<IRI, Set<OWLEntity>>();
+  private List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+  private Report report;
 
-  List<OWLOntology> ontologies = new ArrayList<OWLOntology>();
+  @InjectLogger
+  private Logger logger;
+
+  @Inject
+  private IReportFactory reportFactory;
 
   @Inject
   public TypecheckCommand(@Assisted OwlclCommand main) {
     super(main);
-    configure();
   }
 
-  Report report;
+  protected void doInitialize() {
+    configure();
+  };
 
-  public void run() {
+  protected void configure() {
+    if (!isFilesSet())
+    {
+      files = new ArrayList<File>();
+      files.add(getMain().getProject());
+    }
 
-    report = new Report("typecheckReport");
-    ontologyFiles = new OntologyFiles(files, subDir);
+    if (!reportNameSet)
+    {
+      this.reportName = "TypingReport.txt";
+    }
+
+    if (!reportDirectorySet)
+    {
+      this.reportDirectory = getMain().getJobDirectory();
+    }
+
+  }
+
+  @Override
+  public Object call() throws Exception {
+
+    report = reportFactory.createReport(reportName, reportDirectory, this);
+    ontologyFiles = new OntologyFiles(files, !noSubDir);
 
     for (Entry<File, IRI> entry : ontologyFiles.getLocalOntologyFiles(null).entrySet())
     {
@@ -131,13 +227,14 @@ public class TypecheckCommand extends AbstractCommand {
       Action.valueOf(action).execute(this);
     }
     report.finish();
+    return null;
   }
 
   @Override
   protected void addCommandActions(List<String> actionsList) {
     actionsList.add(Action.duplicatIris.name());
     actionsList.add(Action.checkTypes.name());
-    if (addTypes)
+    if (noTyping)
     {
       actionsList.add(Action.addTypes.name());
     }
@@ -314,20 +411,9 @@ public class TypecheckCommand extends AbstractCommand {
     public abstract void execute(TypecheckCommand command);
   }
 
-  protected void configure() {
-    // TODO Auto-generated method stub
-
-  }
-
   protected void init() {
     // TODO Auto-generated method stub
 
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 }

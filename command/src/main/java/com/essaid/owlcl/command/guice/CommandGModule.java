@@ -1,15 +1,26 @@
-package com.essaid.owlcl.command;
+package com.essaid.owlcl.command.guice;
 
 import static com.essaid.owlcl.command.AbstractCommand.*;
 
+import com.essaid.owlcl.command.CatalogCommand;
+import com.essaid.owlcl.command.CompareCommand;
+import com.essaid.owlcl.command.EroCommand;
+import com.essaid.owlcl.command.GenerateModuleCommand;
+import com.essaid.owlcl.command.MainCommand;
+import com.essaid.owlcl.command.MapperCommand;
+import com.essaid.owlcl.command.NewModuleCommand;
+import com.essaid.owlcl.command.RewriteCommand;
+import com.essaid.owlcl.command.TypecheckCommand;
+import com.essaid.owlcl.command.UpdateModuleCommand;
+import com.essaid.owlcl.command.ValidateIriCommand;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
-import com.essaid.owlcl.core.OwlclGModule;
+import com.essaid.owlcl.core.OwlclGuiceModule;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
 import com.essaid.owlcl.core.util.GuiceUtils;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
-public class CommandGModule extends AbstractModule implements OwlclGModule {
+public class CommandGModule extends AbstractModule implements OwlclGuiceModule {
 
   @Override
   protected void configure() {
@@ -24,6 +35,7 @@ public class CommandGModule extends AbstractModule implements OwlclGModule {
 
     GuiceUtils.installCommandFactory(binder(), CompareCommand.class, COMPARE);
     GuiceUtils.installTopCommand(topCommandFactories, COMPARE);
+    
 
     GuiceUtils.installCommandFactory(binder(), EroCommand.class, ERO);
     GuiceUtils.installTopCommand(topCommandFactories, ERO);
@@ -47,7 +59,7 @@ public class CommandGModule extends AbstractModule implements OwlclGModule {
     GuiceUtils.installTopCommand(topCommandFactories, UPDATE_MODULE);
 
     GuiceUtils.installCommandFactory(binder(), ValidateIriCommand.class, VALIDATE);
-    GuiceUtils.installTopCommand(topCommandFactories, NEW_MODULE);
+    GuiceUtils.installTopCommand(topCommandFactories, VALIDATE);
 
   }
 

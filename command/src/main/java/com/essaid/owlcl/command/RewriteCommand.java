@@ -59,6 +59,12 @@ public class RewriteCommand extends AbstractCommand {
     super(main);
     configure();
   }
+  
+  @Override
+  protected void doInitialize() {
+    // TODO Auto-generated method stub
+    
+  }
 
   @Override
   protected void addCommandActions(List<String> actionsList) {

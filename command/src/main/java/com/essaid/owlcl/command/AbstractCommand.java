@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.annotation.InjectLogger;
+import com.essaid.owlcl.core.util.ILoggerOwner;
 
-public abstract class AbstractCommand extends OwlclCommand {
+public abstract class AbstractCommand extends OwlclCommand implements ILoggerOwner {
 
   public static final String CATALOG = "owlcl.command.catalog";
   public static final String COMPARE = "owlcl.command.compare";
@@ -30,7 +31,7 @@ public abstract class AbstractCommand extends OwlclCommand {
       description = "The exact sub-actions to execute the command. If this is "
           + "specified, the default execution actions of the command are " + "overridden "
           + "with the specified actions. An action might require some "
-          + "options and each command should document this.")
+          + "options and each command should document this.", hidden = true)
   public void setActions(List<String> actions) {
     this.actions = actions;
     this.actionsSet = true;
@@ -52,7 +53,7 @@ public abstract class AbstractCommand extends OwlclCommand {
   // ================================================================================
   @Parameter(names = "-preActions",
       description = "Additional actions that could be taken before the execution "
-          + "of the command .")
+          + "of the command .", hidden = true)
   public List<String> preActions = new ArrayList<String>();
 
   // ================================================================================
@@ -60,18 +61,15 @@ public abstract class AbstractCommand extends OwlclCommand {
   // ================================================================================
   @Parameter(names = "-postActions",
       description = "Additional actions that could be taken after the execution of "
-          + "the command.")
+          + "the command.", hidden = true)
   public List<String> postActions = new ArrayList<String>();
 
   // ================================================================================
-  //
+  // implementation
   // ================================================================================
 
-  public final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-  public MainCommand getMain() {
-    return (MainCommand) parent;
-  }
+  @InjectLogger
+  private Logger logger;
 
   public AbstractCommand(OwlclCommand main) {
     super(main);
@@ -81,6 +79,15 @@ public abstract class AbstractCommand extends OwlclCommand {
           "AbstractCommand needs an OwlclCommand of type MainCommand but was passed " + main == null ? null
               : main.getClass().getName());
     }
+  }
+
+  @Override
+  public Logger getLogger() {
+    return logger;
+  }
+
+  public MainCommand getMain() {
+    return (MainCommand) parent;
   }
 
   /**

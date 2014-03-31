@@ -25,9 +25,11 @@ import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.FileConverter;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.IriConverter;
+import com.essaid.owlcl.core.util.IReportFactory;
 import com.essaid.owlcl.core.util.OntologyFiles;
 import com.essaid.owlcl.core.util.OwlclUtil;
 import com.essaid.owlcl.core.util.Report;
@@ -126,84 +128,99 @@ public class CompareCommand extends AbstractCommand {
   private IRI toIri;
   private boolean toIriSet;
 
-  // //
-  // ================================================================================
-  // // itemized
-  // //
-  // ================================================================================
-  //
-  // @Parameter(names = "-itemized", arity = 1,
-  // description = "If the diff should be itemized by IRI/File.")
-  // public void setItemized(boolean itemized) {
-  // this.itemized = itemized;
-  // this.itemizedSet = true;
-  // }
-  //
-  // public boolean isItemized() {
-  // return itemized;
-  // }
-  //
-  // public boolean isItemizedSet() {
-  // return itemizedSet;
-  // }
-  //
-  // private boolean itemized = true;
-  // private boolean itemizedSet = false;
-
   // ================================================================================
   // Include sub directories?
   // ================================================================================
 
-  @Parameter(names = "-subdir", arity = 1, description = "Include sub directories? "
-      + "True by default.")
-  public void setSubDir(boolean subDir) {
-    this.subDir = subDir;
-    this.subDirSet = true;
+  @Parameter(names = "-noSubs", description = "Include sub directories when "
+      + "loading ontology files? " + "Subdirectories are loaded by default.")
+  public void setNoSubDir(boolean noSubDir) {
+    this.noSubDir = noSubDir;
+    this.noSubDirSet = true;
   }
 
-  public boolean isSubDir() {
-    return subDir;
+  public boolean isNoSubDir() {
+    return noSubDir;
   }
 
-  public boolean isSubDirSet() {
-    return subDirSet;
+  public boolean isNoSubDirSet() {
+    return noSubDirSet;
   }
 
-  private boolean subDir = true;
-  private boolean subDirSet;
+  private boolean noSubDir = false;
+  private boolean noSubDirSet;
 
   // ================================================================================
-  // Custom relative path for the report
+  // ReportName
   // ================================================================================
-  @Parameter(names = "-report", description = "A relative path for the generated report.")
-  public void setReportPath(String reportPath) {
-    this.reportPath = reportPath;
-    this.reportPathSet = true;
+
+  @Parameter(names = "-reportName", description = "Report name.")
+  public void setReportName(String name) {
+    this.reportName = name;
+    this.reportNameSet = true;
   }
 
-  public String getReportPath() {
-    return reportPath;
+  public String getReportName() {
+    return reportName;
   }
 
-  public boolean isReportPathSet() {
-    return reportPathSet;
+  public boolean isReportNameSet() {
+    return reportNameSet;
   }
 
-  private String reportPath = "CompareCommandReport+" + System.currentTimeMillis() + ".txt";
-  private boolean reportPathSet;
+  private String reportName;
+  private boolean reportNameSet;
+
+  // ================================================================================
+  // Custom directory for the report
+  // ================================================================================
+  @Parameter(names = "-reportDirectory", description = "A directory for the generated "
+      + "report. Relative paths whill be under the project directory.",
+      converter = FileConverter.class)
+  public void setReportDirectory(File reportDirectory) {
+    if (reportDirectory.isAbsolute())
+    {
+      this.reportDirectory = reportDirectory;
+    } else
+    {
+      this.reportDirectory = new File(getMain().getJobDirectory(), reportDirectory.getPath());
+    }
+    this.reportDirectorySet = true;
+  }
+
+  public File getReportDirectory() {
+    return reportDirectory;
+  }
+
+  public boolean isReportDirectorySet() {
+    return reportDirectorySet;
+  }
+
+  private File reportDirectory;
+  private boolean reportDirectorySet;
 
   // ================================================================================
   // Initialization
   // ================================================================================
 
   protected void configure() {
-    // TODO Auto-generated method stub
+    if (!reportNameSet)
+    {
+      reportName = "CompareReport.txt";
+    }
+    if (!reportDirectorySet)
+    {
+      reportDirectory = getMain().getJobDirectory();
+    }
 
   }
 
   // ================================================================================
   // Implementation
   // ================================================================================
+
+  @Inject
+  IReportFactory reportFactory;
 
   Set<OWLAxiom> fromAxioms = new HashSet<OWLAxiom>();
   Set<OWLAxiom> toAxioms = new HashSet<OWLAxiom>();
@@ -238,20 +255,25 @@ public class CompareCommand extends AbstractCommand {
   @Inject
   public CompareCommand(@Assisted OwlclCommand main) {
     super(main);
+  }
+
+  @Override
+  protected void doInitialize() {
     configure();
   }
 
-  public void run() {
+  @Override
+  public Object call() throws Exception {
     configure();
+
+    report = reportFactory.createReport(reportName, reportDirectory, this);
 
     if (fromIriSet ^ toIriSet)
     {
       throw new IllegalStateException("Called with one IRI set but not the other.");
     }
 
-    report = new Report(reportPath);
-
-    fromOntologyFiles = new OntologyFiles(fromFiles, subDir);
+    fromOntologyFiles = new OntologyFiles(fromFiles, noSubDir, new HashSet<File>());
     fromManager = getMain().getNewBaseManager();
     fromOntologyFiles.setupManager(fromManager, null);
     if (fromIri != null)
@@ -282,7 +304,7 @@ public class CompareCommand extends AbstractCommand {
       }
     }
 
-    toOntologyFiles = new OntologyFiles(toFiles, subDir);
+    toOntologyFiles = new OntologyFiles(toFiles, noSubDir);
     toManager = getMain().getNewBaseManager();
     toOntologyFiles.setupManager(toManager, null);
     if (toIri != null)
@@ -333,6 +355,7 @@ public class CompareCommand extends AbstractCommand {
     }
 
     report.finish();
+    return null;
   }
 
   @Override
@@ -896,12 +919,6 @@ public class CompareCommand extends AbstractCommand {
       return fromPath.isEmpty() && fromPaths.get(0).isEmpty() && toPath.isEmpty()
           && toPaths.get(0).isEmpty();
     }
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 }

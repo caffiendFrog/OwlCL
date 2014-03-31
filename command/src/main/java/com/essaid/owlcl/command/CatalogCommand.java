@@ -60,31 +60,30 @@ public class CatalogCommand extends AbstractCommand {
     return directorySet;
   }
 
-  private File directory = null;
+  private File directory;
   private boolean directorySet;
 
   // ================================================================================
   // Do subdirectories?
   // ================================================================================
 
-  @Parameter(names = "-subs", arity = 1,
-      description = "Set to false if you only want the specified "
-          + "directory cataloged without doing the sub directories.")
-  public void setSubs(boolean subs) {
-    this.subs = subs;
-    this.subsSet = true;
+  @Parameter(names = "-noSubs", description = "Set to false if you only want the specified "
+      + "directory cataloged without doing the sub directories.")
+  public void setNoSubs(boolean noSubs) {
+    this.noSubs = noSubs;
+    this.noSubsSet = true;
   }
 
-  public boolean isSubs() {
-    return subs;
+  public boolean isNoSubs() {
+    return noSubs;
   }
 
-  public boolean isSubsSet() {
-    return subsSet;
+  public boolean isNoSubsSet() {
+    return noSubsSet;
   }
 
-  private boolean subs = true;
-  private boolean subsSet;
+  private boolean noSubs = false;
+  private boolean noSubsSet;
 
   // ================================================================================
   // Which directories to catalog, all or just *.owl ones
@@ -114,9 +113,6 @@ public class CatalogCommand extends AbstractCommand {
   // Catalog file name
   // ================================================================================
 
-  private String catalogName = "catalog-v001.xml";
-  private boolean catalogNameSet;
-
   @Parameter(names = "-name", description = "The file name for generated catalog files. "
       + "The protege catalog name is the default value.")
   public void setCatalogName(String catalogName) {
@@ -132,6 +128,9 @@ public class CatalogCommand extends AbstractCommand {
     return catalogNameSet;
   }
 
+  private String catalogName = "catalog-v001.xml";
+  private boolean catalogNameSet;
+
   // ================================================================================
   // Initialization
   // ================================================================================
@@ -139,13 +138,7 @@ public class CatalogCommand extends AbstractCommand {
 
     if (!directorySet)
     {
-      if (getMain().getProject() != null)
-      {
-        directory = getMain().getProject();
-      } else
-      {
-        directory = getMain().getJobDirectory();
-      }
+      directory = getMain().getProject();
     }
 
   }
@@ -157,6 +150,10 @@ public class CatalogCommand extends AbstractCommand {
   @Inject
   public CatalogCommand(@Assisted OwlclCommand main) {
     super(main);
+  }
+
+  @Override
+  protected void doInitialize() {
     configure();
   }
 
@@ -165,13 +162,15 @@ public class CatalogCommand extends AbstractCommand {
     actionsList.add(Action.create.name());
   }
 
-  public void run() {
+  @Override
+  public Object call() throws Exception {
     configure();
 
     for (String action : getAllActions())
     {
       Action.valueOf(action).execute(this);
     }
+    return null;
   }
 
   enum Action {
@@ -179,14 +178,14 @@ public class CatalogCommand extends AbstractCommand {
 
       @Override
       public void execute(CatalogCommand command) {
-        command.logger.info("Creating catalogs.");
+        command.getLogger().info("Creating catalogs.");
         AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), true);
 
         File topDirectory = command.getDirectory();
 
         // for all directories
         for (File d : FileUtils.listFilesAndDirs(topDirectory, DirectoryFileFilter.INSTANCE,
-            command.isSubs() ? TrueFileFilter.INSTANCE : null))
+            command.isNoSubs() ? null : TrueFileFilter.INSTANCE))
         {
 
           // if we have any owl files
@@ -251,12 +250,6 @@ public class CatalogCommand extends AbstractCommand {
     };
 
     public abstract void execute(CatalogCommand command);
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 }

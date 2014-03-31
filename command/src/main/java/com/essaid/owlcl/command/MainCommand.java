@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -14,24 +15,17 @@ import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.FileAppender;
-import ch.qos.logback.core.filter.Filter;
-import ch.qos.logback.core.spi.FilterReply;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.internal.Nullable;
 import com.essaid.owlcl.core.IOwlclManager;
 import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
 import com.essaid.owlcl.core.cli.util.FileListValueValidator;
 import com.essaid.owlcl.core.cli.util.FileValueExistsValidator;
+import com.essaid.owlcl.core.util.ILogConfigurator;
 import com.essaid.owlcl.core.util.OntologyFiles;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -62,6 +56,10 @@ import com.google.inject.assistedinject.Assisted;
 // @formatter:on
 public class MainCommand extends OwlclCommand {
 
+  // ================================================================================
+  // Constants
+  // ================================================================================
+
   public static final String PROGRAM_DESC = "This is the ISF Tools program with various "
       + "(in development) commands and options.\n";
 
@@ -83,7 +81,7 @@ public class MainCommand extends OwlclCommand {
   public static final String IMPORT_FILES_PROPERTY = "import.files";
   public static final String IMPORT_SUBS_PROPERTY = "import.subs";
 
-  public static final String OUTPUT_DIRECTORY_PROPERTY = "output.directory";
+  // public static final String OUTPUT_DIRECTORY_PROPERTY = "output.directory";
 
   public static final String JOB_NAME_PROPERTY = "job.name";
   public static final String JOB_QUALIFIER_PROPERTY = "job.qualifier";
@@ -99,48 +97,56 @@ public class MainCommand extends OwlclCommand {
   // Working directory
   // ================================================================================
 
-  /**
-   * This needs to be set before calling preConfigure(). This location might
-   * have property files that configure the main object, and possibly the
-   * specific command. Currently, the tool looks for main configuration in this
-   * directory, in a isft-main.properties file. If there is a similar file in
-   * the user's home directory (as specified by user.home), the home file will
-   * provide default values that can be overridden by the file in the working
-   * directory.
-   * 
-   * It defaults to the current directory as specified by the user.dir system
-   * property.
-   * 
-   * The working directory is not related to the output directory but by default
-   * the output directory will be a sub directory named "isft-output". This
-   * default output location can be overridden.
-   */
-  @Parameter(names = "-work", description = "The working directory, where a configuration "
-      + "file might be located", converter = CanonicalFileConverter.class,
+  @Parameter(
+      names = "-workDirectory",
+      description = "The working directory, where a configuration "
+          + "file might be located. This is only shown for inforamtional purposes. Set with system/env"
+          + " property ", converter = CanonicalFileConverter.class,
       validateValueWith = FileValueExistsValidator.class)
   public void setWorkingDirectory(File workingDirectory) {
-    this.workingDirectory = workingDirectory;
-    this.workingDirectorySet = true;
+    // this.workingDirectory = workingDirectory;
+    // this.workingDirectorySet = true;
   }
 
   public File getWorkingDirectory() {
-    return workingDirectory;
+    return manager.getWorkDirectory();
   }
 
   public boolean isWorkingDirectorySet() {
-    return workingDirectorySet;
+    // return workingDirectorySet;
+    return false;
   }
 
-  private File workingDirectory = null;
-  private boolean workingDirectorySet = false;
+  // ================================================================================
+  // The output directory location
+  // ================================================================================
+
+  @Parameter(
+      names = "-output",
+      converter = CanonicalFileConverter.class,
+      description = "The top directory for output. This is set with system/env properties, not on the commandline.")
+  public void setOutputDirectory(File outputDirectory) {
+    // this.outputDirectory = outputDirectory;
+    // this.outputDirectorySet = true;
+  }
+
+  public File getOutputDirectory() {
+    return manager.getOutputDirectory();
+  }
+
+  public boolean isOutputDirectorySet() {
+    return false;
+  }
 
   // ================================================================================
   // Ontology project directory
   // ================================================================================
 
-  @Parameter(names = "-project", description = "The location of the ontology project. "
-      + "If this is set, certain commands will will work with files under this "
-      + "project location based on an assumed project file structure.",
+  @Parameter(
+      names = "-projectDirectory",
+      description = "The location of the ontology project. "
+          + "If this is set, certain commands will will work with files under this "
+          + "project location based on an assumed project file structure. It defaults to the working directory",
       converter = CanonicalFileConverter.class,
       validateValueWith = DirectoryExistsValueValidator.class)
   public void setProject(File project) {
@@ -156,15 +162,17 @@ public class MainCommand extends OwlclCommand {
     return projectSet;
   }
 
-  private File project = null;
-  private boolean projectSet = false;
+  private File project;
+  private boolean projectSet;
 
   // ================================================================================
   // Ontology files and directories
   // ================================================================================
 
   @Parameter(names = "-ontologyFiles", converter = CanonicalFileConverter.class,
-      validateValueWith = FileListValueValidator.class, description = "")
+      validateValueWith = FileListValueValidator.class,
+      description = "The files/directories that are considered "
+          + "to be the ontology files for this project/command. See import files.")
   public void setOntologyFiles(List<File> ontologyFiles) {
     this.ontologyFiles = ontologyFiles;
     this.ontologyFilesSet = true;
@@ -178,15 +186,15 @@ public class MainCommand extends OwlclCommand {
     return ontologyFilesSet;
   }
 
-  private List<File> ontologyFiles = null;
-  private boolean ontologyFilesSet = false;
+  private List<File> ontologyFiles;
+  private boolean ontologyFilesSet;
 
   // ================================================================================
   // ontology subs?
   // ================================================================================
 
   @Parameter(names = "-ontologySubs", arity = 1,
-      description = "If ontology subfolders should be considered. " + "True by default.")
+      description = "If ontology subfolders should be considered. True buy default.")
   public void setOntologySubs(boolean ontologySubs) {
     this.ontologySubs = ontologySubs;
     this.ontologySubsSet = true;
@@ -201,14 +209,18 @@ public class MainCommand extends OwlclCommand {
   }
 
   private boolean ontologySubs = true;
-  private boolean ontologySubsSet = false;
+  private boolean ontologySubsSet;
 
   // ================================================================================
   // Import files.
   // ================================================================================
 
-  @Parameter(names = "-importFiles", converter = CanonicalFileConverter.class,
-      validateValueWith = FileListValueValidator.class, description = "")
+  @Parameter(
+      names = "-importFiles",
+      converter = CanonicalFileConverter.class,
+      validateValueWith = FileListValueValidator.class,
+      description = "The files that are considered to "
+          + "be external imports. e.i. used by the ontology files but not under the control of this ontology project.")
   public void setImportFiles(List<File> importFiles) {
     this.importFiles = importFiles;
     this.importFilesSet = true;
@@ -222,15 +234,15 @@ public class MainCommand extends OwlclCommand {
     return importFilesSet;
   }
 
-  private List<File> importFiles = null;
-  private boolean importFilesSet = false;
+  private List<File> importFiles;
+  private boolean importFilesSet;
 
   // ================================================================================
   // import subs?
   // ================================================================================
 
   @Parameter(names = "-importSubs", arity = 1,
-      description = "If import subfolders should be considered. " + "True by default.")
+      description = "If import subfolders should be considered. True by default.")
   public void setImportSubs(boolean importSubs) {
     this.importSubs = importSubs;
     this.importSubsSet = true;
@@ -245,29 +257,7 @@ public class MainCommand extends OwlclCommand {
   }
 
   private boolean importSubs = true;
-  private boolean importSubsSet = false;
-
-  // ================================================================================
-  // The output directory location
-  // ================================================================================
-
-  @Parameter(names = "-output", converter = CanonicalFileConverter.class,
-      description = "The top directory for output.")
-  public void setOutputDirectory(File outputDirectory) {
-    this.outputDirectory = outputDirectory;
-    this.outputDirectorySet = true;
-  }
-
-  public File getOutputDirectory() {
-    return outputDirectory;
-  }
-
-  public boolean isOutputDirectorySet() {
-    return outputDirectorySet;
-  }
-
-  private File outputDirectory = null;
-  private boolean outputDirectorySet = false;
+  private boolean importSubsSet;
 
   // ================================================================================
   // Logging level for this run
@@ -288,30 +278,8 @@ public class MainCommand extends OwlclCommand {
     return logLevelSet;
   }
 
-  private String logLevel = null;
-  private boolean logLevelSet = false;
-
-  // ================================================================================
-  // Detailed reports
-  // ================================================================================
-
-  @Parameter(names = "-details", arity = 1,
-      description = "If any generated reports should be detailed.")
-  public void setDetailedReport(boolean detailedReport) {
-    this.detailedReport = detailedReport;
-    this.detailedReportSet = true;
-  }
-
-  public boolean isDetailedReport() {
-    return detailedReport;
-  }
-
-  public boolean isDetailedReportSet() {
-    return detailedReportSet;
-  }
-
-  private boolean detailedReport = true;
-  private boolean detailedReportSet = false;
+  private String logLevel;
+  private boolean logLevelSet;
 
   // ================================================================================
   // A job name that will be prefix the job's folder name.
@@ -364,9 +332,11 @@ public class MainCommand extends OwlclCommand {
   // Offline mode?
   // ================================================================================
 
-  @Parameter(names = "-offline", arity = 1,
-      description = "Avoids loading ontologies online for the base/main "
-          + "ontology manager. Specific commands might or might not use the base/main manager.")
+  @Parameter(
+      names = "-offline",
+      arity = 1,
+      description = "Enables online loading of ontologies where needed. Ontology "
+          + "and import files take priority over online resolution. The tools operate in offline mode by default.")
   public void setOffline(boolean offline) {
     this.offline = offline;
     this.offlineSet = true;
@@ -380,8 +350,8 @@ public class MainCommand extends OwlclCommand {
     return offlineSet;
   }
 
-  private boolean offline = true;
-  private boolean offlineSet = false;
+  private boolean offline;
+  private boolean offlineSet;
 
   // ================================================================================
   // Quiet?
@@ -389,7 +359,8 @@ public class MainCommand extends OwlclCommand {
 
   @Parameter(names = "-quiet", arity = 1,
       description = "Suppress default console output. By default "
-          + "warn or higher level logging, and generate reports are alos shown on console.")
+          + "console is quiet for the first early steps until the option is available. "
+          + "Later, if no explicit option is available" + ", the console is not quiet.")
   public void setQuiet(boolean quiet) {
     this.quiet = quiet;
     this.quietSet = true;
@@ -403,60 +374,61 @@ public class MainCommand extends OwlclCommand {
     return quietSet;
   }
 
-  private boolean quiet = false;
-  private boolean quietSet = false;
+  private boolean quiet = true;
+  private boolean quietSet;
 
   // ================================================================================
   // Overwrite output
   // ================================================================================
 
-  @Parameter(names = "-overwrite", arity = 1,
-      description = "Should the job's output directory be overwritten if it exists?")
-  public void setOverwrite(boolean overwrite) {
-    this.overwrite = overwrite;
-  }
-
-  public boolean isOverwrite() {
-    return overwrite;
-  }
-
-  public boolean isOverwriteSet() {
-    return overwriteSet;
-  }
-
-  public boolean overwrite = false;
-  private boolean overwriteSet = false;
+  // @Parameter(names = "-overwrite", arity = 1,
+  // description =
+  // "Should the job's output directory be overwritten if it exists?")
+  // public void setOverwrite(boolean overwrite) {
+  // this.overwrite = overwrite;
+  // }
+  //
+  // public boolean isOverwrite() {
+  // return overwrite;
+  // }
+  //
+  // public boolean isOverwriteSet() {
+  // return overwriteSet;
+  // }
+  //
+  // public boolean overwrite;
+  // private boolean overwriteSet;
 
   // ================================================================================
   // Initialization
   // ================================================================================
+  @InjectLogger
+  private static Logger logger;
+
+  @Inject
+  private IOwlclManager manager;
+  @Inject
+  private ILogConfigurator logConfigurator;
 
   private Properties configProperties;
 
-  /**
-   * This preconfigures the Main object before JCommander. The working directory
-   * (which should be set if needed) and home directory are used to look for
-   * isft-main.properties as initial configuration. The home file provides
-   * defaults to the working file. If this loaded should be avoided, set the
-   * configProperties field to a custom (possibly empty) instance. If
-   * configProperties is not null, the file loading will be skipped.
-   * <p>
-   * 
-   * The values specified in the property files are used to pre-configure this
-   * instance.
-   */
+  private File jobDirectory = null;
+  private OntologyFiles ifiles = null;
+  private OntologyFiles ofiles = null;
+  private OWLOntologyManager sharedBaseManager = null;
+
+  @Inject
+  public MainCommand(@Nullable @Assisted OwlclCommand parent) {
+    super(parent);
+  }
+
   public void configure() {
 
-    if (!workingDirectorySet)
-    {
-      workingDirectory = mananger.getWorkDirectory();
-    }
-
     // load properties (after the working directory is set if needed.)
-    if (configProperties == null || workingDirectorySet)
+    if (configProperties == null)
     {
-      Properties homeProperties = getProperties(new File(System.getProperty("user.home")), null);
-      Properties workingProperties = getProperties(getWorkingDirectory(), homeProperties);
+      Properties homeProperties = getProperties(manager.getHomeDirectory(), null);
+      Properties workingProperties = getProperties(manager.getWorkDirectory(), homeProperties);
 
       if (workingProperties != null)
       {
@@ -476,7 +448,7 @@ public class MainCommand extends OwlclCommand {
         this.jobName = jobName.trim().replace(' ', '_');
       } else
       {
-        this.jobName = "_isft_job";
+        this.jobName = "_owlcl_job";
       }
     }
 
@@ -489,7 +461,7 @@ public class MainCommand extends OwlclCommand {
         this.jobQualifier = jobQualifier.trim().replace(' ', '_');
       } else
       {
-        SimpleDateFormat df = new SimpleDateFormat("yy.MM.dd-HH.mm.ss");
+        SimpleDateFormat df = new SimpleDateFormat("yy.MM.dd_HH.mm.ss");
         this.jobQualifier = df.format(new Date());
       }
     }
@@ -518,7 +490,7 @@ public class MainCommand extends OwlclCommand {
         }
       } else
       {
-        this.project = getJobDirectory();
+        this.project = getWorkingDirectory();
       }
     }
 
@@ -541,6 +513,9 @@ public class MainCommand extends OwlclCommand {
                 + "configuration properties but it does not exist.");
           }
         }
+      } else
+      {
+        ontologyFiles = new ArrayList<File>();
       }
     }
 
@@ -576,6 +551,9 @@ public class MainCommand extends OwlclCommand {
                 + "configuration properties but it does not exist.");
           }
         }
+      } else
+      {
+        importFiles = new ArrayList<File>();
       }
     }
 
@@ -592,25 +570,6 @@ public class MainCommand extends OwlclCommand {
       }
     }
 
-    // output directory
-    if (!outputDirectorySet)
-    {
-      String output = configProperties.getProperty(OUTPUT_DIRECTORY_PROPERTY);
-      if (output != null)
-      {
-        try
-        {
-          outputDirectory = new File(output).getCanonicalFile();
-        } catch (IOException e)
-        {
-          throw new RuntimeException("Error while creating output directory.", e);
-        }
-      } else
-      {
-        outputDirectory = new File(getWorkingDirectory(), "isft-output");
-      }
-    }
-
     // quiet
     if (!quietSet)
     {
@@ -620,7 +579,7 @@ public class MainCommand extends OwlclCommand {
         this.quiet = Boolean.valueOf(quiet.trim());
       } else
       {
-        this.quiet = false;
+        this.quiet = true;
       }
     }
 
@@ -634,19 +593,6 @@ public class MainCommand extends OwlclCommand {
       } else
       {
         this.offline = true;
-      }
-    }
-
-    // overwrite
-    if (!overwriteSet)
-    {
-      String overwrite = configProperties.getProperty(OVERWRITE_PROPERTY);
-      if (overwrite != null)
-      {
-        this.overwrite = Boolean.valueOf(overwrite.trim());
-      } else
-      {
-        this.overwrite = false;
       }
     }
 
@@ -666,169 +612,56 @@ public class MainCommand extends OwlclCommand {
 
   }
 
-  private LoggerContext context;
-
-  private boolean initWithLogging;
-
-  /**
-   * To setup logging backend. SLF4J is the API and logback is the backend.
-   */
-  public void initWithLogging() {
-    configure();
-    getJobDirectory().mkdirs();
-
-    this.initWithLogging = true;
-    context = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-    PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-    encoder.setContext(context);
-    encoder.setPattern("%r %c %level - %msg%n");
-    encoder.start();
-
-    PatternLayoutEncoder encoderDebug = new PatternLayoutEncoder();
-    encoderDebug.setContext(context);
-    encoderDebug.setPattern("%r %c %level - %msg%n");
-    encoderDebug.start();
-
-    FileAppender<ILoggingEvent> appender = new FileAppender<ILoggingEvent>();
-    appender.setFile(new File(getJobDirectory(), "log.txt").getAbsolutePath());
-    appender.setContext(context);
-    appender.setEncoder(encoder);
-    appender.addFilter(new Filter<ILoggingEvent>() {
-
-      @Override
-      public FilterReply decide(ILoggingEvent event) {
-        if (event.getLevel().isGreaterOrEqual(Level.INFO))
-        {
-          return FilterReply.ACCEPT;
-        } else
-        {
-          return FilterReply.DENY;
-        }
-      }
-
-    });
-    appender.start();
-
-    FileAppender<ILoggingEvent> appenderDebug = new FileAppender<ILoggingEvent>();
-    appenderDebug.setFile(new File(getJobDirectory(), "log-debug.txt").getAbsolutePath());
-    appenderDebug.setContext(context);
-    appenderDebug.setEncoder(encoderDebug);
-    appenderDebug.start();
-
-    ch.qos.logback.classic.Logger rootLogger = context
-        .getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-
-    if (quiet)
-    {
-      rootLogger.detachAppender("console");
-    } else
-    {
-      rootLogger.getAppender("console").addFilter(new Filter<ILoggingEvent>() {
-
-        @Override
-        public FilterReply decide(ILoggingEvent event) {
-          if (event.getLevel().isGreaterOrEqual(Level.WARN))
-          {
-            return FilterReply.ACCEPT;
-          }
-          return FilterReply.DENY;
-        }
-      });
-    }
-
-    rootLogger.addAppender(appender);
-    rootLogger.addAppender(appenderDebug);
-
-    if (logLevel.equals("debug"))
-    {
-      rootLogger.setLevel(Level.DEBUG);
-    } else if (logLevel.equals("info"))
-    {
-      rootLogger.setLevel(Level.INFO);
-    } else if (logLevel.equals("warn"))
-    {
-      rootLogger.setLevel(Level.WARN);
-    }
-
-    init();
-  }
-
-  private Logger logger = null;
-
-  public void init() {
-    if (!initWithLogging)
-    {
-      configure();
-      getJobDirectory().mkdirs();
-    }
-    logger = LoggerFactory.getLogger(this.getClass());
-
-    logger.info("Started job at " + new Date());
-    logger.info("Working directory: " + getWorkingDirectory().getAbsolutePath());
-    logger.info("Job's directory: " + getJobDirectory().getAbsolutePath());
-
-    // ifiles = new OntologyFiles(importFiles, importSubs);
-    logger.info("Use import sub directories: " + importSubs);
-    for (File file : importFiles)
-    {
-      logger.info("Import file: " + file);
-    }
-
-  }
-
   // ================================================================================
   // Implementation
   // ================================================================================
 
-  @Inject
-  IOwlclManager mananger;
-
-  @Inject
-  public MainCommand(@Nullable @Assisted OwlclCommand parent) {
-    super(parent);
-  }
-
   @Override
-  public void initialize() {
+  protected void doInitialize() {
     configure();
+    if (quiet)
+    {
+      logConfigurator.disableConsole();
+    } else
+    {
+      logConfigurator.enableConsole();
+    }
   }
 
   @Override
   public Object call() throws Exception {
-
-    System.out.println("\nDynamic parameters:");
-    this.getDynamicParameters().entrySet();
-    for (Entry<String, String> dparam : this.getDynamicParameters().entrySet())
-
+    configure();
+    if (outputInsideProject())
     {
-      System.out.println("\t" + dparam.getKey() + "=" + dparam.getValue());
+      throw new IllegalStateException(
+          "Output directory can't be inside or equal to the project directory. " + "Project: "
+              + getProject().getAbsolutePath() + " Output: "
+              + getOutputDirectory().getAbsolutePath());
     }
 
-    System.out.println("\nMain parameters:");
-    for (String mainParameter : this.getMainParameters())
+    logConfigurator.setDirectory(getJobDirectory());
+
+    if (!isQuietSet())
     {
-      System.out.println("\t" + mainParameter);
+      logConfigurator.enableConsole();
+    } else
+    {
+      if (isQuiet())
+      {
+        logConfigurator.disableConsole();
+      } else
+      {
+        logConfigurator.enableConsole();
+      }
     }
-
-    System.out.println("\nFinished!");
-
     return null;
   }
 
-  /**
-   * Pass in a working directory that possibly has configuration properties.
-   * This constructor is to force a client to make a choise instead of just
-   * getting the current directory.
-   * 
-   * @param workingDirectory
-   */
-  // public Main(File workingDirectory) {
-  // this.workingDirectory = workingDirectory;
-  // configure();
-  // }
+  private boolean outputInsideProject() {
 
-  private File jobDirectory = null;
+    return (getOutputDirectory().getAbsolutePath() + "/").startsWith(getProject().getAbsolutePath()
+        + "/");
+  }
 
   public File getJobDirectory() {
     if (jobDirectory == null)
@@ -838,9 +671,6 @@ public class MainCommand extends OwlclCommand {
     }
     return jobDirectory;
   }
-
-  private OntologyFiles ifiles = null;
-  private OntologyFiles ofiles = null;
 
   public OWLOntologyManager getNewBaseManager() {
     OWLOntologyManager man = OWLManager.createOWLOntologyManager();
@@ -858,7 +688,7 @@ public class MainCommand extends OwlclCommand {
         logger.info("\tFile: " + file.getAbsolutePath());
       }
 
-      ifiles = new OntologyFiles(importFiles, importSubs);
+      ifiles = new OntologyFiles(importFiles, importSubs, new HashSet<File>());
       logger.debug("Found base imports: ");
       for (Entry<File, IRI> entry : ifiles.getLocalOntologyFiles(null).entrySet())
       {
@@ -876,7 +706,7 @@ public class MainCommand extends OwlclCommand {
         logger.info("\tFile: " + file.getAbsolutePath());
       }
 
-      ofiles = new OntologyFiles(ontologyFiles, ontologySubs);
+      ofiles = new OntologyFiles(ontologyFiles, ontologySubs, new HashSet<File>());
       logger.debug("Found base ontologies: ");
       for (Entry<File, IRI> entry : ofiles.getLocalOntologyFiles(null).entrySet())
       {
@@ -886,8 +716,6 @@ public class MainCommand extends OwlclCommand {
     ofiles.setupManager(man, null);
     return man;
   }
-
-  private OWLOntologyManager sharedBaseManager = null;
 
   public OWLOntologyManager getSharedBaseManager() {
     if (sharedBaseManager == null)

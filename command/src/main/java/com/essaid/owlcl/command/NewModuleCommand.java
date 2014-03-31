@@ -249,6 +249,9 @@ public class NewModuleCommand extends AbstractCommand {
     configure();
   }
 
+  protected void doInitialize() {
+  };
+
   OWLOntologyManager man;
   OWLDataFactory df;
   IRI topIri;
@@ -335,7 +338,7 @@ public class NewModuleCommand extends AbstractCommand {
         ModuleVocab.module_iri.getAP(), configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module IRI annotations for module: " + getModuleName());
+      getLogger().warn("Found multiple module IRI annotations for module: " + getModuleName());
     } else if (axioms.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
@@ -348,7 +351,7 @@ public class NewModuleCommand extends AbstractCommand {
         configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module inferreed IRI annotations for module: " + getModuleName());
+      getLogger().warn("Found multiple module inferreed IRI annotations for module: " + getModuleName());
     } else if (axioms.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
@@ -361,7 +364,7 @@ public class NewModuleCommand extends AbstractCommand {
         configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module file name annotations for module: " + getModuleName());
+      getLogger().warn("Found multiple module file name annotations for module: " + getModuleName());
     } else if (axioms.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
@@ -373,7 +376,7 @@ public class NewModuleCommand extends AbstractCommand {
         ModuleVocab.module_file_name_inferred.getAP(), configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module inferred file name annotations for module: "
+      getLogger().warn("Found multiple module inferred file name annotations for module: "
           + getModuleName());
     } else if (axioms.size() == 0)
     {
@@ -386,7 +389,7 @@ public class NewModuleCommand extends AbstractCommand {
         configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module generate annotations for module: " + getModuleName());
+      getLogger().warn("Found multiple module generate annotations for module: " + getModuleName());
     } else if (axioms.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
@@ -398,7 +401,7 @@ public class NewModuleCommand extends AbstractCommand {
         ModuleVocab.module_generate_inferred.getAP(), configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module generate annotations for module: " + getModuleName());
+      getLogger().warn("Found multiple module generate annotations for module: " + getModuleName());
     } else if (axioms.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
@@ -410,7 +413,7 @@ public class NewModuleCommand extends AbstractCommand {
         configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module builders annotations for module: " + getModuleName());
+      getLogger().warn("Found multiple module builders annotations for module: " + getModuleName());
     } else if (axioms.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
@@ -422,7 +425,7 @@ public class NewModuleCommand extends AbstractCommand {
         ModuleVocab.module_inferred_builders.getAP(), configurationOntology, false);
     if (axioms.size() > 1)
     {
-      logger.warn("Found multiple module inferred builders annotations for module: "
+      getLogger().warn("Found multiple module inferred builders annotations for module: "
           + getModuleName());
     } else if (axioms.size() == 0)
     {

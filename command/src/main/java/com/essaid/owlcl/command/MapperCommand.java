@@ -277,6 +277,12 @@ public class MapperCommand extends AbstractCommand {
   }
 
   @Override
+  protected void doInitialize() {
+    // TODO Auto-generated method stub
+    
+  }
+  
+  @Override
   protected void addCommandActions(List<String> actionsList) {
     actionsList.add(Action.map.name());
   }

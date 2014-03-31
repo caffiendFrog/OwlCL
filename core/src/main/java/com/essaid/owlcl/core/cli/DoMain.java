@@ -6,8 +6,8 @@ import com.beust.jcommander.DefaultUsage;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
 import com.essaid.owlcl.core.IOwlclManager;
 import com.essaid.owlcl.core.OwlclCommand;
-import com.essaid.owlcl.core.OwlclCoreGModule;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
+import com.essaid.owlcl.core.guice.OwlclCoreGModule;
 import com.essaid.owlcl.core.util.DefaultOwlclManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binding;
@@ -30,6 +30,7 @@ public class DoMain {
       }
     });
 
+    // look for main command
     Binding<IOwlclCommandFactory> binding = injector.getExistingBinding(Key.get(
         IOwlclCommandFactory.class, Names.named(OwlclCommand.CORE_MAIN)));
 

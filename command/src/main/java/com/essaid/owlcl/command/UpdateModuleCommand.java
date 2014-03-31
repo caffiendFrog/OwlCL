@@ -22,11 +22,11 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
 import com.essaid.owlcl.core.util.OwlclUtil;
@@ -43,45 +43,77 @@ public class UpdateModuleCommand extends AbstractCommand {
   // ================================================================================
   // name
   // ================================================================================
-  @Parameter(names = "-name", description = "The module name for the one module update. If "
-      + "not supplied, or if module root update, the directory name will be used as "
-      + "module name.")
-  public String moduleName = null;
+  // @Parameter(names = "-name", description =
+  // "The module name for the one module update. If "
+  // +
+  // "not supplied, or if module root update, the directory name will be used as "
+  // + "module name.")
+  // public void setModuleName(String moduleName) {
+  // this.moduleName = moduleName;
+  // this.moduleNameSet = true;
+  // }
+  //
+  // public String getModuleName() {
+  // return moduleName;
+  // }
+  //
+  // public boolean isModuleNameSet() {
+  // return moduleNameSet;
+  // }
+  //
+  // private String moduleName;
+  //
+  // private boolean moduleNameSet;
 
   // ================================================================================
   // directory
   // ================================================================================
-  public File directory;
-  public boolean directorySet;
-
-  public File getDirectory() {
-    return directory;
-  }
-
   @Parameter(names = "-directory",
       description = "The directory to update. If it is not a module root,"
           + " only that directory will be updated. If root, will search for "
           + " *module* files in subdirectories and assume to be a module if present.",
-      converter = CanonicalFileConverter.class,
-      validateValueWith = DirectoryExistsValueValidator.class)
+      converter = CanonicalFileConverter.class)
   public void setDirectory(File directory) {
     this.directory = directory;
     this.directorySet = true;
   }
 
+  public File getDirectory() {
+    return directory;
+  }
+
+  public boolean isDirectorySet() {
+    return directorySet;
+  }
+
+  private File directory;
+  private boolean directorySet;
+
   // ================================================================================
   // root
   // ================================================================================
 
-  public boolean root = false;
+  @Parameter(names = "-root")
+  public void setRoot(boolean root) {
+    this.root = root;
+    this.rootSet = true;
+  }
 
   public boolean isRoot() {
     return root;
   }
 
-  @Parameter(names = "-root")
-  public void setRoot(boolean root) {
-    this.root = root;
+  public boolean isRootSet() {
+    return rootSet;
+  }
+
+  private boolean root;
+  private boolean rootSet;
+
+  @Override
+  protected void doInitialize() {
+    configure();
+
   }
 
   // ================================================================================
@@ -89,40 +121,23 @@ public class UpdateModuleCommand extends AbstractCommand {
   // ================================================================================
   protected void configure() {
 
-    this.moduleName = "_unnamed";
-
-    if (getMain().getProject() != null)
+    if (!isDirectorySet())
     {
-      this.directory = new File(getMain().getProject(), "module");
-      this.root = true;
-    } else
-    {
-      this.directory = new File(getMain().getJobDirectory() + "module/" + this.moduleName);
+      directory = new File(getMain().getProject(), "module");
+      root = true;
     }
   }
 
-  protected void init() {
-    // if main had a command line parameter that sets custom project (as
-    // opposed to getting it from properties) and this command didn't have a
-    // custom directory, we need to update the default with the new
-    // main.project.
-    if (getMain().isProjectSet() && this.directorySet == false)
-    {
-      this.directory = new File(getMain().getProject(), "module");
-    }
-
-  }
-
   // ================================================================================
-  //
+  // implementation
   // ================================================================================
 
-  Logger logger = LoggerFactory.getLogger(this.getClass());
+  @InjectLogger
+  Logger logger;
 
   @Inject
   public UpdateModuleCommand(@Assisted OwlclCommand main) {
     super(main);
-    configure();
   }
 
   @Override
@@ -131,16 +146,18 @@ public class UpdateModuleCommand extends AbstractCommand {
 
   }
 
-  public void run() {
-    init();
+  @Override
+  public Object call() throws Exception {
+    if (!getDirectory().exists())
+    {
+      throw new IllegalStateException("Update module directory does not exist: "
+          + getDirectory().getAbsolutePath());
+    }
     if (!root)
     {
       if (containsModuleFiles(directory))
       {
-        if (moduleName == null)
-        {
-          moduleName = directory.getName();
-        }
+        String moduleName = directory.getName();
         updateModule(moduleName, directory);
       }
     } else
@@ -152,6 +169,7 @@ public class UpdateModuleCommand extends AbstractCommand {
       }
     }
 
+    return null;
   }
 
   private void updateModule(String moduleName, File moduleDirectory) {
@@ -425,12 +443,6 @@ public class UpdateModuleCommand extends AbstractCommand {
 
   private boolean containsModuleFiles(File directory) {
     return FileUtils.listFiles(directory, new RegexFileFilter(".*module.*"), null).size() > 0;
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
-    return null;
   }
 
 }
