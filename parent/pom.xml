@@ -177,4 +177,7 @@
   </build>
 
 
+  <modules>
+    <module>tmp</module>
+  </modules>
 </project>
