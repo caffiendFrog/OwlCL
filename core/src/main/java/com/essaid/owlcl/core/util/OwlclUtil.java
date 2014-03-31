@@ -639,105 +639,105 @@ public class OwlclUtil  {
 
   static
   {
-    String osName = System.getProperty("os.name");
-    String osArch = System.getProperty("os.arch");
-    String libName = null;
-    String libPath = null;
-
-    if (osName.toLowerCase().startsWith("windows"))
-    {
-      if (osArch.contains("64"))
-      {
-        libName = "FaCTPlusPlusJNI.dll";
-        libPath = "/fact162/win64/";
-      } else
-      {
-        libName = "FaCTPlusPlusJNI.dll";
-        libPath = "/fact162/win32/";
-      }
-    } else if (osName.toLowerCase().startsWith("linux"))
-    {
-      if (osArch.contains("64"))
-      {
-        libName = "libFaCTPlusPlusJNI.so";
-        libPath = "/fact162/linux64/";
-      } else
-      {
-        libName = "libFaCTPlusPlusJNI.so";
-        libPath = "/fact162/linux32/";
-      }
-    } else if (osName.toLowerCase().contains("mac"))
-    {
-      if (osArch.contains("64"))
-      {
-        libName = "libFaCTPlusPlusJNI.jnilib";
-        libPath = "/fact162/os64/";
-      } else
-      {
-        libName = "libFaCTPlusPlusJNI.jnilib";
-        libPath = "/fact162/os32/";
-      }
-    }
-    FileOutputStream fos = null;
-    InputStream fis = null;
-    try
-    {
-      final Path libDir = Files.createTempDirectory("factpp-");
-      libDir.toFile().deleteOnExit();
-      fos = new FileOutputStream(new File(libDir.toFile(), libName));
-      fis = OwlclUtil.class.getResourceAsStream(libPath + libName);
-      byte[] buffer = new byte[1024];
-      int bytesRead = 0;
-      while ((bytesRead = fis.read(buffer)) != -1)
-      {
-        fos.write(buffer, 0, bytesRead);
-      }
-      System.setProperty("java.library.path", libDir.toFile().getAbsolutePath());
-      Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
-      fieldSysPath.setAccessible(true);
-      fieldSysPath.set(null, null);
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-
-        public void run() {
-          delete(libDir.toFile());
-        }
-
-        void delete(File f) {
-          if (f.isDirectory())
-          {
-            for (File c : f.listFiles())
-              delete(c);
-          }
-          if (!f.delete())
-            throw new RuntimeException("Failed to delete file: " + f);
-        }
-      });
-    } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException
-        | IllegalAccessException e)
-    {
-      throw new RuntimeException("ISFUtil: failed to copy native library.", e);
-    } finally
-    {
-      if (fos != null)
-      {
-        try
-        {
-          fos.close();
-        } catch (IOException e)
-        {
-        }
-      }
-      if (fis != null)
-      {
-        try
-        {
-          fis.close();
-        } catch (IOException e)
-        {
-        }
-      }
-
-    }
+//    String osName = System.getProperty("os.name");
+//    String osArch = System.getProperty("os.arch");
+//    String libName = null;
+//    String libPath = null;
+//
+//    if (osName.toLowerCase().startsWith("windows"))
+//    {
+//      if (osArch.contains("64"))
+//      {
+//        libName = "FaCTPlusPlusJNI.dll";
+//        libPath = "/fact162/win64/";
+//      } else
+//      {
+//        libName = "FaCTPlusPlusJNI.dll";
+//        libPath = "/fact162/win32/";
+//      }
+//    } else if (osName.toLowerCase().startsWith("linux"))
+//    {
+//      if (osArch.contains("64"))
+//      {
+//        libName = "libFaCTPlusPlusJNI.so";
+//        libPath = "/fact162/linux64/";
+//      } else
+//      {
+//        libName = "libFaCTPlusPlusJNI.so";
+//        libPath = "/fact162/linux32/";
+//      }
+//    } else if (osName.toLowerCase().contains("mac"))
+//    {
+//      if (osArch.contains("64"))
+//      {
+//        libName = "libFaCTPlusPlusJNI.jnilib";
+//        libPath = "/fact162/os64/";
+//      } else
+//      {
+//        libName = "libFaCTPlusPlusJNI.jnilib";
+//        libPath = "/fact162/os32/";
+//      }
+//    }
+//    FileOutputStream fos = null;
+//    InputStream fis = null;
+//    try
+//    {
+//      final Path libDir = Files.createTempDirectory("factpp-");
+//      libDir.toFile().deleteOnExit();
+//      fos = new FileOutputStream(new File(libDir.toFile(), libName));
+//      fis = OwlclUtil.class.getResourceAsStream(libPath + libName);
+//      byte[] buffer = new byte[1024];
+//      int bytesRead = 0;
+//      while ((bytesRead = fis.read(buffer)) != -1)
+//      {
+//        fos.write(buffer, 0, bytesRead);
+//      }
+//      System.setProperty("java.library.path", libDir.toFile().getAbsolutePath());
+//      Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+//      fieldSysPath.setAccessible(true);
+//      fieldSysPath.set(null, null);
+//      Runtime.getRuntime().addShutdownHook(new Thread() {
+//
+//        public void run() {
+//          delete(libDir.toFile());
+//        }
+//
+//        void delete(File f) {
+//          if (f.isDirectory())
+//          {
+//            for (File c : f.listFiles())
+//              delete(c);
+//          }
+//          if (!f.delete())
+//            throw new RuntimeException("Failed to delete file: " + f);
+//        }
+//      });
+//    } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException
+//        | IllegalAccessException e)
+//    {
+//      throw new RuntimeException("ISFUtil: failed to copy native library.", e);
+//    } finally
+//    {
+//      if (fos != null)
+//      {
+//        try
+//        {
+//          fos.close();
+//        } catch (IOException e)
+//        {
+//        }
+//      }
+//      if (fis != null)
+//      {
+//        try
+//        {
+//          fis.close();
+//        } catch (IOException e)
+//        {
+//        }
+//      }
+//
+//    }
 
   }
 

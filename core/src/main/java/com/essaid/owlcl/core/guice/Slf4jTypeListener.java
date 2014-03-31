@@ -25,30 +25,37 @@ public class Slf4jTypeListener implements TypeListener {
 
   public <I> void hear(TypeLiteral<I> aTypeLiteral, TypeEncounter<I> aTypeEncounter) {
 
-    for (Field field : aTypeLiteral.getRawType().getDeclaredFields())
-    {
-      if (field.getType() == Logger.class && field.isAnnotationPresent(InjectLogger.class))
-      {
-        // static case
-        if (Modifier.isStatic(field.getModifiers()))
-        {
-          // use reflection
-          try
-          {
-            field.setAccessible(true);
-            Logger logger = LoggerFactory.getLogger(field.getDeclaringClass());
-            field.set(null, logger);
-          } catch (IllegalAccessException iae)
-          {
-            throw new RuntimeException("Error setting logger on static field: " + field.getName()
-                + " in class: " + field.getDeclaringClass().getName());
-          }
-        } else
-        {
-          aTypeEncounter.register(new Slf4jMembersInjector<I>(field));
-        }
+    Class rawClass = aTypeLiteral.getRawType();
 
+    while (!rawClass.equals(Object.class))
+    {
+
+      for (Field field : rawClass.getDeclaredFields())
+      {
+        if (field.getType() == Logger.class && field.isAnnotationPresent(InjectLogger.class))
+        {
+          // static case
+          if (Modifier.isStatic(field.getModifiers()))
+          {
+            // use reflection
+            try
+            {
+              field.setAccessible(true);
+              Logger logger = LoggerFactory.getLogger(aTypeLiteral.getClass());
+              field.set(null, logger);
+            } catch (IllegalAccessException iae)
+            {
+              throw new RuntimeException("Error setting logger on static field: " + field.getName()
+                  + " in class: " + field.getDeclaringClass().getName());
+            }
+          } else
+          {
+            aTypeEncounter.register(new Slf4jMembersInjector<I>(field, aTypeLiteral.getRawType()));
+          }
+
+        }
       }
+      rawClass = rawClass.getSuperclass();
     }
   }
 }

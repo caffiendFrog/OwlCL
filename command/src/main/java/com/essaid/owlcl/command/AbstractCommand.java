@@ -9,6 +9,7 @@ import com.beust.jcommander.Parameter;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.util.ILoggerOwner;
+import com.google.inject.Inject;
 
 public abstract class AbstractCommand extends OwlclCommand implements ILoggerOwner {
 
@@ -73,7 +74,7 @@ public abstract class AbstractCommand extends OwlclCommand implements ILoggerOwn
 
   public AbstractCommand(OwlclCommand main) {
     super(main);
-    if (main == null || !(main instanceof MainCommand))
+    if (main != null && !(main instanceof MainCommand))
     {
       throw new IllegalStateException(
           "AbstractCommand needs an OwlclCommand of type MainCommand but was passed " + main == null ? null

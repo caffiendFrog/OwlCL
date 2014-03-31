@@ -38,9 +38,6 @@ public class NewModuleCommand extends AbstractCommand {
   // ================================================================================
   // The module name
   // ================================================================================
-  private String moduleName;
-  private boolean moduleNameSet;
-
   @Parameter(
       names = "-name",
       description = "The module name. This will be used to create default IRIs, files, and folders.")
@@ -53,12 +50,16 @@ public class NewModuleCommand extends AbstractCommand {
     return moduleName;
   }
 
+  public boolean isModuleNameSet() {
+    return moduleNameSet;
+  }
+
+  private String moduleName;
+  private boolean moduleNameSet;
+
   // ================================================================================
   // The output directory
   // ================================================================================
-
-  private File directory;
-  private boolean directorySet;
 
   @Parameter(names = "-directory", description = "The directory where the module will be created.",
       converter = FileConverter.class)
@@ -71,11 +72,17 @@ public class NewModuleCommand extends AbstractCommand {
     return directory;
   }
 
+  public boolean isDirectorySet() {
+
+    return directorySet;
+  }
+
+  private File directory;
+  private boolean directorySet;
+
   // ================================================================================
   // The source IRIs for the module
   // ================================================================================
-  private List<IRI> sourceIris;
-  private boolean sourceIrisSet;
 
   @Parameter(names = "-sourceIris", converter = IriConverter.class,
       description = "The source IRIs that will be used for this module.")
@@ -88,11 +95,16 @@ public class NewModuleCommand extends AbstractCommand {
     return sourceIris;
   }
 
+  public boolean isSourceIrisSet() {
+    return sourceIrisSet;
+  }
+
+  private List<IRI> sourceIris;
+  private boolean sourceIrisSet;
+
   // ================================================================================
   // The final IRI of the module
   // ================================================================================
-  private IRI iri;
-  private boolean iriSet;
 
   @Parameter(names = "-iri", description = "The generated module's IRI",
       converter = IriConverter.class)
@@ -105,11 +117,16 @@ public class NewModuleCommand extends AbstractCommand {
     return iri;
   }
 
+  public boolean isIriSet() {
+    return iriSet;
+  }
+
+  private IRI iri;
+  private boolean iriSet;
+
   // ================================================================================
   // The final IRI of the module inferred
   // ================================================================================
-  private IRI iriInferred;
-  private boolean iriInferredSet;
 
   @Parameter(names = "-iriInferred", description = "The generated inferred module's IRI",
       converter = IriConverter.class)
@@ -121,6 +138,13 @@ public class NewModuleCommand extends AbstractCommand {
   public IRI getIriInferred() {
     return iriInferred;
   }
+
+  public boolean isIriInferredSet() {
+    return iriInferredSet;
+  }
+
+  private IRI iriInferred;
+  private boolean iriInferredSet;
 
   // ================================================================================
   // The final filename of the module
@@ -138,11 +162,13 @@ public class NewModuleCommand extends AbstractCommand {
     return fileName;
   }
 
+  public boolean isFileNameSet() {
+    return fileNameSet;
+  }
+
   // ================================================================================
   // The final filename of the module inferred
   // ================================================================================
-  private String fileInferredName;
-  private boolean fileInferredNameSet;
 
   @Parameter(names = "-fileNameInferred",
       description = "The generated inferred module's file name.")
@@ -155,11 +181,16 @@ public class NewModuleCommand extends AbstractCommand {
     return fileInferredName;
   }
 
+  public boolean isFileInferredNameSet() {
+    return fileInferredNameSet;
+  }
+
+  private String fileInferredName;
+  private boolean fileInferredNameSet;
+
   // ================================================================================
   // The IRI prefix of the module's files
   // ================================================================================
-  private String iriPrefix;
-  private boolean iriPrefixSet;
 
   @Parameter(
       names = "-iriPrefix",
@@ -176,54 +207,95 @@ public class NewModuleCommand extends AbstractCommand {
     return iriPrefix;
   }
 
+  public boolean isIriPrefixSet() {
+    return iriPrefixSet;
+  }
+
+  private String iriPrefix;
+  private boolean iriPrefixSet;
+
   // ================================================================================
   // Initialization
   // ================================================================================
 
-  private boolean inited;
-
   protected void configure() {
-    moduleName = "_unnamed";
-    if (getMain().getProject() == null)
+    if (!isModuleNameSet())
     {
-      directory = new File(getMain().getOutputDirectory(), "module/" + moduleName);
-    } else
-    {
-      directory = new File(getMain().getProject(), "module/" + moduleName);
+      moduleName = "_unnamed";
     }
-    sourceIris = new ArrayList<IRI>();
-    sourceIris.add(Owlcl.ISF_DEV_IRI);
-    iri = IRI.create(Owlcl.ISF_ONTOLOGY_IRI_PREFIX + moduleName + Owlcl.MODULE_IRI_SUFFIX);
-    iriInferred = IRI.create(Owlcl.ISF_ONTOLOGY_IRI_PREFIX + moduleName
-        + Owlcl.MODULE_IRI_INRERRED_SUFFIX);
-    fileName = moduleName + Owlcl.MODULE_IRI_SUFFIX;
-    fileInferredName = moduleName + Owlcl.MODULE_IRI_INRERRED_SUFFIX;
-    iriPrefix = Owlcl.ISF_ONTOLOGY_IRI_PREFIX;
+
+    if (!isIriPrefixSet())
+    {
+      iriPrefix = "http://owlcl/";
+    }
+
+    if (!isDirectorySet())
+    {
+      directory = new File(getMain().getJobDirectory(), "module/" + moduleName);
+    }
+
+    if (!isSourceIrisSet())
+    {
+      sourceIris = new ArrayList<IRI>();
+      sourceIris.add(Owlcl.ISF_DEV_IRI);
+    }
+
+    if (!isIriSet())
+    {
+      iri = IRI.create(iriPrefix + "module/" + moduleName + Owlcl.MODULE_IRI_SUFFIX);
+    }
+
+    if (!isIriInferredSet())
+    {
+      iriInferred = IRI.create(iriPrefix + "module/" + moduleName
+          + Owlcl.MODULE_IRI_INRERRED_SUFFIX);
+    }
+
+    if (!isFileNameSet())
+    {
+      fileName = moduleName + Owlcl.MODULE_IRI_SUFFIX;
+    }
+
+    if (!isFileInferredNameSet())
+    {
+      fileInferredName = moduleName + Owlcl.MODULE_IRI_INRERRED_SUFFIX;
+    }
+
   }
 
-  @SuppressWarnings("deprecation")
-  protected void init() {
-    if (inited)
-    {
-      return;
-    }
-    inited = true;
+  // ================================================================================
+  // Implementation
+  // ================================================================================
 
-    if (getMain().getProject() == null)
+  @Inject
+  public NewModuleCommand(@Assisted OwlclCommand main) {
+    super(main);
+  }
+
+  protected void doInitialize() {
+    getLogger().debug("Doing initialization.");
+    configure();
+  };
+
+  OWLOntologyManager man;
+  OWLDataFactory df;
+  IRI topIri;
+  IRI configurationIri;
+  IRI includeIri;
+  IRI excludeIri;
+  IRI legacyIri;
+  IRI legacyRemovedIri;
+
+  public void run() {
+    configure();
+
+    if (directory.exists())
     {
-      directory = new File(getMain().getOutputDirectory(), "module/" + moduleName);
-    } else
-    {
-      directory = new File(getMain().getProject(), "module/" + moduleName);
+      throw new IllegalStateException("New module's directory already exists. Aborting so that I "
+          + "don't overwrite an existing module");
     }
 
     directory.mkdirs();
-
-    iri = IRI.create(Owlcl.ISF_ONTOLOGY_IRI_PREFIX + moduleName + Owlcl.MODULE_IRI_SUFFIX);
-    iriInferred = IRI.create(Owlcl.ISF_ONTOLOGY_IRI_PREFIX + moduleName
-        + Owlcl.MODULE_IRI_INRERRED_SUFFIX);
-    fileName = moduleName + Owlcl.MODULE_IRI_SUFFIX;
-    fileInferredName = moduleName + Owlcl.MODULE_IRI_INRERRED_SUFFIX;
 
     man = OWLManager.createOWLOntologyManager();
     man.clearIRIMappers();
@@ -238,31 +310,6 @@ public class NewModuleCommand extends AbstractCommand {
     excludeIri = IRI.create(iriPrefix + moduleName + Owlcl.MODULE_EXCLUDE_IRI_SUFFIX);
     legacyIri = IRI.create(iriPrefix + moduleName + Owlcl.MODULE_LEGACY_IRI_SUFFIX);
     legacyRemovedIri = IRI.create(iriPrefix + moduleName + Owlcl.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
-  }
-
-  // ================================================================================
-  // Implementation
-  // ================================================================================
-  @Inject
-  public NewModuleCommand(@Assisted OwlclCommand main) {
-    super(main);
-    configure();
-  }
-
-  protected void doInitialize() {
-  };
-
-  OWLOntologyManager man;
-  OWLDataFactory df;
-  IRI topIri;
-  IRI configurationIri;
-  IRI includeIri;
-  IRI excludeIri;
-  IRI legacyIri;
-  IRI legacyRemovedIri;
-
-  public void run() {
-    init();
 
     // include
     OWLOntology includeOntology = OwlclUtil.getOrLoadOrCreateOntology(includeIri, man);
@@ -278,160 +325,145 @@ public class NewModuleCommand extends AbstractCommand {
 
     // configuration
     OWLOntology configurationOntology = null;
-    try
-    {
-      configurationOntology = OwlclUtil.getOrLoadOntology(configurationIri, man);
-    } catch (RuntimeOntologyLoadingException e1)
-    {
-      if (!e1.isIriMapping())
-      {
-        throw e1;
-      }
-    }
 
-    // if null we might need to migrate the -annotation file
-    OWLOntology annotationOntology = null;
-    if (configurationOntology == null)
-    {
-      annotationOntology = OwlclUtil.getOrLoadOntology(
-          IRI.create(iriPrefix + moduleName + "-module-annotation.owl"), man);
-    }
+    configurationOntology = OwlclUtil.getOrLoadOrCreateOntology(configurationIri, man);
 
-    // create a new one if needed.
-    if (configurationOntology == null)
-    {
-      configurationOntology = OwlclUtil.getOrLoadOrCreateOntology(configurationIri, man);
-      if (annotationOntology != null)
-      {
-        // until I see how to change xmlns and xml:base, otherwise those
-        // will not be updated.
-        // TODO: fix
-        man.addAxioms(configurationOntology, annotationOntology.getAxioms());
-        for (OWLAnnotation a : annotationOntology.getAnnotations())
-        {
-          man.applyChange(new AddOntologyAnnotation(configurationOntology, a));
-        }
+    // // remove the old imports
+    // man.applyChange(new RemoveImport(configurationOntology,
+    // df.getOWLImportsDeclaration(includeIri)));
+    // man.applyChange(new RemoveImport(configurationOntology,
+    // df.getOWLImportsDeclaration(excludeIri)));
+    // man.applyChange(new RemoveImport(configurationOntology,
+    // df.getOWLImportsDeclaration(legacyIri)));
+    // man.applyChange(new RemoveImport(configurationOntology, df
+    // .getOWLImportsDeclaration(legacyRemovedIri)));
 
-        for (OWLImportsDeclaration id : annotationOntology.getImportsDeclarations())
-        {
-          man.applyChange(new AddImport(configurationOntology, id));
-        }
-      }
-    }
-
-    // remove the old imports
-    man.applyChange(new RemoveImport(configurationOntology, df.getOWLImportsDeclaration(includeIri)));
-    man.applyChange(new RemoveImport(configurationOntology, df.getOWLImportsDeclaration(excludeIri)));
-    man.applyChange(new RemoveImport(configurationOntology, df.getOWLImportsDeclaration(legacyIri)));
-    man.applyChange(new RemoveImport(configurationOntology, df
-        .getOWLImportsDeclaration(legacyRemovedIri)));
+    // add source imports
     for (IRI source : sourceIris)
     {
       man.applyChange(new AddImport(configurationOntology, df.getOWLImportsDeclaration(source)));
     }
+
     // ifs-tools.owl import
     man.applyChange(new AddImport(configurationOntology, df
         .getOWLImportsDeclaration(Owlcl.ISF_TOOLS_IRI)));
 
-    // check/add the module IRI annotation
-    Set<String> axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-        ModuleVocab.module_iri.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module IRI annotations for module: " + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_iri.getAP(),
-          df.getOWLLiteral(iriPrefix + getModuleName() + Owlcl.MODULE_IRI_SUFFIX))));
-    }
+    // // check/add the module IRI annotation
+    // Set<String> axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    // ModuleVocab.module_iri.getAP(), configurationOntology, false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger().warn("Found multiple module IRI annotations for module: " +
+    // getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_iri.getAP(),
+        df.getOWLLiteral(iriPrefix + getModuleName() + Owlcl.MODULE_IRI_SUFFIX))));
+    // }
 
-    // check/add the module inferred IRI annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_iri_inferred.getAP(),
-        configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module inferreed IRI annotations for module: " + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_iri_inferred.getAP(),
-          df.getOWLLiteral(iriPrefix + getModuleName() + Owlcl.MODULE_IRI_INRERRED_SUFFIX))));
-    }
+    // // check/add the module inferred IRI annotation
+    // axioms =
+    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_iri_inferred.getAP(),
+    // configurationOntology, false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger().warn(
+    // "Found multiple module inferreed IRI annotations for module: " +
+    // getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_iri_inferred.getAP(),
+        df.getOWLLiteral(iriPrefix + getModuleName() + Owlcl.MODULE_IRI_INRERRED_SUFFIX))));
+    // }
 
     // check/add the module file name annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_file_name.getAP(),
-        configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module file name annotations for module: " + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_file_name.getAP(), df.getOWLLiteral(fileName))));
-    }
+    // axioms =
+    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_file_name.getAP(),
+    // configurationOntology, false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger()
+    // .warn("Found multiple module file name annotations for module: " +
+    // getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_file_name.getAP(), df.getOWLLiteral(fileName))));
+    // }
 
     // check/add the module inferred file name annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-        ModuleVocab.module_file_name_inferred.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module inferred file name annotations for module: "
-          + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_file_name_inferred.getAP(), df.getOWLLiteral(fileInferredName))));
-    }
+    // axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    // ModuleVocab.module_file_name_inferred.getAP(), configurationOntology,
+    // false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger().warn(
+    // "Found multiple module inferred file name annotations for module: " +
+    // getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_file_name_inferred.getAP(), df.getOWLLiteral(fileInferredName))));
+    // }
 
     // check/add the module generate annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_generate.getAP(),
-        configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module generate annotations for module: " + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_generate.getAP(), df.getOWLLiteral(""))));
-    }
+    // axioms =
+    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_generate.getAP(),
+    // configurationOntology, false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger().warn("Found multiple module generate annotations for module: "
+    // + getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_generate.getAP(), df.getOWLLiteral("true"))));
+    // }
 
-    // check/add the module generate inferred annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-        ModuleVocab.module_generate_inferred.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module generate annotations for module: " + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_generate_inferred.getAP(), df.getOWLLiteral(""))));
-    }
+    // // check/add the module generate inferred annotation
+    // axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    // ModuleVocab.module_generate_inferred.getAP(), configurationOntology,
+    // false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger().warn("Found multiple module generate annotations for module: "
+    // + getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_generate_inferred.getAP(), df.getOWLLiteral("true"))));
+    // }
 
-    // check/add the builders annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_builders.getAP(),
-        configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module builders annotations for module: " + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_builders.getAP(), df.getOWLLiteral(""))));
-    }
+    // // check/add the builders annotation
+    // axioms =
+    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_builders.getAP(),
+    // configurationOntology, false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger().warn("Found multiple module builders annotations for module: "
+    // + getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_builders.getAP(), df.getOWLLiteral(""))));
+    // }
 
-    // check/add the inferred builders annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-        ModuleVocab.module_inferred_builders.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
-    {
-      getLogger().warn("Found multiple module inferred builders annotations for module: "
-          + getModuleName());
-    } else if (axioms.size() == 0)
-    {
-      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral(""))));
-    }
+    // // check/add the inferred builders annotation
+    // axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    // ModuleVocab.module_inferred_builders.getAP(), configurationOntology,
+    // false);
+    // if (axioms.size() > 1)
+    // {
+    // getLogger().warn(
+    // "Found multiple module inferred builders annotations for module: " +
+    // getModuleName());
+    // } else if (axioms.size() == 0)
+    // {
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral(""))));
+    // }
 
     // top
     OWLOntology topOntology = OwlclUtil.getOrLoadOrCreateOntology(topIri, man);
@@ -468,7 +500,7 @@ public class NewModuleCommand extends AbstractCommand {
 
   @Override
   public Object call() throws Exception {
-    // TODO Auto-generated method stub
+    run();
     return null;
   }
 

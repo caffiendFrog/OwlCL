@@ -132,10 +132,14 @@ public class DefaultOwlclManager implements IOwlclManager {
       throw new RuntimeException("Error getting current directory.", e);
     }
 
-    // find caller's home directory;
+    // find caller's owlcl home directory;
     try
     {
-      homeDirectory = new File(System.getProperty("user.home")).getCanonicalFile();
+      homeDirectory = new File(System.getProperty("user.home"), ".owlcl").getCanonicalFile();
+      if (!homeDirectory.exists())
+      {
+        homeDirectory.mkdirs();
+      }
     } catch (IOException e)
     {
       throw new RuntimeException("Error getting home directory.", e);

@@ -19,10 +19,10 @@ public class Slf4jMembersInjector<T> implements MembersInjector<T> {
   private final Field field;
   private final Logger logger;
 
-  Slf4jMembersInjector(Field aField) {
+  Slf4jMembersInjector(Field aField, Class<? extends Object> c) {
     field = aField;
-    logger = LoggerFactory.getLogger(field.getDeclaringClass());
     field.setAccessible(true);
+    logger = LoggerFactory.getLogger(c);
   }
 
   public void injectMembers(T anArg0) {

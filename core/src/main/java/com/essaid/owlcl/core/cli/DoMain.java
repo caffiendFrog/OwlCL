@@ -41,6 +41,8 @@ public class DoMain {
           Names.named(OwlclCommand.CORE_MAIN)));
 
       OwlclCommand mainCommand = mainFactory.getCommand(null);
+      mainCommand.setAllowAbbreviatedOptions(false);
+      mainCommand.setCaseSensitiveOptions(true);
 
       Key<Set<IOwlclCommandFactory>> topFactoryKey = new Key<Set<IOwlclCommandFactory>>(
           TopCommandQualifier.class) {
@@ -53,7 +55,10 @@ public class DoMain {
       }
 
       mainCommand.initialize();
-      DefaultUsage.usage(mainCommand);
+      if (args.length == 0)
+      {
+        DefaultUsage.usage(mainCommand);
+      }
       mainCommand.parse(args);
       try
       {

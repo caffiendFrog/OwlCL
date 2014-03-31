@@ -54,7 +54,7 @@ import com.google.inject.assistedinject.Assisted;
  * 
  */
 // @formatter:on
-public class MainCommand extends OwlclCommand {
+public class MainCommand extends AbstractCommand {
 
   // ================================================================================
   // Constants
@@ -92,6 +92,8 @@ public class MainCommand extends OwlclCommand {
 
   public static final String LOG_LEVEL_PROPERTY = "log.level";
   public static final String DETAILS_PROPERTY = "details";
+
+  public static final String COMMAND_PROPERTIES_FILE_NAME = "owlcl-command.properties";
 
   // ================================================================================
   // Working directory
@@ -402,8 +404,8 @@ public class MainCommand extends OwlclCommand {
   // ================================================================================
   // Initialization
   // ================================================================================
-  @InjectLogger
-  private static Logger logger;
+  // @InjectLogger
+  // private Logger logger;
 
   @Inject
   private IOwlclManager manager;
@@ -626,6 +628,7 @@ public class MainCommand extends OwlclCommand {
     {
       logConfigurator.enableConsole();
     }
+    getLogger().debug("Initializing");
   }
 
   @Override
@@ -654,6 +657,8 @@ public class MainCommand extends OwlclCommand {
         logConfigurator.enableConsole();
       }
     }
+
+    getSubCommand(getParsedCommand()).call();
     return null;
   }
 
@@ -682,17 +687,18 @@ public class MainCommand extends OwlclCommand {
     // add the imports first, they have lower priority
     if (ifiles == null)
     {
-      logger.info("Loading base import files");
+      getLogger().info("Loading base import files");
       for (File file : importFiles)
       {
-        logger.info("\tFile: " + file.getAbsolutePath());
+        getLogger().info("\tFile: " + file.getAbsolutePath());
       }
 
       ifiles = new OntologyFiles(importFiles, importSubs, new HashSet<File>());
-      logger.debug("Found base imports: ");
+      getLogger().debug("Found base imports: ");
       for (Entry<File, IRI> entry : ifiles.getLocalOntologyFiles(null).entrySet())
       {
-        logger.debug("\tIRI: " + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
+        getLogger().debug(
+            "\tIRI: " + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
       }
 
     }
@@ -700,17 +706,18 @@ public class MainCommand extends OwlclCommand {
 
     if (ofiles == null)
     {
-      logger.info("Loading base ontology files");
+      getLogger().info("Loading base ontology files");
       for (File file : ontologyFiles)
       {
-        logger.info("\tFile: " + file.getAbsolutePath());
+        getLogger().info("\tFile: " + file.getAbsolutePath());
       }
 
       ofiles = new OntologyFiles(ontologyFiles, ontologySubs, new HashSet<File>());
-      logger.debug("Found base ontologies: ");
+      getLogger().debug("Found base ontologies: ");
       for (Entry<File, IRI> entry : ofiles.getLocalOntologyFiles(null).entrySet())
       {
-        logger.debug("\tIRI: " + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
+        getLogger().debug(
+            "\tIRI: " + entry.getValue() + "  <--  " + entry.getKey().getAbsolutePath());
       }
     }
     ofiles.setupManager(man, null);
@@ -726,7 +733,7 @@ public class MainCommand extends OwlclCommand {
   }
 
   private Properties getProperties(File directory, Properties parent) {
-    File mainPropertiesFile = new File(directory, "isft-main.properties");
+    File mainPropertiesFile = new File(directory, COMMAND_PROPERTIES_FILE_NAME);
     Properties properties = null;
 
     if (mainPropertiesFile.isFile())
@@ -749,6 +756,12 @@ public class MainCommand extends OwlclCommand {
       }
     }
     return null;
+  }
+
+  @Override
+  protected void addCommandActions(List<String> actionsList) {
+    // TODO Auto-generated method stub
+
   }
 
   // private IJCommander jc = new JCommander();
