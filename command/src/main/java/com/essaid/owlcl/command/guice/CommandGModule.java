@@ -13,11 +13,15 @@ import com.essaid.owlcl.command.RewriteCommand;
 import com.essaid.owlcl.command.TypecheckCommand;
 import com.essaid.owlcl.command.UpdateModuleCommand;
 import com.essaid.owlcl.command.ValidateIriCommand;
+import com.essaid.owlcl.command.module.builder.IModuleBuilder;
+import com.essaid.owlcl.command.module.builder.ModuleBuilderManager;
+import com.essaid.owlcl.command.module.builder.simple.SimpleInferredModuleBuilder;
+import com.essaid.owlcl.command.module.builder.simple.SimpleModuleBuilder;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
 import com.essaid.owlcl.core.OwlclGuiceModule;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
-import com.essaid.owlcl.core.util.GuiceUtils;
 import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 
 public class CommandGModule extends AbstractModule implements OwlclGuiceModule {
@@ -35,7 +39,6 @@ public class CommandGModule extends AbstractModule implements OwlclGuiceModule {
 
     GuiceUtils.installCommandFactory(binder(), CompareCommand.class, COMPARE);
     GuiceUtils.installTopCommand(topCommandFactories, COMPARE);
-    
 
     GuiceUtils.installCommandFactory(binder(), EroCommand.class, ERO);
     GuiceUtils.installTopCommand(topCommandFactories, ERO);
@@ -60,6 +63,15 @@ public class CommandGModule extends AbstractModule implements OwlclGuiceModule {
 
     GuiceUtils.installCommandFactory(binder(), ValidateIriCommand.class, VALIDATE);
     GuiceUtils.installTopCommand(topCommandFactories, VALIDATE);
+
+    // module related
+
+    bind(ModuleBuilderManager.class).in(Scopes.SINGLETON);;
+
+    GuiceUtils.installBuilderFactory(binder(), SimpleInferredModuleBuilder.class,
+        IModuleBuilder.SIMPLE_INFERRED);
+
+    GuiceUtils.installBuilderFactory(binder(), SimpleModuleBuilder.class, IModuleBuilder.SIMPLE);
 
   }
 

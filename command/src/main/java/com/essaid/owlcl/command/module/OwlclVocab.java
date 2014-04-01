@@ -1,6 +1,6 @@
-package com.essaid.owlcl.module;
+package com.essaid.owlcl.command.module;
 
-import static com.essaid.owlcl.module.OwlclVocab.Vocab.*;
+import static com.essaid.owlcl.command.module.OwlclVocab.Vocab.*;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;

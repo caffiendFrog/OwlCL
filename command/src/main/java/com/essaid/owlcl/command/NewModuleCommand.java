@@ -23,12 +23,12 @@ import org.semanticweb.owlapi.util.AutoIRIMapper;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.FileConverter;
+import com.essaid.owlcl.command.module.ModuleVocab;
+import com.essaid.owlcl.command.module.Owlcl;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.IriConverter;
 import com.essaid.owlcl.core.util.OwlclUtil;
 import com.essaid.owlcl.core.util.RuntimeOntologyLoadingException;
-import com.essaid.owlcl.module.ModuleVocab;
-import com.essaid.owlcl.module.Owlcl;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 

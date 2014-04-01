@@ -8,10 +8,11 @@ import com.essaid.owlcl.core.IOwlclManager;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
 import com.essaid.owlcl.core.guice.OwlclCoreGModule;
+import com.essaid.owlcl.core.util.DefaultLogConfigurator;
 import com.essaid.owlcl.core.util.DefaultOwlclManager;
+import com.essaid.owlcl.core.util.ILogConfigurator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binding;
-import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -27,6 +28,9 @@ public class DoMain {
       protected void configure() {
         bind(IOwlclManager.class).toInstance(dm);
 
+        // this does default initialization that is then further refined from
+        // commandline.
+        bind(ILogConfigurator.class).toInstance(new DefaultLogConfigurator(dm));
       }
     });
 
@@ -37,8 +41,8 @@ public class DoMain {
     if (binding != null)
     {
       IOwlclCommandFactory mainFactory = binding.getProvider().get();
-      mainFactory = injector.getInstance(Key.get(IOwlclCommandFactory.class,
-          Names.named(OwlclCommand.CORE_MAIN)));
+      // mainFactory = injector.getInstance(Key.get(IOwlclCommandFactory.class,
+      // Names.named(OwlclCommand.CORE_MAIN)));
 
       OwlclCommand mainCommand = mainFactory.getCommand(null);
       mainCommand.setAllowAbbreviatedOptions(false);
@@ -51,7 +55,6 @@ public class DoMain {
       for (IOwlclCommandFactory topFactory : injector.getInstance(topFactoryKey))
       {
         mainCommand.addCommand(topFactory.getCommand(mainCommand));
-
       }
 
       mainCommand.initialize();

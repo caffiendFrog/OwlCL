@@ -25,14 +25,13 @@ import org.slf4j.Logger;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.essaid.owlcl.command.module.ModuleVocab;
+import com.essaid.owlcl.command.module.Owlcl;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
-import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
 import com.essaid.owlcl.core.util.OwlclUtil;
 import com.essaid.owlcl.core.util.RuntimeOntologyLoadingException;
-import com.essaid.owlcl.module.ModuleVocab;
-import com.essaid.owlcl.module.Owlcl;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -132,9 +131,6 @@ public class UpdateModuleCommand extends AbstractCommand {
   // implementation
   // ================================================================================
 
-  @InjectLogger
-  Logger logger;
-
   @Inject
   public UpdateModuleCommand(@Assisted OwlclCommand main) {
     super(main);
@@ -148,6 +144,10 @@ public class UpdateModuleCommand extends AbstractCommand {
 
   @Override
   public Object call() throws Exception {
+    getLogger().info("Starting module update");
+    getLogger().info("\tdirectory: " + directory.getAbsolutePath());
+    getLogger().info("\troot: " + root);
+
     if (!getDirectory().exists())
     {
       throw new IllegalStateException("Update module directory does not exist: "
@@ -158,6 +158,7 @@ public class UpdateModuleCommand extends AbstractCommand {
       if (containsModuleFiles(directory))
       {
         String moduleName = directory.getName();
+        getLogger().info("Updating single directory. Module name: " + moduleName);
         updateModule(moduleName, directory);
       }
     } else
@@ -165,6 +166,7 @@ public class UpdateModuleCommand extends AbstractCommand {
 
       for (File file : getModuleDirectories(directory))
       {
+        getLogger().info("Updating module directory: " + file.getAbsolutePath());
         updateModule(file.getName(), file);
       }
     }
@@ -188,6 +190,7 @@ public class UpdateModuleCommand extends AbstractCommand {
     // try all the possible configurations from recent to old
     if (new File(moduleDirectory, moduleName + "-module-configuration.owl").exists())
     {
+      getLogger().debug("Module name {} has -module-configuration.owl file", moduleName);
       try
       {
         configurationOntology = OwlclUtil.loadOntology(new File(moduleDirectory, moduleName
@@ -195,8 +198,9 @@ public class UpdateModuleCommand extends AbstractCommand {
         configurationConfiguration = true;
       } catch (RuntimeOntologyLoadingException e)
       {
-        logger.warn("Faild to load " + moduleName
-            + "-module-configuration.owl while looking for possible configurations.");
+        getLogger().warn(
+            "Faild to load " + moduleName
+                + "-module-configuration.owl while looking for possible configurations.");
         if (!e.isIriMapping())
         {
           throw e;
@@ -205,6 +209,7 @@ public class UpdateModuleCommand extends AbstractCommand {
 
     } else if (new File(moduleDirectory, moduleName + "-module-annotation.owl").exists())
     {
+      getLogger().debug("Module name {} has -module-annotation.owl file", moduleName);
       try
       {
         annotationOntology = OwlclUtil.loadOntology(new File(moduleDirectory, moduleName
@@ -212,8 +217,9 @@ public class UpdateModuleCommand extends AbstractCommand {
         annotationConfiguration = true;
       } catch (RuntimeOntologyLoadingException e)
       {
-        logger.warn("Faild to load " + moduleName
-            + "-module-annotation.owl while looking for possible configurations.");
+        getLogger().warn(
+            "Faild to load " + moduleName
+                + "-module-annotation.owl while looking for possible configurations.");
         if (!e.isIriMapping())
         {
           throw e;
@@ -223,8 +229,9 @@ public class UpdateModuleCommand extends AbstractCommand {
 
     if (configurationOntology == null && annotationOntology == null)
     {
-      logger.warn("Updating module " + moduleName
-          + " failed. Couldn't file a configuration file to start from.");
+      getLogger().warn(
+          "Updating module " + moduleName
+              + " failed. Couldn't find a configuration or annotation file to start from.");
       return;
     }
 
@@ -242,6 +249,8 @@ public class UpdateModuleCommand extends AbstractCommand {
       iriPrefix = configurationOntology.getOntologyID().getOntologyIRI().toString()
           .substring(0, index);
     }
+
+    getLogger().debug("Found iri prefix: {}", iriPrefix);
 
     // build iris
     IRI topIri = IRI.create(iriPrefix + moduleName + Owlcl.TOP_IRI_SUFFIX);
@@ -264,11 +273,13 @@ public class UpdateModuleCommand extends AbstractCommand {
       for (OWLAnnotation a : annotationOntology.getAnnotations())
       {
         man.applyChange(new AddOntologyAnnotation(configurationOntology, a));
+        getLogger().debug("Copying ontology annotation from module-annotation.owl. {}", a);
       }
 
       for (OWLImportsDeclaration id : annotationOntology.getImportsDeclarations())
       {
         man.applyChange(new AddImport(configurationOntology, id));
+        getLogger().debug("Copying ontology import from module-annotation.owl. {}", id);
       }
       man.addAxioms(configurationOntology, annotationOntology.getAxioms());
 
@@ -299,12 +310,12 @@ public class UpdateModuleCommand extends AbstractCommand {
         .getOWLImportsDeclaration(Owlcl.ISF_TOOLS_IRI)));
 
     // check/add the module IRI annotation
-    Set<String> axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    Set<String> values = OwlclUtil.getOntologyAnnotationLiteralValues(
         ModuleVocab.module_iri.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module IRI annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn("Found multiple module IRI annotations for module: {}", moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
           ModuleVocab.module_iri.getAP(),
@@ -312,12 +323,12 @@ public class UpdateModuleCommand extends AbstractCommand {
     }
 
     // check/add the module inferred IRI annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_iri_inferred.getAP(),
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_iri_inferred.getAP(),
         configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module inferreed IRI annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn("Found multiple module inferreed IRI annotations for module: " + moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
           ModuleVocab.module_iri_inferred.getAP(),
@@ -325,24 +336,25 @@ public class UpdateModuleCommand extends AbstractCommand {
     }
 
     // check/add the module file name annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_file_name.getAP(),
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_file_name.getAP(),
         configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module file name annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn("Found multiple module file name annotations for module: " + moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
           ModuleVocab.module_file_name.getAP(), df.getOWLLiteral(moduleName + "-module.owl"))));
     }
 
     // check/add the module inferred file name annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(
         ModuleVocab.module_file_name_inferred.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module inferred file name annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn(
+          "Found multiple module inferred file name annotations for module: " + moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
           ModuleVocab.module_file_name_inferred.getAP(),
@@ -350,48 +362,49 @@ public class UpdateModuleCommand extends AbstractCommand {
     }
 
     // check/add the module generate annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_generate.getAP(),
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_generate.getAP(),
         configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module generate annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn("Found multiple module generate annotations for module: " + moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_generate.getAP(), df.getOWLLiteral(""))));
+          ModuleVocab.module_generate.getAP(), df.getOWLLiteral("true"))));
     }
 
     // check/add the module generate inferred annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(
         ModuleVocab.module_generate_inferred.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module generate annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn("Found multiple module generate annotations for module: " + moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_generate_inferred.getAP(), df.getOWLLiteral(""))));
+          ModuleVocab.module_generate_inferred.getAP(), df.getOWLLiteral("true"))));
     }
 
     // check/add the builders annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_builders.getAP(),
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_builders.getAP(),
         configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module builders annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn("Found multiple module builders annotations for module: " + moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
           ModuleVocab.module_builders.getAP(), df.getOWLLiteral(""))));
     }
 
     // check/add the inferred builders annotation
-    axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(
         ModuleVocab.module_inferred_builders.getAP(), configurationOntology, false);
-    if (axioms.size() > 1)
+    if (values.size() > 1)
     {
-      logger.warn("Found multiple module inferred builders annotations for module: " + moduleName);
-    } else if (axioms.size() == 0)
+      getLogger().warn(
+          "Found multiple module inferred builders annotations for module: " + moduleName);
+    } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
           ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral(""))));
@@ -407,17 +420,17 @@ public class UpdateModuleCommand extends AbstractCommand {
 
     try
     {
-      man.saveOntology(includeOntology, new FileOutputStream(new File(getDirectory(), moduleName
+      man.saveOntology(includeOntology, new FileOutputStream(new File(moduleDirectory, moduleName
           + Owlcl.MODULE_INCLUDE_IRI_SUFFIX)));
-      man.saveOntology(excludeOntology, new FileOutputStream(new File(getDirectory(), moduleName
+      man.saveOntology(excludeOntology, new FileOutputStream(new File(moduleDirectory, moduleName
           + Owlcl.MODULE_EXCLUDE_IRI_SUFFIX)));
-      man.saveOntology(legacyOntology, new FileOutputStream(new File(getDirectory(), moduleName
+      man.saveOntology(legacyOntology, new FileOutputStream(new File(moduleDirectory, moduleName
           + Owlcl.MODULE_LEGACY_IRI_SUFFIX)));
-      man.saveOntology(legacyRemovedOntology, new FileOutputStream(new File(getDirectory(),
+      man.saveOntology(legacyRemovedOntology, new FileOutputStream(new File(moduleDirectory,
           moduleName + Owlcl.MODULE_LEGACY_REMOVED_IRI_SUFFIX)));
-      man.saveOntology(configurationOntology, new FileOutputStream(new File(getDirectory(),
+      man.saveOntology(configurationOntology, new FileOutputStream(new File(moduleDirectory,
           moduleName + Owlcl.CONFIGURATION_IRI_SUFFIX)));
-      man.saveOntology(topOntology, new FileOutputStream(new File(getDirectory(), moduleName
+      man.saveOntology(topOntology, new FileOutputStream(new File(moduleDirectory, moduleName
           + Owlcl.MODULE_TOP_IRI_SUFFIX)));
     } catch (OWLOntologyStorageException | FileNotFoundException e)
     {

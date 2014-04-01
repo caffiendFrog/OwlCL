@@ -1,4 +1,4 @@
-package com.essaid.owlcl.module.builder.simple;
+package com.essaid.owlcl.command.module.builder.simple;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,11 +17,11 @@ import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import com.essaid.owlcl.core.IsftModuleBuilder;
-import com.essaid.owlcl.core.IModule;
-import com.essaid.owlcl.module.builder.ModuleBuilderFactory;
+import com.essaid.owlcl.command.module.IModule;
+import com.essaid.owlcl.command.module.builder.IModuleBuilder;
+import com.essaid.owlcl.command.module.builder.IModuleBuilderFactory;
 
-public abstract class AbstractSimpleModuleBuilder implements IsftModuleBuilder, ModuleBuilderFactory {
+public abstract class AbstractSimpleModuleBuilder implements IModuleBuilder, IModuleBuilderFactory {
 
 	IModule module;
 	com.essaid.owlcl.core.util.Report report;

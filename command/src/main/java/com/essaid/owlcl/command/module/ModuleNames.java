@@ -1,4 +1,4 @@
-package com.essaid.owlcl.module;
+package com.essaid.owlcl.command.module;
 
 public interface ModuleNames {
 

@@ -1,4 +1,4 @@
-package com.essaid.owlcl.core;
+package com.essaid.owlcl.command.module;
 
 import java.util.Set;
 
@@ -8,6 +8,8 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
+
+import com.essaid.owlcl.command.module.builder.IModuleBuilder;
 
 /**
  * A "module", in the most general sense, is a subset of the axioms of one or
@@ -42,9 +44,9 @@ public interface IModule {
 
 	void loadConfiguration();
 
-	void addBuilder(IsftModuleBuilder builder);
+	void addBuilder(IModuleBuilder builder);
 
-	Set<IsftModuleBuilder> getBuilders();
+	Set<IModuleBuilder> getBuilders();
 
 	com.essaid.owlcl.core.util.Report getReport();
 

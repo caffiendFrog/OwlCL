@@ -179,7 +179,7 @@ public class CatalogCommand extends AbstractCommand {
       @Override
       public void execute(CatalogCommand command) {
         command.getLogger().info("Creating catalogs.");
-        AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), true);
+        AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), !command.noSubs);
 
         File topDirectory = command.getDirectory();
 

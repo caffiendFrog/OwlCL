@@ -1,10 +1,10 @@
-package com.essaid.owlcl.module;
+package com.essaid.owlcl.command.module;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 
-import static com.essaid.owlcl.module.ModuleVocab.Constant.*;
+import static com.essaid.owlcl.command.module.ModuleVocab.Constant.*;
 
 public enum ModuleVocab {
 

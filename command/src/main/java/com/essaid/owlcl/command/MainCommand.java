@@ -16,6 +16,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 
+import com.beust.jcommander.Command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.internal.Nullable;
 import com.essaid.owlcl.core.IOwlclManager;
@@ -658,7 +659,12 @@ public class MainCommand extends AbstractCommand {
       }
     }
 
-    getSubCommand(getParsedCommand()).call();
+    Command c = getSubCommand(getParsedCommand());
+    if (c != null)
+    {
+      c.call();
+
+    }
     return null;
   }
 

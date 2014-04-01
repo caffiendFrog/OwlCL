@@ -1,4 +1,4 @@
-package com.essaid.owlcl.module.builder.simple;
+package com.essaid.owlcl.command.module.builder.simple;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,14 +13,17 @@ import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.util.OWLAxiomVisitorAdapter;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
-import com.essaid.owlcl.core.IsftModuleBuilder;
-import com.essaid.owlcl.core.IModule;
+import com.essaid.owlcl.command.module.IModule;
+import com.essaid.owlcl.command.module.Util;
+import com.essaid.owlcl.command.module.builder.IModuleBuilder;
 import com.essaid.owlcl.core.util.OwlclUtil;
-import com.essaid.owlcl.module.Util;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
-public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
+public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 
-  public InferredSimpleModuleBuilder(IModule simeplModule) {
+  @Inject
+  public SimpleInferredModuleBuilder(@Assisted IModule simeplModule) {
     super(simeplModule);
   }
 
@@ -298,7 +301,7 @@ public class InferredSimpleModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   @Override
-  public IsftModuleBuilder createBuilder(IModule module) {
-    return new InferredSimpleModuleBuilder(module);
+  public IModuleBuilder createBuilder(IModule module) {
+    return new SimpleInferredModuleBuilder(module);
   }
 }

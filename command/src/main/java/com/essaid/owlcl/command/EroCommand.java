@@ -14,14 +14,14 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.essaid.owlcl.core.IModule;
+import com.essaid.owlcl.command.module.IModule;
+import com.essaid.owlcl.command.module.ModuleNames;
+import com.essaid.owlcl.command.module.Owlcl;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
 import com.essaid.owlcl.core.reasoner.IReasonerManager;
 import com.essaid.owlcl.core.util.OwlclUtil;
-import com.essaid.owlcl.module.ModuleNames;
-import com.essaid.owlcl.module.Owlcl;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;

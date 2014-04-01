@@ -8,10 +8,10 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.essaid.owlcl.core.IModule;
+import com.essaid.owlcl.command.module.DefaultModule;
+import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
-import com.essaid.owlcl.module.DefaultModule;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -39,7 +39,7 @@ public class GenerateModuleCommand extends AbstractCommand {
     return moduleNameSet;
   }
 
-  private String moduleName = null;
+  private String moduleName;
   private boolean moduleNameSet;
 
   // ================================================================================
@@ -198,7 +198,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 
     if (!outputSet)
     {
-      output = new File(getMain().getProject(), "module-output/" + moduleName);
+      output = new File(getMain().getJobDirectory(), "module-output/" + moduleName);
     }
 
   }

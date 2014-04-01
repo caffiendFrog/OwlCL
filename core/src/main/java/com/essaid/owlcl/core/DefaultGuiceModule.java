@@ -9,7 +9,7 @@ public class DefaultGuiceModule extends AbstractModule implements OwlclGuiceModu
 
   @Override
   protected void configure() {
-    bind(ILogConfigurator.class).to(DefaultLogConfigurator.class).in(Scopes.SINGLETON);
+//    bind(ILogConfigurator.class).to(DefaultLogConfigurator.class).in(Scopes.SINGLETON);
 
   }
 

@@ -18,15 +18,15 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.essaid.owlcl.command.mapping.DefaultMapping;
+import com.essaid.owlcl.command.mapping.Mapper;
+import com.essaid.owlcl.command.mapping.Mapping;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.IriConverter;
 import com.essaid.owlcl.core.cli.util.ManualIriMapping;
 import com.essaid.owlcl.core.util.OntologyFiles;
 import com.essaid.owlcl.core.util.OwlclUtil;
-import com.essaid.owlcl.mapping.DefaultMapping;
-import com.essaid.owlcl.mapping.Mapper;
-import com.essaid.owlcl.mapping.Mapping;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 

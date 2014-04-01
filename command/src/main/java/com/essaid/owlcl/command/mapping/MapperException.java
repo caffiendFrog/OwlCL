@@ -1,4 +1,4 @@
-package com.essaid.owlcl.mapping;
+package com.essaid.owlcl.command.mapping;
 
 public class MapperException extends IllegalStateException {
 

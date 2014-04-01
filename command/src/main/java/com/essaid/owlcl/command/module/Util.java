@@ -1,4 +1,4 @@
-package com.essaid.owlcl.module;
+package com.essaid.owlcl.command.module;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -8,8 +8,8 @@ import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
 
+import com.essaid.owlcl.command.module.builder.simple.MBSimpleVocab;
 import com.essaid.owlcl.core.util.OwlclUtil;
-import com.essaid.owlcl.module.builder.simple.MBSimpleVocab;
 
 public class Util {
 

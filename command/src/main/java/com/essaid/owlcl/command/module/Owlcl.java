@@ -1,4 +1,4 @@
-package com.essaid.owlcl.module;
+package com.essaid.owlcl.command.module;
 
 import org.semanticweb.owlapi.model.IRI;
 

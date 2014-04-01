@@ -1,13 +1,13 @@
-package com.essaid.owlcl.module.builder.simple;
+package com.essaid.owlcl.command.module.builder.simple;
 
-import static com.essaid.owlcl.module.OwlclVocab.Vocab.*;
-import static com.essaid.owlcl.module.builder.simple.MBSimpleVocab.Constant.*;
+import static com.essaid.owlcl.command.module.OwlclVocab.Vocab.*;
+import static com.essaid.owlcl.command.module.builder.simple.MBSimpleVocab.Constant.*;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 
-import com.essaid.owlcl.module.Owlcl;
+import com.essaid.owlcl.command.module.Owlcl;
 
 public enum MBSimpleVocab {
 	exclude(ISFT_EXCLUDE), exclude_subs(ISFT_EXCLUDE_SUBS), include(ISFT_INCLUDE), include_subs(

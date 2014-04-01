@@ -1,4 +1,4 @@
-package com.essaid.owlcl.mapping;
+package com.essaid.owlcl.command.mapping;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,8 +12,8 @@ import org.semanticweb.owlapi.model.OWLAnnotationSubject;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLOntology;
 
+import com.essaid.owlcl.command.module.OwlclVocab;
 import com.essaid.owlcl.core.util.OwlclUtil;
-import com.essaid.owlcl.module.OwlclVocab;
 
 public class DefaultMapping implements Mapping {
 

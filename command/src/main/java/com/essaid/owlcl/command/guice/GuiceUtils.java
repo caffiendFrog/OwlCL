@@ -1,5 +1,7 @@
-package com.essaid.owlcl.core.util;
+package com.essaid.owlcl.command.guice;
 
+import com.essaid.owlcl.command.module.builder.IModuleBuilder;
+import com.essaid.owlcl.command.module.builder.IModuleBuilderFactory;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
@@ -15,6 +17,12 @@ public class GuiceUtils {
       Class<? extends OwlclCommand> commandClass, String commandName) {
     binder.install(new FactoryModuleBuilder().implement(OwlclCommand.class, commandClass).build(
         Key.get(IOwlclCommandFactory.class, Names.named(commandName))));
+  }
+
+  public static void installBuilderFactory(Binder binder,
+      Class<? extends IModuleBuilder> builderClass, String buidlderName) {
+    binder.install(new FactoryModuleBuilder().implement(IModuleBuilder.class, builderClass).build(
+        Key.get(IModuleBuilderFactory.class, Names.named(buidlderName))));
   }
 
   public static void installTopCommand(Binder binder, String commandName) {
