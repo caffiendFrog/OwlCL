@@ -5,7 +5,7 @@ import static com.essaid.owlcl.command.AbstractCommand.*;
 import com.essaid.owlcl.command.CatalogCommand;
 import com.essaid.owlcl.command.CompareCommand;
 import com.essaid.owlcl.command.EroCommand;
-import com.essaid.owlcl.command.GenerateModuleCommand;
+import com.essaid.owlcl.command.ModuleCommand;
 import com.essaid.owlcl.command.MainCommand;
 import com.essaid.owlcl.command.MapperCommand;
 import com.essaid.owlcl.command.NewModuleCommand;
@@ -13,10 +13,10 @@ import com.essaid.owlcl.command.RewriteCommand;
 import com.essaid.owlcl.command.TypecheckCommand;
 import com.essaid.owlcl.command.UpdateModuleCommand;
 import com.essaid.owlcl.command.ValidateIriCommand;
-import com.essaid.owlcl.command.module.builder.IModuleBuilder;
+import com.essaid.owlcl.command.module.builder.IModuleBuilderFactory;
 import com.essaid.owlcl.command.module.builder.ModuleBuilderManager;
-import com.essaid.owlcl.command.module.builder.simple.SimpleInferredModuleBuilder;
-import com.essaid.owlcl.command.module.builder.simple.SimpleModuleBuilder;
+import com.essaid.owlcl.command.module.builder.simple.SimpleInferredModuleBuilderFactory;
+import com.essaid.owlcl.command.module.builder.simple.SimpleModuleBuilderFactory;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
 import com.essaid.owlcl.core.OwlclGuiceModule;
 import com.essaid.owlcl.core.annotation.TopCommandQualifier;
@@ -43,7 +43,7 @@ public class CommandGModule extends AbstractModule implements OwlclGuiceModule {
     GuiceUtils.installCommandFactory(binder(), EroCommand.class, ERO);
     GuiceUtils.installTopCommand(topCommandFactories, ERO);
 
-    GuiceUtils.installCommandFactory(binder(), GenerateModuleCommand.class, GENERATE_MODULE);
+    GuiceUtils.installCommandFactory(binder(), ModuleCommand.class, GENERATE_MODULE);
     GuiceUtils.installTopCommand(topCommandFactories, GENERATE_MODULE);
 
     GuiceUtils.installCommandFactory(binder(), MapperCommand.class, MAPPER);
@@ -66,13 +66,14 @@ public class CommandGModule extends AbstractModule implements OwlclGuiceModule {
 
     // module related
 
-    bind(ModuleBuilderManager.class).in(Scopes.SINGLETON);;
+    bind(ModuleBuilderManager.class).in(Scopes.SINGLETON);
+    ;
 
-    GuiceUtils.installBuilderFactory(binder(), SimpleInferredModuleBuilder.class,
-        IModuleBuilder.SIMPLE_INFERRED);
-
-    GuiceUtils.installBuilderFactory(binder(), SimpleModuleBuilder.class, IModuleBuilder.SIMPLE);
+    Multibinder<IModuleBuilderFactory> builderFactories = Multibinder.<IModuleBuilderFactory> newSetBinder(
+        binder(), IModuleBuilderFactory.class);
+    
+    builderFactories.addBinding().to(SimpleInferredModuleBuilderFactory.class);
+    builderFactories.addBinding().to(SimpleModuleBuilderFactory.class);
 
   }
-
 }

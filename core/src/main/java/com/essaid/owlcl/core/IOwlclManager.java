@@ -13,7 +13,7 @@ public interface IOwlclManager {
 
   public File getTemporaryDirectory();
 
-  public void loadNativeLibrary(InputStream stream);
+  public void loadNativeLibrary(InputStream stream, String name);
 
   public String getNativeResourcePrefix(String resourceGroupName);
 

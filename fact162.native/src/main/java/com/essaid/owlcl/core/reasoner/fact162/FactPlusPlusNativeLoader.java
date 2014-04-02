@@ -3,14 +3,18 @@ package com.essaid.owlcl.core.reasoner.fact162;
 import java.io.InputStream;
 
 import com.essaid.owlcl.core.IOwlclManager;
+import com.essaid.owlcl.core.util.IInitializable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class FactPlusPlusNativeLoader {
+public class FactPlusPlusNativeLoader implements IInitializable {
 
   @Inject
-  private void setManager(IOwlclManager manager) {
+  IOwlclManager manager;
+
+  @Override
+  public void initialize() {
     String libName = null;
     if (manager.isLinux())
     {
@@ -35,7 +39,8 @@ public class FactPlusPlusNativeLoader {
 
     InputStream is = cl.getResourceAsStream(libPath);
 
-    manager.loadNativeLibrary(is);
+    manager.loadNativeLibrary(is, libName);
+
   }
 
 }

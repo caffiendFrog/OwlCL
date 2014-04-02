@@ -643,6 +643,7 @@ public class MainCommand extends AbstractCommand {
               + getOutputDirectory().getAbsolutePath());
     }
 
+    getLogger().info("Continuing logging in: " + getJobDirectory().getAbsolutePath());
     logConfigurator.setDirectory(getJobDirectory());
 
     if (!isQuietSet())

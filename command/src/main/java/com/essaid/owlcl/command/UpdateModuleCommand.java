@@ -3,12 +3,15 @@ package com.essaid.owlcl.command;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.coode.owlapi.rdfxml.parser.IRIProvider;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
@@ -21,16 +24,18 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
-import org.slf4j.Logger;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.ModuleVocab;
 import com.essaid.owlcl.command.module.Owlcl;
+import com.essaid.owlcl.command.module.Util;
 import com.essaid.owlcl.core.OwlclCommand;
-import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
+import com.essaid.owlcl.core.util.IReportFactory;
 import com.essaid.owlcl.core.util.OwlclUtil;
+import com.essaid.owlcl.core.util.Report;
 import com.essaid.owlcl.core.util.RuntimeOntologyLoadingException;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -38,31 +43,6 @@ import com.google.inject.assistedinject.Assisted;
 @Parameters(commandNames = "updateModule",
     commandDescription = "Updates one or more module directories.")
 public class UpdateModuleCommand extends AbstractCommand {
-
-  // ================================================================================
-  // name
-  // ================================================================================
-  // @Parameter(names = "-name", description =
-  // "The module name for the one module update. If "
-  // +
-  // "not supplied, or if module root update, the directory name will be used as "
-  // + "module name.")
-  // public void setModuleName(String moduleName) {
-  // this.moduleName = moduleName;
-  // this.moduleNameSet = true;
-  // }
-  //
-  // public String getModuleName() {
-  // return moduleName;
-  // }
-  //
-  // public boolean isModuleNameSet() {
-  // return moduleNameSet;
-  // }
-  //
-  // private String moduleName;
-  //
-  // private boolean moduleNameSet;
 
   // ================================================================================
   // directory
@@ -136,123 +116,138 @@ public class UpdateModuleCommand extends AbstractCommand {
     super(main);
   }
 
+  @Inject
+  private IReportFactory reportFactory;
+
+  private Report report;
+
   @Override
   protected void addCommandActions(List<String> actionsList) {
     // TODO Auto-generated method stub
 
   }
 
+  private int moduleVersion = 0;
+
   @Override
   public Object call() throws Exception {
     getLogger().info("Starting module update");
     getLogger().info("\tdirectory: " + directory.getAbsolutePath());
     getLogger().info("\troot: " + root);
+    report = reportFactory.createReport("ModuleUpdates.txt", getMain().getJobDirectory(), this);
 
-    if (!getDirectory().exists())
-    {
-      throw new IllegalStateException("Update module directory does not exist: "
-          + getDirectory().getAbsolutePath());
-    }
     if (!root)
     {
       if (containsModuleFiles(directory))
       {
-        String moduleName = directory.getName();
-        getLogger().info("Updating single directory. Module name: " + moduleName);
-        updateModule(moduleName, directory);
+        updateModule(directory);
+      } else
+      {
+        getLogger().error("Directory {} does not appear to be a module directory, skipping. ",
+            getDirectory().getAbsolutePath());
       }
     } else
     {
-
       for (File file : getModuleDirectories(directory))
       {
-        getLogger().info("Updating module directory: " + file.getAbsolutePath());
-        updateModule(file.getName(), file);
+        updateModule(file);
       }
     }
-
+    report.finish();
     return null;
   }
 
-  private void updateModule(String moduleName, File moduleDirectory) {
-    OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-    man.clearIRIMappers();
-    man.setSilentMissingImportsHandling(true);
-    man.addIRIMapper(new AutoIRIMapper(moduleDirectory, false));
-
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    OWLOntology configurationOntology = null;
-    OWLOntology annotationOntology = null;
-    boolean configurationConfiguration = false;
-    boolean annotationConfiguration = false;
-
-    // try all the possible configurations from recent to old
-    if (new File(moduleDirectory, moduleName + "-module-configuration.owl").exists())
+  private boolean preconditions(File directory) {
+    if (!directory.exists())
     {
-      getLogger().debug("Module name {} has -module-configuration.owl file", moduleName);
-      try
-      {
-        configurationOntology = OwlclUtil.loadOntology(new File(moduleDirectory, moduleName
-            + "-module-configuration.owl"), man);
-        configurationConfiguration = true;
-      } catch (RuntimeOntologyLoadingException e)
-      {
-        getLogger().warn(
-            "Faild to load " + moduleName
-                + "-module-configuration.owl while looking for possible configurations.");
-        if (!e.isIriMapping())
-        {
-          throw e;
-        }
-      }
-
-    } else if (new File(moduleDirectory, moduleName + "-module-annotation.owl").exists())
-    {
-      getLogger().debug("Module name {} has -module-annotation.owl file", moduleName);
-      try
-      {
-        annotationOntology = OwlclUtil.loadOntology(new File(moduleDirectory, moduleName
-            + "-module-annotation.owl"), man);
-        annotationConfiguration = true;
-      } catch (RuntimeOntologyLoadingException e)
-      {
-        getLogger().warn(
-            "Faild to load " + moduleName
-                + "-module-annotation.owl while looking for possible configurations.");
-        if (!e.isIriMapping())
-        {
-          throw e;
-        }
-      }
+      getLogger().error("Module directory {} does not exist while attempting update.",
+          directory.getAbsolutePath());
+      return false;
     }
 
-    if (configurationOntology == null && annotationOntology == null)
+    moduleVersion = Util.getModuleVersion(directory);
+    if (moduleVersion == -1)
     {
-      getLogger().warn(
-          "Updating module " + moduleName
-              + " failed. Couldn't find a configuration or annotation file to start from.");
+      getLogger().error("Module does not have a version file while updating directory {} ",
+          directory);
+      return false;
+    }
+    if (moduleVersion == -2)
+    {
+      getLogger()
+          .error("Module has multiple version files while updating directory {} ", directory);
+      return false;
+    }
+    if (moduleVersion > IModule.VERSION)
+    {
+      getLogger().error("Module has higher version that this tool while updating directory {}",
+          directory);
+      return false;
+    }
+
+    return true;
+  }
+
+  private void updateModule(File moduleDirectory) {
+
+    if (!preconditions(moduleDirectory))
+    {
+      getLogger().error(
+          "Failed preconditions for updating module located at {} , skipping update.",
+          moduleDirectory);
       return;
     }
 
-    // get current prefix since we don't know what it is
-    String iriPrefix = null;
-    if (annotationConfiguration)
+    // extract any needed info from old versions, or return if version is
+    // current
+    switch (moduleVersion)
     {
-      int index = annotationOntology.getOntologyID().getOntologyIRI().toString().lastIndexOf('/');
-      iriPrefix = annotationOntology.getOntologyID().getOntologyIRI().toString()
-          .substring(0, index + 1);
-    } else if (configurationConfiguration)
-    {
-      int index = configurationOntology.getOntologyID().getOntologyIRI().toString()
-          .lastIndexOf('/');
-      iriPrefix = configurationOntology.getOntologyID().getOntologyIRI().toString()
-          .substring(0, index);
+    case 0:
+      report.info("Updating module version 0 located at: " + moduleDirectory.getAbsolutePath());
+      migrate0(moduleDirectory);
+      break;
+    case 1:
+      report.info("Module version 1 up to date, ,located at: " + moduleDirectory.getAbsolutePath());
+      // up to date, just return. No updates are done without bumping the
+      // version.
+      return;
+    default:
+      // should not get here
+      report.error("Module with unknown version " + moduleVersion + " skipped,located at: "
+          + moduleDirectory.getAbsolutePath());
+      // getLogger().error("Unknown version {} for module located at {}, skipping.",
+      // moduleVersion,
+      // getDirectory());
+      return;
     }
 
-    getLogger().debug("Found iri prefix: {}", iriPrefix);
+  }
 
-    // build iris
+  private void migrate0(File directory) {
+    File file = FileUtils
+        .listFiles(directory, new SuffixFileFilter("-module-annotation.owl"), null).iterator()
+        .next();
+    String name = file.getName();
+    String moduleName = name.substring(0, name.lastIndexOf("-module-annotation.owl"));
+    getLogger().info("Found module version 0 with name {}", moduleName);
+
+    OWLOntologyManager m = OWLManager.createOWLOntologyManager();
+    m.clearIRIMappers();
+    m.setSilentMissingImportsHandling(true);
+    m.addIRIMapper(new AutoIRIMapper(directory, false));
+
+    OWLOntology o = OwlclUtil.loadOntology(file, m);
+    String iri = o.getOntologyID().getOntologyIRI().toString();
+    String iriPrefix = iri.substring(0, iri.lastIndexOf('/') + 1);
+
+    // setup the current version module's ontologies
+    OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+    OWLDataFactory df = man.getOWLDataFactory();
+    man.clearIRIMappers();
+    man.setSilentMissingImportsHandling(true);
+    man.addIRIMapper(new AutoIRIMapper(directory, false));
+
+    IRI annotationIri = IRI.create(iriPrefix + moduleName + "-module-annotation.owl");
     IRI topIri = IRI.create(iriPrefix + moduleName + Owlcl.TOP_IRI_SUFFIX);
     IRI configurationIri = IRI.create(iriPrefix + moduleName + Owlcl.CONFIGURATION_IRI_SUFFIX);
     IRI includeIri = IRI.create(iriPrefix + moduleName + Owlcl.MODULE_INCLUDE_IRI_SUFFIX);
@@ -261,44 +256,24 @@ public class UpdateModuleCommand extends AbstractCommand {
     IRI legacyRemovedIri = IRI.create(iriPrefix + moduleName
         + Owlcl.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
 
-    // we now have IRIs and will continue updating
+    OWLOntology annotationOntology = OwlclUtil.getOrLoadOntology(annotationIri, man);
+    OWLOntology configurationOntology = OwlclUtil.createOntology(configurationIri, man);
 
-    if (annotationConfiguration)
+    // move content of old annotation ontology
+    for (OWLAnnotation a : annotationOntology.getAnnotations())
     {
-      configurationOntology = OwlclUtil.createOntology(configurationIri, man);
-      // until I see how to change xmlns and xml:base, otherwise
-      // those
-      // will not be updated.
-      // TODO: fix
-      for (OWLAnnotation a : annotationOntology.getAnnotations())
-      {
-        man.applyChange(new AddOntologyAnnotation(configurationOntology, a));
-        getLogger().debug("Copying ontology annotation from module-annotation.owl. {}", a);
-      }
-
-      for (OWLImportsDeclaration id : annotationOntology.getImportsDeclarations())
-      {
-        man.applyChange(new AddImport(configurationOntology, id));
-        getLogger().debug("Copying ontology import from module-annotation.owl. {}", id);
-      }
-      man.addAxioms(configurationOntology, annotationOntology.getAxioms());
-
+      man.applyChange(new AddOntologyAnnotation(configurationOntology, a));
+      getLogger().debug("Copying ontology annotation from module-annotation.owl. {}", a);
     }
 
-    // include
-    OWLOntology includeOntology = OwlclUtil.getOrLoadOrCreateOntology(includeIri, man);
+    for (OWLImportsDeclaration id : annotationOntology.getImportsDeclarations())
+    {
+      man.applyChange(new AddImport(configurationOntology, id));
+      getLogger().debug("Copying ontology import from module-annotation.owl. {}", id);
+    }
+    man.addAxioms(configurationOntology, annotationOntology.getAxioms());
 
-    // exclude
-    OWLOntology excludeOntology = OwlclUtil.getOrLoadOrCreateOntology(excludeIri, man);
-
-    // legacy
-    OWLOntology legacyOntology = OwlclUtil.getOrLoadOrCreateOntology(legacyIri, man);
-
-    // legacy removed
-    OWLOntology legacyRemovedOntology = OwlclUtil.getOrLoadOrCreateOntology(legacyRemovedIri, man);
-
-    // remove the old imports. these would have been copied (above) with all
-    // imports.
+    // remove old imports
     man.applyChange(new RemoveImport(configurationOntology, df.getOWLImportsDeclaration(includeIri)));
     man.applyChange(new RemoveImport(configurationOntology, df.getOWLImportsDeclaration(excludeIri)));
     man.applyChange(new RemoveImport(configurationOntology, df.getOWLImportsDeclaration(legacyIri)));
@@ -308,6 +283,11 @@ public class UpdateModuleCommand extends AbstractCommand {
     // ifs-tools.owl import
     man.applyChange(new AddImport(configurationOntology, df
         .getOWLImportsDeclaration(Owlcl.ISF_TOOLS_IRI)));
+
+    // ifs-tools.owl source exclude
+    man.applyChange(new AddOntologyAnnotation(configurationOntology,
+        df.getOWLAnnotation(ModuleVocab.module_source_exclude.getAP(),
+            df.getOWLLiteral(Owlcl.ISF_TOOLS_IRI.toString()))));
 
     // check/add the module IRI annotation
     Set<String> values = OwlclUtil.getOntologyAnnotationLiteralValues(
@@ -394,7 +374,7 @@ public class UpdateModuleCommand extends AbstractCommand {
     } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_builders.getAP(), df.getOWLLiteral(""))));
+          ModuleVocab.module_builders.getAP(), df.getOWLLiteral("no-builders"))));
     }
 
     // check/add the inferred builders annotation
@@ -407,7 +387,34 @@ public class UpdateModuleCommand extends AbstractCommand {
     } else if (values.size() == 0)
     {
       man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-          ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral(""))));
+          ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral("no-builders"))));
+    }
+
+    
+    // check/add add legacy
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(
+        ModuleVocab.module_add_legacy.getAP(), configurationOntology, false);
+    if (values.size() > 1)
+    {
+      getLogger().warn(
+          "Found multiple add legacy annotations for module: " + moduleName);
+    } else if (values.size() == 0)
+    {
+      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+          ModuleVocab.module_add_legacy.getAP(), df.getOWLLiteral("false"))));
+    }
+    
+    // check/add clean legacy
+    values = OwlclUtil.getOntologyAnnotationLiteralValues(
+        ModuleVocab.module_clean_legacy.getAP(), configurationOntology, false);
+    if (values.size() > 1)
+    {
+      getLogger().warn(
+          "Found multiple clean legacy annotations for module: " + moduleName);
+    } else if (values.size() == 0)
+    {
+      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+          ModuleVocab.module_clean_legacy.getAP(), df.getOWLLiteral("false"))));
     }
 
     // top
@@ -420,19 +427,20 @@ public class UpdateModuleCommand extends AbstractCommand {
 
     try
     {
-      man.saveOntology(includeOntology, new FileOutputStream(new File(moduleDirectory, moduleName
-          + Owlcl.MODULE_INCLUDE_IRI_SUFFIX)));
-      man.saveOntology(excludeOntology, new FileOutputStream(new File(moduleDirectory, moduleName
-          + Owlcl.MODULE_EXCLUDE_IRI_SUFFIX)));
-      man.saveOntology(legacyOntology, new FileOutputStream(new File(moduleDirectory, moduleName
-          + Owlcl.MODULE_LEGACY_IRI_SUFFIX)));
-      man.saveOntology(legacyRemovedOntology, new FileOutputStream(new File(moduleDirectory,
-          moduleName + Owlcl.MODULE_LEGACY_REMOVED_IRI_SUFFIX)));
-      man.saveOntology(configurationOntology, new FileOutputStream(new File(moduleDirectory,
-          moduleName + Owlcl.CONFIGURATION_IRI_SUFFIX)));
-      man.saveOntology(topOntology, new FileOutputStream(new File(moduleDirectory, moduleName
+      man.saveOntology(configurationOntology, new FileOutputStream(new File(directory, moduleName
+          + Owlcl.CONFIGURATION_IRI_SUFFIX)));
+      man.saveOntology(topOntology, new FileOutputStream(new File(directory, moduleName
           + Owlcl.MODULE_TOP_IRI_SUFFIX)));
-    } catch (OWLOntologyStorageException | FileNotFoundException e)
+
+      // update files
+      File versionFile = new File(directory, "V-" + moduleVersion);
+      versionFile.delete();
+      versionFile = new File(directory, "V-" + IModule.VERSION);
+      versionFile.createNewFile();
+
+      File annotationFile = new File(directory, moduleName + "-module-annotation.owl");
+      annotationFile.renameTo(new File(directory, "_old_" + annotationFile.getName()));
+    } catch (OWLOntologyStorageException | IOException e)
     {
       throw new RuntimeException("Failed while saving files for new module" + moduleName, e);
     }

@@ -10,14 +10,18 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.module.DefaultModule;
 import com.essaid.owlcl.command.module.IModule;
+import com.essaid.owlcl.command.module.Util;
+import com.essaid.owlcl.command.module.config.IModuleConfig;
+import com.essaid.owlcl.command.module.config.ModuleConfigurationV1;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.assistedinject.Assisted;
 
 @Parameters(commandNames = "module",
     commandDescription = "Generate the named module. The module has to be already created.")
-public class GenerateModuleCommand extends AbstractCommand {
+public class ModuleCommand extends AbstractCommand {
 
   // ================================================================================
   // The module name
@@ -25,7 +29,7 @@ public class GenerateModuleCommand extends AbstractCommand {
 
   @Parameter(
       names = "-name",
-      description = "The module name. This will be used to create default IRIs, files, and folders.")
+      description = "The module name. This will be used to create default IRIs, files, and folders if needed.")
   public void setModuleName(String moduleName) {
     this.moduleName = moduleName;
     this.moduleNameSet = true;
@@ -91,7 +95,7 @@ public class GenerateModuleCommand extends AbstractCommand {
   // do unreasoned
   // ================================================================================
 
-  @Parameter(names = "-unReasoned", arity = 1,
+  @Parameter(names = "-unInferred", arity = 1,
       description = "Set the module to generate the un-reasoned version. "
           + "Use it to overrides the default module configuration if needed."
           + "Ignore the shown default on the command line, the default is what "
@@ -116,7 +120,7 @@ public class GenerateModuleCommand extends AbstractCommand {
   // do reasoned
   // ================================================================================
 
-  @Parameter(names = "-reasoned", arity = 1,
+  @Parameter(names = "-inferred", arity = 1,
       description = "Set the module to generate the reasoned version. "
           + "Use it to overrides the default module configuration if needed."
           + "Ignore the shown default on the command line, the default is what "
@@ -208,36 +212,64 @@ public class GenerateModuleCommand extends AbstractCommand {
   // ================================================================================
 
   @Inject
-  public GenerateModuleCommand(@Assisted OwlclCommand main) {
+  Injector injector;
+
+  @Inject
+  public ModuleCommand(@Assisted OwlclCommand main) {
     super(main);
   }
-
-  protected void doInitialize() {
-    configure();
-  };
 
   OWLReasoner sourceReasoner;
   OWLOntology sourceOntology;
   IModule module = null;
 
-  @Override
-  public Object call() throws Exception {
-
+  protected void doInitialize() {
     configure();
-    output.mkdirs();
+  };
 
-    if (sourceOntology != null && sourceReasoner != null)
+  private boolean preconditions() {
+    if (!getDirectory().exists())
     {
-      module = new DefaultModule(moduleName, directory, sourceOntology, sourceReasoner, output,
-          addLegacy, cleanLegacy);
-    } else
-    {
-      module = new DefaultModule(this.moduleName, this.directory, getMain().getSharedBaseManager(),
-          output, addLegacy, cleanLegacy);
+      getLogger().error("Module {} with directory {}  does not exist. Skipping.", moduleName,
+          getDirectory().getAbsolutePath());
+      return false;
     }
 
-    // load the owl configuration
-    module.loadConfiguration();
+    int version = Util.getModuleVersion(getDirectory());
+    getLogger().info("Module version is: {}", version);
+    if (version != IModule.VERSION)
+    {
+      getLogger()
+          .error(
+              "Module version {} does not match this tools's version {} , skipping. Please update module {} at: {}",
+              version, IModule.VERSION, moduleName, getDirectory().getAbsolutePath());
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public Object call() throws Exception {
+    configure();
+    if (!preconditions())
+    {
+      getLogger().error("Module {} located at {} failed preconditions.", moduleName,
+          getDirectory().getAbsolutePath());
+      return null;
+    }
+
+    output.mkdirs();
+
+    IModuleConfig moduleComfig = new ModuleConfigurationV1(directory, getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager());
+
+    injector.injectMembers(moduleComfig);
+
+    moduleComfig.loadConfiguration();
+
+    module = new DefaultModule(moduleComfig, output);
+    injector.injectMembers(module);
+    ;
 
     // override the configuration from command line
     if (reasonedSet)
@@ -250,9 +282,18 @@ public class GenerateModuleCommand extends AbstractCommand {
       module.setGenerateInferred(unReasoned);
     }
 
+    if (addLegacySet)
+    {
+      module.setAddLegacy(addLegacy);
+    }
+
+    if (cleanLegacySet)
+    {
+      module.setCleanLegacy(cleanLegacy);
+    }
+
     module.generateModule();
     module.saveGeneratedModule();
-    module.saveModuleConfiguration();
 
     return null;
   }

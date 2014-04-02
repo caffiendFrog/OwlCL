@@ -21,7 +21,7 @@ import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.builder.IModuleBuilder;
 import com.essaid.owlcl.command.module.builder.IModuleBuilderFactory;
 
-public abstract class AbstractSimpleModuleBuilder implements IModuleBuilder, IModuleBuilderFactory {
+public abstract class AbstractSimpleModuleBuilder implements IModuleBuilder {
 
 	IModule module;
 	com.essaid.owlcl.core.util.Report report;

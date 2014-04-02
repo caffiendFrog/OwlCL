@@ -3,32 +3,29 @@ package com.essaid.owlcl.command;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.RemoveImport;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.FileConverter;
+import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.ModuleVocab;
 import com.essaid.owlcl.command.module.Owlcl;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.IriConverter;
 import com.essaid.owlcl.core.util.OwlclUtil;
-import com.essaid.owlcl.core.util.RuntimeOntologyLoadingException;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -73,7 +70,6 @@ public class NewModuleCommand extends AbstractCommand {
   }
 
   public boolean isDirectorySet() {
-
     return directorySet;
   }
 
@@ -84,7 +80,7 @@ public class NewModuleCommand extends AbstractCommand {
   // The source IRIs for the module
   // ================================================================================
 
-  @Parameter(names = "-sourceIris", converter = IriConverter.class,
+  @Parameter(names = "-sources", converter = IriConverter.class,
       description = "The source IRIs that will be used for this module.")
   public void setSourceIris(List<IRI> sourceIris) {
     this.sourceIris = sourceIris;
@@ -101,6 +97,28 @@ public class NewModuleCommand extends AbstractCommand {
 
   private List<IRI> sourceIris;
   private boolean sourceIrisSet;
+
+  // ================================================================================
+  // The source exclude IRIs for the module
+  // ================================================================================
+
+  @Parameter(names = "-sourceExcludes", converter = IriConverter.class,
+      description = "The excluded source IRIs that will be used for this module.")
+  public void setSourceExcludeIris(List<IRI> sourceExcludesIris) {
+    this.sourceExcludeIris = sourceExcludesIris;
+    this.sourceExcludeIrisSet = true;
+  }
+
+  public List<IRI> getSourceExcludeIris() {
+    return sourceExcludeIris;
+  }
+
+  public boolean isSourceExcludeIrisSet() {
+    return sourceExcludeIrisSet;
+  }
+
+  private List<IRI> sourceExcludeIris;
+  private boolean sourceExcludeIrisSet;
 
   // ================================================================================
   // The final IRI of the module
@@ -240,6 +258,12 @@ public class NewModuleCommand extends AbstractCommand {
       sourceIris.add(Owlcl.ISF_DEV_IRI);
     }
 
+    if (!isSourceExcludeIrisSet())
+    {
+      sourceExcludeIris = new ArrayList<IRI>();
+      sourceExcludeIris.add(Owlcl.ISF_TOOLS_IRI);
+    }
+
     if (!isIriSet())
     {
       iri = IRI.create(iriPrefix + "module/" + moduleName + Owlcl.MODULE_IRI_SUFFIX);
@@ -286,14 +310,25 @@ public class NewModuleCommand extends AbstractCommand {
   IRI legacyIri;
   IRI legacyRemovedIri;
 
-  public void run() {
-    configure();
+  private void preconditions() {
 
     if (directory.exists())
     {
       throw new IllegalStateException("New module's directory already exists. Aborting so that I "
           + "don't overwrite an existing module");
     }
+
+  }
+
+  @Override
+  public Object call() throws Exception {
+    configure();
+    preconditions();
+    run();
+    return null;
+  }
+
+  public void run() {
 
     directory.mkdirs();
 
@@ -311,32 +346,20 @@ public class NewModuleCommand extends AbstractCommand {
     legacyIri = IRI.create(iriPrefix + moduleName + Owlcl.MODULE_LEGACY_IRI_SUFFIX);
     legacyRemovedIri = IRI.create(iriPrefix + moduleName + Owlcl.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
 
-    // include
+    // include ontology
     OWLOntology includeOntology = OwlclUtil.getOrLoadOrCreateOntology(includeIri, man);
 
-    // exclude
+    // exclude ontology
     OWLOntology excludeOntology = OwlclUtil.getOrLoadOrCreateOntology(excludeIri, man);
 
-    // legacy
+    // legacy ontology
     OWLOntology legacyOntology = OwlclUtil.getOrLoadOrCreateOntology(legacyIri, man);
 
-    // legacy removed
+    // legacy removed ontology
     OWLOntology legacyRemovedOntology = OwlclUtil.getOrLoadOrCreateOntology(legacyRemovedIri, man);
 
-    // configuration
-    OWLOntology configurationOntology = null;
-
-    configurationOntology = OwlclUtil.getOrLoadOrCreateOntology(configurationIri, man);
-
-    // // remove the old imports
-    // man.applyChange(new RemoveImport(configurationOntology,
-    // df.getOWLImportsDeclaration(includeIri)));
-    // man.applyChange(new RemoveImport(configurationOntology,
-    // df.getOWLImportsDeclaration(excludeIri)));
-    // man.applyChange(new RemoveImport(configurationOntology,
-    // df.getOWLImportsDeclaration(legacyIri)));
-    // man.applyChange(new RemoveImport(configurationOntology, df
-    // .getOWLImportsDeclaration(legacyRemovedIri)));
+    // configuration ontology
+    OWLOntology configurationOntology = OwlclUtil.getOrLoadOrCreateOntology(configurationIri, man);
 
     // add source imports
     for (IRI source : sourceIris)
@@ -344,125 +367,61 @@ public class NewModuleCommand extends AbstractCommand {
       man.applyChange(new AddImport(configurationOntology, df.getOWLImportsDeclaration(source)));
     }
 
+    // add source excludes
+    for (IRI source : sourceExcludeIris)
+    {
+      man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+          ModuleVocab.module_source_exclude.getAP(), df.getOWLLiteral(source.toString()))));
+    }
+
     // ifs-tools.owl import
     man.applyChange(new AddImport(configurationOntology, df
         .getOWLImportsDeclaration(Owlcl.ISF_TOOLS_IRI)));
 
-    // // check/add the module IRI annotation
-    // Set<String> axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-    // ModuleVocab.module_iri.getAP(), configurationOntology, false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger().warn("Found multiple module IRI annotations for module: " +
-    // getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // module IRI
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
         ModuleVocab.module_iri.getAP(),
         df.getOWLLiteral(iriPrefix + getModuleName() + Owlcl.MODULE_IRI_SUFFIX))));
-    // }
 
-    // // check/add the module inferred IRI annotation
-    // axioms =
-    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_iri_inferred.getAP(),
-    // configurationOntology, false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger().warn(
-    // "Found multiple module inferreed IRI annotations for module: " +
-    // getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // module inferred IRI
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
         ModuleVocab.module_iri_inferred.getAP(),
         df.getOWLLiteral(iriPrefix + getModuleName() + Owlcl.MODULE_IRI_INRERRED_SUFFIX))));
-    // }
 
-    // check/add the module file name annotation
-    // axioms =
-    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_file_name.getAP(),
-    // configurationOntology, false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger()
-    // .warn("Found multiple module file name annotations for module: " +
-    // getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // module file name
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
         ModuleVocab.module_file_name.getAP(), df.getOWLLiteral(fileName))));
-    // }
 
-    // check/add the module inferred file name annotation
-    // axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-    // ModuleVocab.module_file_name_inferred.getAP(), configurationOntology,
-    // false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger().warn(
-    // "Found multiple module inferred file name annotations for module: " +
-    // getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // module inferred name
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
         ModuleVocab.module_file_name_inferred.getAP(), df.getOWLLiteral(fileInferredName))));
-    // }
 
-    // check/add the module generate annotation
-    // axioms =
-    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_generate.getAP(),
-    // configurationOntology, false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger().warn("Found multiple module generate annotations for module: "
-    // + getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // module generate true/false
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
         ModuleVocab.module_generate.getAP(), df.getOWLLiteral("true"))));
-    // }
 
-    // // check/add the module generate inferred annotation
-    // axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-    // ModuleVocab.module_generate_inferred.getAP(), configurationOntology,
-    // false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger().warn("Found multiple module generate annotations for module: "
-    // + getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // module generate inferred true/false
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
         ModuleVocab.module_generate_inferred.getAP(), df.getOWLLiteral("true"))));
+
+    // builders
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_builders.getAP(), df.getOWLLiteral("no-builder"))));
     // }
 
-    // // check/add the builders annotation
-    // axioms =
-    // OwlclUtil.getOntologyAnnotationLiteralValues(ModuleVocab.module_builders.getAP(),
-    // configurationOntology, false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger().warn("Found multiple module builders annotations for module: "
-    // + getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // builders inferred
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-        ModuleVocab.module_builders.getAP(), df.getOWLLiteral(""))));
+        ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral("no-builders"))));
     // }
 
-    // // check/add the inferred builders annotation
-    // axioms = OwlclUtil.getOntologyAnnotationLiteralValues(
-    // ModuleVocab.module_inferred_builders.getAP(), configurationOntology,
-    // false);
-    // if (axioms.size() > 1)
-    // {
-    // getLogger().warn(
-    // "Found multiple module inferred builders annotations for module: " +
-    // getModuleName());
-    // } else if (axioms.size() == 0)
-    // {
+    // add legacy
     man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
-        ModuleVocab.module_inferred_builders.getAP(), df.getOWLLiteral(""))));
+        ModuleVocab.module_add_legacy.getAP(), df.getOWLLiteral("false"))));
+    // }
+
+    // clean legacy
+    man.applyChange(new AddOntologyAnnotation(configurationOntology, df.getOWLAnnotation(
+        ModuleVocab.module_clean_legacy.getAP(), df.getOWLLiteral("false"))));
     // }
 
     // top
@@ -487,7 +446,11 @@ public class NewModuleCommand extends AbstractCommand {
           getModuleName() + Owlcl.CONFIGURATION_IRI_SUFFIX)));
       man.saveOntology(topOntology, new FileOutputStream(new File(getDirectory(), getModuleName()
           + Owlcl.MODULE_TOP_IRI_SUFFIX)));
-    } catch (OWLOntologyStorageException | FileNotFoundException e)
+
+      File versionFile = new File(directory, "V-" + IModule.VERSION);
+      versionFile.createNewFile();
+
+    } catch (OWLOntologyStorageException | IOException e)
     {
       throw new RuntimeException("Failed while saving files for new module" + getModuleName(), e);
     }
@@ -496,12 +459,6 @@ public class NewModuleCommand extends AbstractCommand {
   @Override
   protected void addCommandActions(List<String> actionsList) {
 
-  }
-
-  @Override
-  public Object call() throws Exception {
-    run();
-    return null;
   }
 
 }

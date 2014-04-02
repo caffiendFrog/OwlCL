@@ -16,7 +16,7 @@ public interface IModuleBuilder {
    * 
    * @param module
    */
-  void build(IModule module);
+  void build(IModule module, boolean inferred);
 
   /**
    * This is called when a module build is finished. The builders are held in a

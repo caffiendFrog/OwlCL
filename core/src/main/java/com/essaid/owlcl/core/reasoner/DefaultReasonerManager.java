@@ -8,11 +8,13 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class DefaultReasonerManager implements IReasonerManager {
 
   @Inject(optional = true)
-  @Named("Fact++")
+  @Named(IReasonerManager.FACT_PLUS_PLUS_FACTORY_BINDING_NAME)
   private OWLReasonerFactory factFactory;
 
   @Override
@@ -32,7 +34,7 @@ public class DefaultReasonerManager implements IReasonerManager {
 
   @Override
   public OWLReasoner getReasonedOntology(OWLOntology ontology) {
-    return null;
+    return factFactory.createNonBufferingReasoner(ontology);
   }
 
   @Override

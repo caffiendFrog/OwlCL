@@ -15,15 +15,11 @@ import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
 import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.Util;
-import com.essaid.owlcl.command.module.builder.IModuleBuilder;
 import com.essaid.owlcl.core.util.OwlclUtil;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 
 public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 
-  @Inject
-  public SimpleInferredModuleBuilder(@Assisted IModule simeplModule) {
+  public SimpleInferredModuleBuilder(IModule simeplModule) {
     super(simeplModule);
   }
 
@@ -31,21 +27,24 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 
     report.info("");
     report.info("==========================================================");
-    report.info("======== Generating inferred simple module " + module.getName()
-        + "================");
+    report.info("======== Generating inferred simple module "
+        + module.getModuleConfiguration().getModuleName() + "================");
     report.info("===========================================================");
     report.info("");
 
-    if (module.getSourceReasoned().getUnsatisfiableClasses().getEntities().size() > 0)
+    if (module.getModuleConfiguration().getSourceReasoner().getUnsatisfiableClasses().getEntities()
+        .size() > 0)
     {
       report.info("");
       report.info("Unsatisfied entities:");
-      for (OWLEntity entity : module.getSourceReasoned().getUnsatisfiableClasses().getEntities())
+      for (OWLEntity entity : module.getModuleConfiguration().getSourceReasoner()
+          .getUnsatisfiableClasses().getEntities())
       {
         report.info("\t" + entity);
       }
       report.info("Unsatisfieds: "
-          + module.getSourceReasoned().getUnsatisfiableClasses().getEntities());
+          + module.getModuleConfiguration().getSourceReasoner().getUnsatisfiableClasses()
+              .getEntities());
     }
 
     report.info("Doing includes: ");
@@ -75,54 +74,61 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   public void addIncludes() {
-    Set<OWLEntity> entities = Util.getIncludeEntities(module.getModuleConfiguration(), false);
+    Set<OWLEntity> entities = Util.getIncludeEntities(module.getModuleConfiguration()
+        .getConfigurationOntology(), module.getModuleConfiguration().getSourceOntology(), false);
 
     for (OWLEntity e : entities)
     {
       addAxiom(module.getDataFactory().getOWLDeclarationAxiom(e));
-      addAxioms(getDefiningAxioms(e, module.getSource(), true));
+      addAxioms(getDefiningAxioms(e, module.getModuleConfiguration().getSourceOntology(), true));
     }
 
   }
 
   public void addIncludeSubs() {
-    Set<OWLEntity> entities = Util.getIncludeSubsEntities(module.getModuleConfiguration(), false);
+    Set<OWLEntity> entities = Util.getIncludeSubsEntities(module.getModuleConfiguration()
+        .getConfigurationOntology(), module.getModuleConfiguration().getSourceOntology(), false);
     // report.info("Found sub annotations for: " + entities);
     Set<OWLEntity> closureEntities = new HashSet<OWLEntity>();
 
     for (OWLEntity e : entities)
     {
-      closureEntities.addAll(OwlclUtil.getSubs(e, true, module.getSourceReasoned()));
+      closureEntities.addAll(OwlclUtil.getSubs(e, true, module.getModuleConfiguration()
+          .getSourceReasoner()));
     }
     for (OWLEntity e : closureEntities)
     {
       addAxiom(df.getOWLDeclarationAxiom(e));
-      addAxioms(getDefiningAxioms(e, module.getSource(), true));
+      addAxioms(getDefiningAxioms(e, module.getModuleConfiguration().getSourceOntology(), true));
     }
   }
 
   private void addIncludeInstances() {
-    Set<OWLEntity> entities = Util.getIncludeInstances(module.getModuleConfiguration(), false);
+    Set<OWLEntity> entities = Util.getIncludeInstances(module.getModuleConfiguration()
+        .getConfigurationOntology(), module.getModuleConfiguration().getSourceOntology(), false);
 
     for (OWLEntity e : entities)
     {
       addAxiom(df.getOWLDeclarationAxiom(e));
-      addAxioms(getDefiningAxioms(e, module.getSource(), true));
+      addAxioms(getDefiningAxioms(e, module.getModuleConfiguration().getSourceOntology(), true));
     }
 
   }
 
   public void removeExcludes() {
-    Set<OWLEntity> entities = Util.getExcludeEntities(module.getModuleConfiguration(), false);
+    Set<OWLEntity> entities = Util.getExcludeEntities(module.getModuleConfiguration()
+        .getConfigurationOntology(), module.getModuleConfiguration().getSourceOntology(), false);
     for (OWLEntity entity : entities)
     {
       removeAxiom(df.getOWLDeclarationAxiom(entity));
-      removeAxioms(getDefiningAxioms(entity, module.getSource(), true));
+      removeAxioms(getDefiningAxioms(entity, module.getModuleConfiguration().getSourceOntology(),
+          true));
 
       if (entity instanceof OWLClass)
       {
         OWLClass c = (OWLClass) entity;
-        Set<OWLClass> subs = module.getSourceReasoned().getSubClasses(c, true).getFlattened();
+        Set<OWLClass> subs = module.getModuleConfiguration().getSourceReasoner()
+            .getSubClasses(c, true).getFlattened();
         for (OWLClass sub : subs)
         {
           OWLSubClassOfAxiom subAxiom = df.getOWLSubClassOfAxiom(sub, c);
@@ -130,7 +136,8 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
           {
             removeAxiom(subAxiom);
             ;
-            for (OWLClass supr : module.getSourceReasoned().getSuperClasses(c, true).getFlattened())
+            for (OWLClass supr : module.getModuleConfiguration().getSourceReasoner()
+                .getSuperClasses(c, true).getFlattened())
             {
               if (module.getGeneratedModule().containsClassInSignature(supr.getIRI()))
               {
@@ -146,18 +153,21 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   public void removeExcludeSubs() {
-    Set<OWLEntity> entities = Util.getExcludeSubsEntities(module.getModuleConfiguration(), false);
+    Set<OWLEntity> entities = Util.getExcludeSubsEntities(module.getModuleConfiguration()
+        .getConfigurationOntology(), module.getModuleConfiguration().getSourceOntology(), false);
     // report.info("Excluding class: " + entities);
     Set<OWLEntity> entityiesClosure = new HashSet<OWLEntity>();
     for (OWLEntity entity : entities)
     {
-      entityiesClosure.addAll(OwlclUtil.getSubs(entity, true, module.getSourceReasoned()));
+      entityiesClosure.addAll(OwlclUtil.getSubs(entity, true, module.getModuleConfiguration()
+          .getSourceReasoner()));
     }
     // report.info("Excluding class closure: " + entityiesClosure);
     for (OWLEntity entity : entityiesClosure)
     {
       removeAxiom(df.getOWLDeclarationAxiom(entity));
-      removeAxioms(getDefiningAxioms(entity, module.getSource(), true));
+      removeAxioms(getDefiningAxioms(entity, module.getModuleConfiguration().getSourceOntology(),
+          true));
     }
 
   }
@@ -165,12 +175,14 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   public void addClosureToBfo() {
     for (OWLEntity entity : module.getGeneratedModule().getSignature())
     {
-      Set<OWLEntity> supers = OwlclUtil.getSupers(entity, true, module.getSourceReasoned());
+      Set<OWLEntity> supers = OwlclUtil.getSupers(entity, true, module.getModuleConfiguration()
+          .getSourceReasoner());
       for (final OWLEntity supr : supers)
       {
         if (!supr.getIRI().toString().contains("BFO_"))
         {
-          Set<OWLAxiom> axioms = getDefiningAxioms(supr, module.getSource(), true);
+          Set<OWLAxiom> axioms = getDefiningAxioms(supr, module.getModuleConfiguration()
+              .getSourceOntology(), true);
           for (OWLAxiom axiom : axioms)
           {
             axiom.accept(new OWLAxiomVisitorAdapter() {
@@ -211,8 +223,8 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
         OWLEntity entity = i.next();
         i.remove();
         annotatedEntities.add(entity);
-        Set<OWLAnnotationAssertionAxiom> axioms = OwlclUtil.getSubjectAnnotationAxioms(
-            module.getSource(), true, entity.getIRI());
+        Set<OWLAnnotationAssertionAxiom> axioms = OwlclUtil.getSubjectAnnotationAxioms(module
+            .getModuleConfiguration().getSourceOntology(), true, entity.getIRI());
         addAxioms(axioms);
         for (OWLAnnotationAssertionAxiom a : axioms)
         {
@@ -272,14 +284,14 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   @Override
-  public void build(IModule module) {
+  public void build(IModule module, boolean inferred) {
     try
     {
       run();
     } catch (Exception e)
     {
-      throw new RuntimeException("Error while building inferred simple module " + module.getName(),
-          e);
+      throw new RuntimeException("Error while building inferred simple module "
+          + module.getModuleConfiguration().getModuleName(), e);
     }
 
   }
@@ -290,18 +302,4 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 
   }
 
-  @Override
-  public String getName() {
-    return "simple-inferred";
-  }
-
-  @Override
-  public String getDescription() {
-    return "A simple inferred builder factory.";
-  }
-
-  @Override
-  public IModuleBuilder createBuilder(IModule module) {
-    return new SimpleInferredModuleBuilder(module);
-  }
 }

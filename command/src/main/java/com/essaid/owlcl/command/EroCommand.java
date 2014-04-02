@@ -164,7 +164,7 @@ public class EroCommand extends AbstractCommand {
 
     reasoner = fact.createNonBufferingReasoner(isfOntology);
 
-    GenerateModuleCommand eaglei = new GenerateModuleCommand(getMain());
+    ModuleCommand eaglei = new ModuleCommand(getMain());
     eaglei.setModuleName(ModuleNames.EAGLEI);
     eaglei.setOutput(new File(outputDirectory, "core"));
     eaglei.sourceOntology = isfOntology;
@@ -174,7 +174,7 @@ public class EroCommand extends AbstractCommand {
     eaglei.setReasoned(true);
     eaglei.setUnReasoned(true);
     //
-    GenerateModuleCommand eagleiExtended = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtended = new ModuleCommand(getMain());
     eagleiExtended.setModuleName(ModuleNames.EAGLEI_EXTENDED);
     eagleiExtended.setOutput(new File(outputDirectory, "core"));
     eagleiExtended.sourceOntology = isfOntology;
@@ -184,7 +184,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtended.setReasoned(true);
     eagleiExtended.setUnReasoned(true);
     //
-    GenerateModuleCommand eagleiExtendedGo = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedGo = new ModuleCommand(getMain());
     eagleiExtendedGo.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO);
     eagleiExtendedGo.setOutput(new File(outputDirectory, "imports"));
     eagleiExtendedGo.sourceOntology = isfOntology;
@@ -194,7 +194,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedGo.setReasoned(true);
     eagleiExtendedGo.setUnReasoned(true);
     //
-    GenerateModuleCommand eagleiExtendedMesh = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedMesh = new ModuleCommand(getMain());
     eagleiExtendedMesh.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH);
     eagleiExtendedMesh.setOutput(new File(outputDirectory, "imports"));
     eagleiExtendedMesh.sourceOntology = isfOntology;
@@ -204,7 +204,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedMesh.setReasoned(true);
     eagleiExtendedMesh.setUnReasoned(true);
     //
-    GenerateModuleCommand eagleiExtendedMp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedMp = new ModuleCommand(getMain());
     eagleiExtendedMp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP);
     eagleiExtendedMp.setOutput(new File(outputDirectory, "imports"));
     eagleiExtendedMp.sourceOntology = isfOntology;
@@ -214,7 +214,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedMp.setReasoned(true);
     eagleiExtendedMp.setUnReasoned(true);
     //
-    GenerateModuleCommand eagleiExtendedPato = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedPato = new ModuleCommand(getMain());
     eagleiExtendedPato.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO);
     eagleiExtendedPato.setOutput(new File(outputDirectory, "imports"));
     eagleiExtendedPato.sourceOntology = isfOntology;
@@ -224,7 +224,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedPato.setReasoned(true);
     eagleiExtendedPato.setUnReasoned(true);
     //
-    GenerateModuleCommand eagleiExtendedUberon = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedUberon = new ModuleCommand(getMain());
     eagleiExtendedUberon.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON);
     eagleiExtendedUberon.setOutput(new File(outputDirectory, "imports"));
     eagleiExtendedUberon.sourceOntology = isfOntology;
@@ -243,7 +243,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtended.module.importModuleIntoBoth(eagleiExtendedGo.module, null);
 
     //
-    GenerateModuleCommand eagleiApp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiApp = new ModuleCommand(getMain());
     eagleiApp.setModuleName(ModuleNames.EAGLEI_APP);
     eagleiApp.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiApp.sourceOntology = isfOntology;
@@ -254,7 +254,7 @@ public class EroCommand extends AbstractCommand {
     eagleiApp.setUnReasoned(true);
 
     //
-    GenerateModuleCommand eagleiAppDef = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiAppDef = new ModuleCommand(getMain());
     eagleiAppDef.setModuleName(ModuleNames.EAGLEI_APP_DEF);
     eagleiAppDef.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiAppDef.sourceOntology = isfOntology;
@@ -267,7 +267,7 @@ public class EroCommand extends AbstractCommand {
     eagleiApp.module.importModuleIntoBoth(eagleiAppDef.module, null);
 
     //
-    GenerateModuleCommand eagleiExtendedApp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedApp = new ModuleCommand(getMain());
     eagleiExtendedApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_APP);
     eagleiExtendedApp.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiExtendedApp.sourceOntology = isfOntology;
@@ -278,7 +278,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedApp.setUnReasoned(true);
 
     //
-    GenerateModuleCommand eagleiExtendedGoApp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedGoApp = new ModuleCommand(getMain());
     eagleiExtendedGoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO_APP);
     eagleiExtendedGoApp.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiExtendedGoApp.sourceOntology = isfOntology;
@@ -291,7 +291,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedGoApp.module.importModuleIntoBoth(eagleiAppDef.module, null);
 
     //
-    GenerateModuleCommand eagleiExtendedMeshApp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedMeshApp = new ModuleCommand(getMain());
     eagleiExtendedMeshApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH_APP);
     eagleiExtendedMeshApp.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiExtendedMeshApp.sourceOntology = isfOntology;
@@ -304,7 +304,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedMeshApp.module.importModuleIntoBoth(eagleiAppDef.module, null);
 
     //
-    GenerateModuleCommand eagleiExtendedMpApp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedMpApp = new ModuleCommand(getMain());
     eagleiExtendedMpApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP_APP);
     eagleiExtendedMpApp.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiExtendedMpApp.sourceOntology = isfOntology;
@@ -317,7 +317,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedMpApp.module.importModuleIntoBoth(eagleiAppDef.module, null);
 
     //
-    GenerateModuleCommand eagleiExtendedPatoApp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedPatoApp = new ModuleCommand(getMain());
     eagleiExtendedPatoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO_APP);
     eagleiExtendedPatoApp.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiExtendedPatoApp.sourceOntology = isfOntology;
@@ -330,7 +330,7 @@ public class EroCommand extends AbstractCommand {
     eagleiExtendedPatoApp.module.importModuleIntoBoth(eagleiAppDef.module, null);
 
     //
-    GenerateModuleCommand eagleiExtendedUberonApp = new GenerateModuleCommand(getMain());
+    ModuleCommand eagleiExtendedUberonApp = new ModuleCommand(getMain());
     eagleiExtendedUberonApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON_APP);
     eagleiExtendedUberonApp.setOutput(new File(outputDirectory, "application-specific-files"));
     eagleiExtendedUberonApp.sourceOntology = isfOntology;

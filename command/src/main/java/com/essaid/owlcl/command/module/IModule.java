@@ -10,6 +10,7 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import com.essaid.owlcl.command.module.builder.IModuleBuilder;
+import com.essaid.owlcl.command.module.config.IModuleConfig;
 
 /**
  * A "module", in the most general sense, is a subset of the axioms of one or
@@ -40,165 +41,159 @@ import com.essaid.owlcl.command.module.builder.IModuleBuilder;
  */
 public interface IModule {
 
-	String getName();
+  int VERSION = 1;
 
-	void loadConfiguration();
+  com.essaid.owlcl.core.util.Report getReport();
 
-	void addBuilder(IModuleBuilder builder);
+  void generateModule();
 
-	Set<IModuleBuilder> getBuilders();
+  /**
+   * This will cause any axiom in the legacy ontologies to be also included in
+   * the module. This method, and the cleanLegacyOntologies() can help with
+   * migrating a legacy ontology to become an ISF module. This call will allow
+   * the module to include legacy content that is not yet in the ISF, or content
+   * that will not be in the ISF but is still needed in the generated module.
+   */
+  // void addLegacyOntologies();
+  //
+  // void addLegacyOntologiesTransitive();
 
-	com.essaid.owlcl.core.util.Report getReport();
+  /**
+   * This will remove all axioms from all legacy ontologies based on what is
+   * currently in the module ontology. The idea is that after the module
+   * ontology is populated, the legacy ontology files can be cleaned from any
+   * module axiom since the module now generates those axioms. It is a way to
+   * simplify migrating legacy ontologies to being ISF modules (i.e. being an
+   * ISF module based on the ISF ontology).
+   */
+  // void cleanLegacyOntologies();
+  //
+  // void cleanLegacyOntologiesTransitive();
 
-	void generateModule();
 
-	/**
-	 * This will cause any axiom in the legacy ontologies to be also included in
-	 * the module. This method, and the cleanLegacyOntologies() can help with
-	 * migrating a legacy ontology to become an ISF module. This call will allow
-	 * the module to include legacy content that is not yet in the ISF, or
-	 * content that will not be in the ISF but is still needed in the generated
-	 * module.
-	 */
-	// void addLegacyOntologies();
-	//
-	// void addLegacyOntologiesTransitive();
+  OWLOntology getGeneratedModule();
 
-	/**
-	 * This will remove all axioms from all legacy ontologies based on what is
-	 * currently in the module ontology. The idea is that after the module
-	 * ontology is populated, the legacy ontology files can be cleaned from any
-	 * module axiom since the module now generates those axioms. It is a way to
-	 * simplify migrating legacy ontologies to being ISF modules (i.e. being an
-	 * ISF module based on the ISF ontology).
-	 */
-	// void cleanLegacyOntologies();
-	//
-	// void cleanLegacyOntologiesTransitive();
+  OWLOntology getGeneratedModuleInferred();
 
-	IRI getModuleIri();
 
-	IRI getModuleIriInferred();
+  /**
+   * This allows a client to set the source ontology (which includes the
+   * imports) in case there are multiple modules being generated and they all
+   * share the same sources. Otherwise, the module will build its own source
+   * ontology based on its configuration.
+   * 
+   * this has to be set after constructing the module and before calling any
+   * other methods.
+   * 
+   * @param source
+   */
+  // void setSource(OWLOntology source);
 
-	OWLOntology getGeneratedModule();
+  /**
+   * This allows a client to set the reasoned source ontology instead of having
+   * the module reason its source ontology. This would be useful when multiple
+   * modules are being generated with the same reasoned sources and the
+   * reasoning is lengthy. Otherwise, the module will reason its sources.
+   * 
+   * this has to be set after constructing the module and before calling any
+   * other methods.
+   * 
+   * @param sourceReasoner
+   */
+  // void setSourceReasoned(OWLReasoner sourceReasoner);
 
-	OWLOntology getGeneratedModuleInferred();
+  /**
+   * Adds and import into this "generated" module and the specific OWL import
+   * will be based on the boolean option. If true, the inferred module from the
+   * imported module will be imprted into this "generated" file.
+   * 
+   * The idea is that one might want to mix inferred with un-inferred when
+   * composing modules.
+   * 
+   * 
+   * @param module
+   * @param inferred
+   */
+  void importModuleIntoGenerated(IModule module, Boolean inferred);
 
-	OWLOntology getSource();
+  /**
+   * See importModuleIntoGenerated
+   * 
+   * @param module
+   * @param inferred
+   */
+  void importModuleIntoGeneratedInferred(IModule module, Boolean inferred);
 
-	/**
-	 * This allows a client to set the source ontology (which includes the
-	 * imports) in case there are multiple modules being generated and they all
-	 * share the same sources. Otherwise, the module will build its own source
-	 * ontology based on its configuration.
-	 * 
-	 * this has to be set after constructing the module and before calling any
-	 * other methods.
-	 * 
-	 * @param source
-	 */
-	// void setSource(OWLOntology source);
+  /**
+   * See importModuleIntoGenerated
+   * 
+   * If the Boolean is null, both versions of the imported module will be
+   * imported into this module, by matching type. Otherwise, false means the
+   * "generated" will be imported to both and true means that the "inferred"
+   * will be imported into both.
+   * 
+   * @param module
+   * @param inferred
+   */
+  void importModuleIntoBoth(IModule module, Boolean inferred);
 
-	OWLReasoner getSourceReasoned();
+  void addModuleAnnotation(OWLAnnotation annotation);
 
-	/**
-	 * This allows a client to set the reasoned source ontology instead of
-	 * having the module reason its source ontology. This would be useful when
-	 * multiple modules are being generated with the same reasoned sources and
-	 * the reasoning is lengthy. Otherwise, the module will reason its sources.
-	 * 
-	 * this has to be set after constructing the module and before calling any
-	 * other methods.
-	 * 
-	 * @param sourceReasoner
-	 */
-	// void setSourceReasoned(OWLReasoner sourceReasoner);
+  void removeModuleAnnotation(OWLAnnotation annotation);
 
-	/**
-	 * Adds and import into this "generated" module and the specific OWL import
-	 * will be based on the boolean option. If true, the inferred module from
-	 * the imported module will be imprted into this "generated" file.
-	 * 
-	 * The idea is that one might want to mix inferred with un-inferred when
-	 * composing modules.
-	 * 
-	 * A null inferred parameter means import the same type. i.e. generate to
-	 * generate, inferred to inferred.
-	 * 
-	 * @param module
-	 * @param inferred
-	 */
-	void importModuleIntoGenerated(IModule module, Boolean inferred);
+  void addModuleAnnotations(Set<OWLAnnotation> annotations);
 
-	/**
-	 * See importModuleIntoGenerated
-	 * 
-	 * @param module
-	 * @param inferred
-	 */
-	void importModuleIntoGeneratedInferred(IModule module, Boolean inferred);
+  void removeModuleAnnotations(Set<OWLAnnotation> annotations);
 
-	/**
-	 * See importModuleIntoGenerated
-	 * 
-	 * If the Boolean is null, both versions of the imported module will be
-	 * imported into this module, by matching type. Otherwise, false means the
-	 * "generated" will be imported to both and true means that the "inferred"
-	 * will be imported into both.
-	 * 
-	 * @param module
-	 * @param inferred
-	 */
-	void importModuleIntoBoth(IModule module, Boolean inferred);
+  void addModuleAnnotationInferred(OWLAnnotation annotation);
 
-	void addModuleAnnotation(OWLAnnotation annotation);
+  void removeModuleAnnotationInferred(OWLAnnotation annotation);
 
-	void removeModuleAnnotation(OWLAnnotation annotation);
+  void addModuleAnnotationsInferred(Set<OWLAnnotation> annotations);
 
-	void addModuleAnnotations(Set<OWLAnnotation> annotations);
+  void removeModuleAnnotationsInferred(Set<OWLAnnotation> annotations);
 
-	void removeModuleAnnotations(Set<OWLAnnotation> annotations);
+  void addAxiom(OWLAxiom axiom);
 
-	void addModuleAnnotationInferred(OWLAnnotation annotation);
+  void removeAxiom(OWLAxiom axiom);
 
-	void removeModuleAnnotationInferred(OWLAnnotation annotation);
+  void addAxioms(Set<OWLAxiom> axioms);
 
-	void addModuleAnnotationsInferred(Set<OWLAnnotation> annotations);
+  void removeAxioms(Set<OWLAxiom> axioms);
 
-	void removeModuleAnnotationsInferred(Set<OWLAnnotation> annotations);
+  void addAxiomInferred(OWLAxiom axiom);
 
-	void addAxiom(OWLAxiom axiom);
+  void removeAxiomInferred(OWLAxiom axiom);
 
-	void removeAxiom(OWLAxiom axiom);
+  void addAxiomsInferred(Set<OWLAxiom> axioms);
 
-	void addAxioms(Set<OWLAxiom> axioms);
+  void removeAxiomsInferred(Set<OWLAxiom> axioms);
 
-	void removeAxioms(Set<OWLAxiom> axioms);
+  //
+  // void saveModuleConfiguration();
 
-	void addAxiomInferred(OWLAxiom axiom);
+  void saveGeneratedModule();
 
-	void removeAxiomInferred(OWLAxiom axiom);
+  void dispose();
 
-	void addAxiomsInferred(Set<OWLAxiom> axioms);
+  boolean isGenerate();
 
-	void removeAxiomsInferred(Set<OWLAxiom> axioms);
+  void setGenerate(Boolean generate);
 
-	void saveModuleConfiguration();
+  boolean isGenerateInferred();
 
-	void saveGeneratedModule();
+  void setGenerateInferred(Boolean generateInferred);
 
-	void dispose();
+  boolean isAddLegacy();
 
-	void setGenerate(boolean generate);
+  void setAddLegacy(Boolean generate);
 
-	boolean isGenerate();
+  boolean isCleanLegacy();
 
-	void setGenerateInferred(boolean generateInferred);
+  void setCleanLegacy(Boolean generate);
 
-	boolean isGenerateInferred();
+  OWLDataFactory getDataFactory();
 
-	OWLDataFactory getDataFactory();
-
-	OWLOntology getModuleConfiguration();
+  IModuleConfig getModuleConfiguration();
 
 }

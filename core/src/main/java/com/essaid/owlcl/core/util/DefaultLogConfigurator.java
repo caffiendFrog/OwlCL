@@ -58,15 +58,21 @@ public class DefaultLogConfigurator implements ILogConfigurator {
 
       encoder = new PatternLayoutEncoder();
       encoder.setContext(context);
-      encoder.setPattern("%r %c %level - %msg%n");
+      encoder.setPattern("%r %date %logger{5} %level - %msg%n");
       encoder.start();
 
       debugEncoder = new PatternLayoutEncoder();
       debugEncoder.setContext(context);
-      debugEncoder.setPattern("%r %c %level - %msg%n");
+      debugEncoder.setPattern("%r %date %logger{5} %level - %msg%n");
       debugEncoder.start();
 
       setDirectory(this.manager.getOutputDirectory());
+
+      rootLogger.info("");
+      rootLogger.info("===========================================");
+      rootLogger.info("==== Starting new owlcl execution =========");
+      rootLogger.info("===========================================");
+      rootLogger.info("");
 
     }
   }

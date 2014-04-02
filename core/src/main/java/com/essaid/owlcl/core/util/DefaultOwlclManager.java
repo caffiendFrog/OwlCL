@@ -406,12 +406,12 @@ public class DefaultOwlclManager implements IOwlclManager {
    * com.essaid.owlcl.util.IOwlclManager#loadNativeLibrary(java.io.InputStream)
    */
   @Override
-  public void loadNativeLibrary(InputStream stream) {
-    Path tmp;
+  public void loadNativeLibrary(InputStream stream, String name) {
+    Path tmpLibDir;
     try
     {
-      tmp = Files.createTempFile(getTemporaryDirectory().toPath(), "nativelib-", null);
-      File tmpFile = tmp.toFile();
+      tmpLibDir = Files.createTempDirectory(getTemporaryDirectory().toPath(), "nativelib-");
+      File tmpFile = new File(tmpLibDir.toFile(), name);
       // tmpFile.deleteOnExit();
       OutputStream fos = new FileOutputStream(tmpFile);
       byte[] buffer = new byte[1024];
@@ -428,7 +428,7 @@ public class DefaultOwlclManager implements IOwlclManager {
     }
 
     String libPath = System.getProperty("java.library.path");
-    libPath += File.pathSeparatorChar + tmp.toAbsolutePath().toString();
+    libPath += File.pathSeparatorChar + tmpLibDir.toAbsolutePath().toString();
     System.setProperty("java.library.path", libPath);
 
     Field fieldSysPath;

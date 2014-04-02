@@ -4,6 +4,8 @@ import java.util.Iterator;
 import java.util.ServiceLoader;
 
 import com.essaid.owlcl.core.OwlclGuiceModule;
+import com.essaid.owlcl.core.reasoner.DefaultReasonerManager;
+import com.essaid.owlcl.core.reasoner.IReasonerManager;
 import com.essaid.owlcl.core.util.IInitializable;
 import com.essaid.owlcl.core.util.IReportFactory;
 import com.essaid.owlcl.core.util.Report;
@@ -68,6 +70,12 @@ public final class OwlclCoreGModule extends AbstractModule implements OwlclGuice
         new FactoryModuleBuilder().implement(Report.class, Report.class).build(
             Key.get(IReportFactory.class)));
 
+    //================================================================================
+    // Reasoner manager
+    //================================================================================
+    
+    bind(IReasonerManager.class).to(DefaultReasonerManager.class);
+    
     // ================================================================================
     // Dynamic modules
     // ================================================================================
