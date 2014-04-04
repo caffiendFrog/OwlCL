@@ -1,23 +1,32 @@
 package com.essaid.owlcl.command.module.config;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 public interface IModuleConfig {
-  
-  void loadConfiguration();
 
-  String getModuleName();
+  int CURRENT_VERSION = 1;
+
+  String getName();
+
+  String getIriPrefix();
+
+  Path getDirectory();
 
   IRI getConfigurationIri();
 
   OWLOntology getConfigurationOntology();
+
+  IRI getTopIri();
+
+  OWLOntology getTopOntology();
+
+  Set<IRI> getExcludedSourceIris();
 
   IRI getIncludeIri();
 
@@ -27,6 +36,10 @@ public interface IModuleConfig {
 
   OWLOntology getExcludeOntology();
 
+  IRI getSourceConfigurationIri();
+
+  OWLOntology getSourceConfigurationOntology();
+
   IRI getLegacyIri();
 
   OWLOntology getLegacyOntology();
@@ -35,33 +48,32 @@ public interface IModuleConfig {
 
   OWLOntology getLegacyRemovedOntology();
 
-  OWLOntologyManager getSourceManager();
-
   OWLOntology getSourceOntology();
 
   OWLReasoner getSourceReasoner();
 
-  List<String> getBuildersNames();
+  List<String> getUnclassifiedBuilderNames();
 
-  List<String> getBuildersInferredNames();
+  List<String> getClassifiedBuilderNames();
 
-  Set<IRI> getExcludeSourceIris();
+  boolean isUnclassified();
 
-  boolean isGenerate();
+  boolean isClassified();
 
-  boolean isGenerateInferred();
-  
-  boolean isAddLegacy();
-  
-  boolean isCleanLegacy();
+  boolean isClassifiedAddlegacy();
 
-  Set<OWLAnnotation> getAnnotations();
+  boolean isUnclassifiedAddlegacy();
 
-  IRI getGeneratedModuleIri();
+  boolean isUnclassifiedCleanLegacy();
 
-  String getGenerateModuleFileName();
+  boolean isClassifiedCleanLegacy();
 
-  IRI getGeneratedInferredModuleIri();
+  IRI getUnclassifiedIri();
 
-  String getGenerateInferredModuleFileName();
+  String getUnclassifiedFileName();
+
+  IRI getClassifiedIri();
+
+  String getClassifiedFileName();
+
 }
