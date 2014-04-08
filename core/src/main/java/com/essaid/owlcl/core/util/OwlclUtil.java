@@ -1,10 +1,7 @@
 package com.essaid.owlcl.core.util;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -24,8 +21,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.FileDocumentSource;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
@@ -43,13 +42,12 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.ReasonerInternalException;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 //import uk.ac.manchester.cs.factplusplus.owlapiv3.FaCTPlusPlusReasonerFactory;
-
-
 
 import com.essaid.owlcl.core.IOwlclManager;
 
@@ -57,7 +55,7 @@ import com.essaid.owlcl.core.IOwlclManager;
  * @author Shahim Essaid
  * 
  */
-public class OwlclUtil  {
+public class OwlclUtil {
 
   private static final OwlclUtil instance = new OwlclUtil();
 
@@ -81,7 +79,6 @@ public class OwlclUtil  {
   private Object lock = new Object();
 
   private boolean initted;
-
   public void init() {
     synchronized (lock)
     {
@@ -369,8 +366,6 @@ public class OwlclUtil  {
     return values;
   }
 
-
-
   public static Set<OWLAnnotationAssertionAxiom> getAnnotationAssertionAxioms(OWLOntology ontology,
       OWLAnnotationProperty property, boolean includeImports) {
     Set<OWLAnnotationAssertionAxiom> axioms = new HashSet<OWLAnnotationAssertionAxiom>();
@@ -639,105 +634,107 @@ public class OwlclUtil  {
 
   static
   {
-//    String osName = System.getProperty("os.name");
-//    String osArch = System.getProperty("os.arch");
-//    String libName = null;
-//    String libPath = null;
-//
-//    if (osName.toLowerCase().startsWith("windows"))
-//    {
-//      if (osArch.contains("64"))
-//      {
-//        libName = "FaCTPlusPlusJNI.dll";
-//        libPath = "/fact162/win64/";
-//      } else
-//      {
-//        libName = "FaCTPlusPlusJNI.dll";
-//        libPath = "/fact162/win32/";
-//      }
-//    } else if (osName.toLowerCase().startsWith("linux"))
-//    {
-//      if (osArch.contains("64"))
-//      {
-//        libName = "libFaCTPlusPlusJNI.so";
-//        libPath = "/fact162/linux64/";
-//      } else
-//      {
-//        libName = "libFaCTPlusPlusJNI.so";
-//        libPath = "/fact162/linux32/";
-//      }
-//    } else if (osName.toLowerCase().contains("mac"))
-//    {
-//      if (osArch.contains("64"))
-//      {
-//        libName = "libFaCTPlusPlusJNI.jnilib";
-//        libPath = "/fact162/os64/";
-//      } else
-//      {
-//        libName = "libFaCTPlusPlusJNI.jnilib";
-//        libPath = "/fact162/os32/";
-//      }
-//    }
-//    FileOutputStream fos = null;
-//    InputStream fis = null;
-//    try
-//    {
-//      final Path libDir = Files.createTempDirectory("factpp-");
-//      libDir.toFile().deleteOnExit();
-//      fos = new FileOutputStream(new File(libDir.toFile(), libName));
-//      fis = OwlclUtil.class.getResourceAsStream(libPath + libName);
-//      byte[] buffer = new byte[1024];
-//      int bytesRead = 0;
-//      while ((bytesRead = fis.read(buffer)) != -1)
-//      {
-//        fos.write(buffer, 0, bytesRead);
-//      }
-//      System.setProperty("java.library.path", libDir.toFile().getAbsolutePath());
-//      Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
-//      fieldSysPath.setAccessible(true);
-//      fieldSysPath.set(null, null);
-//      Runtime.getRuntime().addShutdownHook(new Thread() {
-//
-//        public void run() {
-//          delete(libDir.toFile());
-//        }
-//
-//        void delete(File f) {
-//          if (f.isDirectory())
-//          {
-//            for (File c : f.listFiles())
-//              delete(c);
-//          }
-//          if (!f.delete())
-//            throw new RuntimeException("Failed to delete file: " + f);
-//        }
-//      });
-//    } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException
-//        | IllegalAccessException e)
-//    {
-//      throw new RuntimeException("ISFUtil: failed to copy native library.", e);
-//    } finally
-//    {
-//      if (fos != null)
-//      {
-//        try
-//        {
-//          fos.close();
-//        } catch (IOException e)
-//        {
-//        }
-//      }
-//      if (fis != null)
-//      {
-//        try
-//        {
-//          fis.close();
-//        } catch (IOException e)
-//        {
-//        }
-//      }
-//
-//    }
+    // String osName = System.getProperty("os.name");
+    // String osArch = System.getProperty("os.arch");
+    // String libName = null;
+    // String libPath = null;
+    //
+    // if (osName.toLowerCase().startsWith("windows"))
+    // {
+    // if (osArch.contains("64"))
+    // {
+    // libName = "FaCTPlusPlusJNI.dll";
+    // libPath = "/fact162/win64/";
+    // } else
+    // {
+    // libName = "FaCTPlusPlusJNI.dll";
+    // libPath = "/fact162/win32/";
+    // }
+    // } else if (osName.toLowerCase().startsWith("linux"))
+    // {
+    // if (osArch.contains("64"))
+    // {
+    // libName = "libFaCTPlusPlusJNI.so";
+    // libPath = "/fact162/linux64/";
+    // } else
+    // {
+    // libName = "libFaCTPlusPlusJNI.so";
+    // libPath = "/fact162/linux32/";
+    // }
+    // } else if (osName.toLowerCase().contains("mac"))
+    // {
+    // if (osArch.contains("64"))
+    // {
+    // libName = "libFaCTPlusPlusJNI.jnilib";
+    // libPath = "/fact162/os64/";
+    // } else
+    // {
+    // libName = "libFaCTPlusPlusJNI.jnilib";
+    // libPath = "/fact162/os32/";
+    // }
+    // }
+    // FileOutputStream fos = null;
+    // InputStream fis = null;
+    // try
+    // {
+    // final Path libDir = Files.createTempDirectory("factpp-");
+    // libDir.toFile().deleteOnExit();
+    // fos = new FileOutputStream(new File(libDir.toFile(), libName));
+    // fis = OwlclUtil.class.getResourceAsStream(libPath + libName);
+    // byte[] buffer = new byte[1024];
+    // int bytesRead = 0;
+    // while ((bytesRead = fis.read(buffer)) != -1)
+    // {
+    // fos.write(buffer, 0, bytesRead);
+    // }
+    // System.setProperty("java.library.path",
+    // libDir.toFile().getAbsolutePath());
+    // Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+    // fieldSysPath.setAccessible(true);
+    // fieldSysPath.set(null, null);
+    // Runtime.getRuntime().addShutdownHook(new Thread() {
+    //
+    // public void run() {
+    // delete(libDir.toFile());
+    // }
+    //
+    // void delete(File f) {
+    // if (f.isDirectory())
+    // {
+    // for (File c : f.listFiles())
+    // delete(c);
+    // }
+    // if (!f.delete())
+    // throw new RuntimeException("Failed to delete file: " + f);
+    // }
+    // });
+    // } catch (IOException | NoSuchFieldException | SecurityException |
+    // IllegalArgumentException
+    // | IllegalAccessException e)
+    // {
+    // throw new RuntimeException("ISFUtil: failed to copy native library.", e);
+    // } finally
+    // {
+    // if (fos != null)
+    // {
+    // try
+    // {
+    // fos.close();
+    // } catch (IOException e)
+    // {
+    // }
+    // }
+    // if (fis != null)
+    // {
+    // try
+    // {
+    // fis.close();
+    // } catch (IOException e)
+    // {
+    // }
+    // }
+    //
+    // }
 
   }
 
@@ -773,6 +770,26 @@ public class OwlclUtil  {
     }
     return o;
 
+  }
+
+  static public OWLOntology loadOntologyIgnoreImports(File file, OWLOntologyManager man) {
+    OWLOntology o = null;
+    if (o == null)
+    {
+      try
+      {
+        man.setSilentMissingImportsHandling(true);
+        OWLOntologyLoaderConfiguration lc = new OWLOntologyLoaderConfiguration();
+        lc = lc.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+
+        o = man.loadOntologyFromOntologyDocument(new FileDocumentSource(file), lc);
+      } catch (OWLOntologyCreationException e)
+      {
+        throw new RuntimeOntologyLoadingException("Failed while loadOntology File: "
+            + file.getAbsolutePath(), e);
+      }
+    }
+    return o;
   }
 
   static public OWLOntology createOntology(IRI iri, OWLOntologyManager man)
@@ -823,13 +840,15 @@ public class OwlclUtil  {
   }
 
   private static Map<IRI, OWLReasoner> reasoners = new HashMap<IRI, OWLReasoner>();
-//  private static FaCTPlusPlusReasonerFactory rf = new FaCTPlusPlusReasonerFactory();
+
+  // private static FaCTPlusPlusReasonerFactory rf = new
+  // FaCTPlusPlusReasonerFactory();
 
   static public OWLReasoner getReasoner(OWLOntology ontology) {
     OWLReasoner r = reasoners.get(ontology.getOntologyID().getOntologyIRI());
     if (r == null)
     {
-//      r = rf.createNonBufferingReasoner(ontology);
+      // r = rf.createNonBufferingReasoner(ontology);
       reasoners.put(ontology.getOntologyID().getOntologyIRI(), r);
     }
     return r;
@@ -840,43 +859,45 @@ public class OwlclUtil  {
     reasoner.dispose();
     reasoners.remove(iri);
   }
-//
-//  public void loadNativeLibrary(InputStream stream) {
-//    Path tmp;
-//    try
-//    {
-//      tmp = Files.createTempFile(getTemporaryDirectory(), "nativelib-", null);
-//      OutputStream fos = new FileOutputStream(tmp.toFile());
-//      byte[] buffer = new byte[1024];
-//      int bytesRead = 0;
-//      while ((bytesRead = stream.read(buffer)) != -1)
-//      {
-//        fos.write(buffer, 0, bytesRead);
-//      }
-//      stream.close();
-//      fos.close();
-//    } catch (IOException e1)
-//    {
-//      throw new RuntimeException("Failed while loading native library", e1);
-//    }
-//
-//    String libPath = System.getProperty("java.library.path");
-//    libPath += File.pathSeparatorChar + tmp.toAbsolutePath().toString();
-//    System.setProperty("java.library.path", libPath);
-//
-//    Field fieldSysPath;
-//    try
-//    {
-//      fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
-//      fieldSysPath.setAccessible(true);
-//      fieldSysPath.set(null, null);
-//    } catch (NoSuchFieldException | SecurityException | IllegalArgumentException
-//        | IllegalAccessException e)
-//    {
-//      throw new RuntimeException("Error resetting java library path", e);
-//    }
-//
-//  }
+
+  //
+  // public void loadNativeLibrary(InputStream stream) {
+  // Path tmp;
+  // try
+  // {
+  // tmp = Files.createTempFile(getTemporaryDirectory(), "nativelib-", null);
+  // OutputStream fos = new FileOutputStream(tmp.toFile());
+  // byte[] buffer = new byte[1024];
+  // int bytesRead = 0;
+  // while ((bytesRead = stream.read(buffer)) != -1)
+  // {
+  // fos.write(buffer, 0, bytesRead);
+  // }
+  // stream.close();
+  // fos.close();
+  // } catch (IOException e1)
+  // {
+  // throw new RuntimeException("Failed while loading native library", e1);
+  // }
+  //
+  // String libPath = System.getProperty("java.library.path");
+  // libPath += File.pathSeparatorChar + tmp.toAbsolutePath().toString();
+  // System.setProperty("java.library.path", libPath);
+  //
+  // Field fieldSysPath;
+  // try
+  // {
+  // fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
+  // fieldSysPath.setAccessible(true);
+  // fieldSysPath.set(null, null);
+  // } catch (NoSuchFieldException | SecurityException |
+  // IllegalArgumentException
+  // | IllegalAccessException e)
+  // {
+  // throw new RuntimeException("Error resetting java library path", e);
+  // }
+  //
+  // }
 
   public String getNativeResourcePrefix(String resourceGroupName) {
     String path = "/native/" + resourceGroupName;

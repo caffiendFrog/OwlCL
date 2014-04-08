@@ -4,7 +4,6 @@ import static com.essaid.owlcl.command.module.ModuleVocab.*;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -35,39 +34,43 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
   protected IReasonerManager reasonerManager;
   @InjectLogger
   protected Logger logger;
-  
-  protected final String name;
+
+  protected final String moduleName;
   protected final String prefix;
   protected final Path directory;
   protected final OWLOntology configurationOntology;
   protected final OWLOntologyManager configMan;
   protected final OWLDataFactory configDf;
- 
+
+  protected OWLOntology sourceConfigurationOntology;// loaded without imports
+                                                    // for configuration
   protected OWLOntology sourceOntology;
   protected OWLReasoner sourceReasoner;
   protected OWLOntologyManager sourceManager;
-  
+
   protected final Set<OWLOntology> changedOntologies = new HashSet<OWLOntology>();
   private OWLOntologyChangeListener changeListener;
-  
-  protected boolean unclassified;
-  protected boolean classified;
-  protected IRI classifiedIri;
-  protected IRI unclassifiedIri;
+
   protected boolean update;
   protected boolean upgrade;
 
-  protected List<String> classifiedBuilderNames = new ArrayList<String>();
-  protected List<String> unclassifiedBuilderNames = new ArrayList<String>();
-  protected String unclassifiedFilename;
-  protected String classifiedFilename;
-  protected HashSet<IRI> excludedIris = new HashSet<IRI>();
-  protected OWLOntology sourceConfigurationOntology;
-  protected boolean classifiedAddlegacy;
-  protected boolean unclassifiedAddlegacy;
-  protected boolean classifiedCleanlegacy;
-  protected boolean unclassifiedCleanlegacy;
-  protected File topFile;
+  //
+  // protected boolean unclassified;
+  // protected boolean classified;
+  // protected IRI classifiedIri;
+  // protected IRI unclassifiedIri;
+
+  // protected List<String> classifiedBuilderNames = new ArrayList<String>();
+  // protected List<String> unclassifiedBuilderNames = new ArrayList<String>();
+  // protected String unclassifiedFilename;
+  // protected String classifiedFilename;
+  // protected HashSet<IRI> excludedIris = new HashSet<IRI>();
+  // protected OWLOntology sourceConfigurationOntology;
+  // protected boolean classifiedAddlegacy;
+  // protected boolean unclassifiedAddlegacy;
+  // protected boolean classifiedCleanlegacy;
+  // protected boolean unclassifiedCleanlegacy;
+  // protected File topFile;
 
   public AbstractModuleConfiguration(String name, String iriPrefix, Path moduleDirectory,
       OWLOntology configurationOntology) {
@@ -90,7 +93,7 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
           "Module constructed with null configuration ontology or iriPrefix.");
     }
 
-    this.name = name;
+    this.moduleName = name;
     this.directory = moduleDirectory;
     this.prefix = iriPrefix;
     this.configurationOntology = configurationOntology;
@@ -115,7 +118,7 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
 
   @Override
   public String getName() {
-    return name;
+    return moduleName;
   }
 
   @Override
@@ -148,34 +151,75 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     configMan.applyChange(roa);
   }
 
+  protected void removeAnnotations(OWLOntology o, OWLAnnotationProperty p) {
+    OWLOntologyManager man = o.getOWLOntologyManager();
+    for (OWLAnnotation a : o.getAnnotations())
+    {
+      if (a.getProperty().equals(p))
+      {
+        man.applyChange(new RemoveOntologyAnnotation(o, a));
+      }
+    }
+  }
+
   public void saveConfiguration() {
 
     Iterator<OWLOntology> oi = changedOntologies.iterator();
     while (oi.hasNext())
     {
-      saveOntology(oi.next());
+      OWLOntology o = oi.next();
+      try
+      {
+        o.getOWLOntologyManager().saveOntology(o);
+      } catch (OWLOntologyStorageException e)
+      {
+        throw new RuntimeException("Error while saving module configuration", e);
+      }
       oi.remove();
     }
   }
 
-  public static Set<OWLAnnotation> getAnnotations(OWLOntology o, OWLAnnotationProperty p) {
+  public Set<OWLAnnotation> getAnnotations(OWLOntology ontology, OWLAnnotationProperty p,
+      boolean transitive) {
     Set<OWLAnnotation> annotations = new HashSet<OWLAnnotation>();
-    for (OWLAnnotation a : o.getAnnotations())
+    if (transitive)
     {
-      if (a.getProperty().equals(p))
+
+      for (OWLOntology o : ontology.getImportsClosure())
       {
-        annotations.add(a);
+        if (o.getOntologyID().getOntologyIRI().equals(getSourceConfigurationIri()))
+        {
+          continue;
+        }
+        for (OWLAnnotation a : o.getAnnotations())
+        {
+          if (a.getProperty().equals(p))
+          {
+            annotations.add(a);
+          }
+        }
+      }
+
+    } else
+    {
+
+      for (OWLAnnotation a : ontology.getAnnotations())
+      {
+        if (a.getProperty().equals(p))
+        {
+          annotations.add(a);
+        }
       }
     }
 
     return annotations;
   }
 
-  public static void checkUnclassifiedIri(OWLOntology o, IRI iri, Logger logger) {
+  public void checkUnclassifiedIri(OWLOntology o, IRI iri, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_iri.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_iri.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple unclassified iri annotations in : " + o.getOntologyID());
@@ -188,11 +232,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
 
   }
 
-  public static void checkClassifiedIri(OWLOntology o, IRI iri, Logger logger) {
+  public void checkClassifiedIri(OWLOntology o, IRI iri, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_classified_iri.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_classified_iri.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple classified iri annotations in : " + o.getOntologyID());
@@ -204,11 +248,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  public static void checkUnclassifiedFilename(OWLOntology o, String fileName, Logger logger) {
+  public void checkUnclassifiedFilename(OWLOntology o, String fileName, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_filename.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_filename.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple unclassified filename in : " + o.getOntologyID());
@@ -221,11 +265,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
 
   }
 
-  public static void checkClassifiedFilename(OWLOntology o, String fileName, Logger logger) {
+  public void checkClassifiedFilename(OWLOntology o, String fileName, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_classified_filename.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_classified_filename.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple classified filename in : " + o.getOntologyID());
@@ -237,11 +281,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  public static void checkUnclassifiedBuilders(OWLOntology o, String builders, Logger logger) {
+  public void checkUnclassifiedBuilders(OWLOntology o, String builders, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_builders.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_builders.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple unclassified builders in : " + o.getOntologyID());
@@ -253,12 +297,12 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  public static void checkClassifiedBuilders(OWLOntology o, String builders, Logger logger) {
+  public void checkClassifiedBuilders(OWLOntology o, String builders, Logger logger) {
 
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_classified_builders.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_classified_builders.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple classified builders in : " + o.getOntologyID());
@@ -271,11 +315,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
 
   }
 
-  public static void checkIsUnclassified(OWLOntology o, Logger logger) {
+  public void checkIsUnclassified(OWLOntology o, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_is_unclassified.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_is_unclassified.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple is unclassified in : " + o.getOntologyID());
@@ -288,11 +332,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
 
   }
 
-  public static void checkIsClassified(OWLOntology o, Logger logger) {
+  public void checkIsClassified(OWLOntology o, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_is_classified.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_is_classified.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple is classified in : " + o.getOntologyID());
@@ -304,11 +348,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  public static void checkUnclassifiedAddlegacy(OWLOntology o, Logger logger) {
+  public void checkUnclassifiedAddlegacy(OWLOntology o, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_addlegacy.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_addlegacy.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple unclassified add legacy: " + o.getOntologyID());
@@ -320,11 +364,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  public static void checkClassifiedAddlegacy(OWLOntology o, Logger logger) {
+  public void checkClassifiedAddlegacy(OWLOntology o, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_classified_addlegacy.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_classified_addlegacy.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple classified add legacy: " + o.getOntologyID());
@@ -336,11 +380,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  public static void checkUnclassifiedCleanlegacy(OWLOntology o, Logger logger) {
+  public void checkUnclassifiedCleanlegacy(OWLOntology o, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_cleanlegacy.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_unclassified_cleanlegacy.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple unclassified clean legacy: " + o.getOntologyID());
@@ -352,11 +396,11 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  public static void checkClassifiedCleanlegacy(OWLOntology o, Logger logger) {
+  public void checkClassifiedCleanlegacy(OWLOntology o, Logger logger) {
     OWLOntologyManager man = o.getOWLOntologyManager();
     OWLDataFactory df = man.getOWLDataFactory();
 
-    Set<OWLAnnotation> as = getAnnotations(o, module_classified_cleanlegacy.getAP());
+    Set<OWLAnnotation> as = getAnnotations(o, module_classified_cleanlegacy.getAP(), false);
     if (as.size() > 1)
     {
       logger.warn("Multiple classified clean legacy: " + o.getOntologyID());
@@ -368,7 +412,7 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     }
   }
 
-  protected static void saveOntology(OWLOntology o) {
+  protected void saveOntology(OWLOntology o) {
     try
     {
       o.getOWLOntologyManager().saveOntology(o);
@@ -377,6 +421,21 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
       throw new RuntimeException("Failed to save ontology " + o.getOntologyID().getOntologyIRI()
           + " to file " + o.getOWLOntologyManager().getOntologyDocumentIRI(o), e);
     }
+    changedOntologies.remove(o);
+  }
+
+  protected static String csv(List<String> values) {
+    Iterator<String> i = values.iterator();
+    StringBuilder sb = new StringBuilder();
+    while (i.hasNext())
+    {
+      sb.append(i.next());
+      if (i.hasNext())
+      {
+        sb.append(",");
+      }
+    }
+    return sb.toString();
   }
 
 }

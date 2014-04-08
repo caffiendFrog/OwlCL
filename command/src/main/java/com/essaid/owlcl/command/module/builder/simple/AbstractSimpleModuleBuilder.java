@@ -38,7 +38,7 @@ public abstract class AbstractSimpleModuleBuilder implements IModuleBuilder {
 		{
 			if (!a.getProperty().getIRI().toString().contains("isftools-"))
 			{
-				module.addModuleAnnotation(a);
+				module.addAnnotationUnclassified(a);
 			}
 		}
 	}

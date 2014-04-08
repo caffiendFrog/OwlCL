@@ -1,6 +1,7 @@
 package com.essaid.owlcl.command.module;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -11,8 +12,12 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import com.essaid.owlcl.command.module.builder.simple.MBSimpleVocab;
+import com.essaid.owlcl.command.module.config.IModuleConfigInternal;
+import com.essaid.owlcl.command.module.config.ModuleConfigurationV1;
 import com.essaid.owlcl.core.util.OwlclUtil;
 
 public class Util {
@@ -121,5 +126,20 @@ public class Util {
       int i = fileName.indexOf('-');
       return Integer.valueOf(fileName.substring(i + 1));
     }
+  }
+
+  public static IModuleConfigInternal getExistingConfigurationByVersion(int version,
+      Path directory, OWLOntologyManager configMan, OWLOntologyManager sourceMan,
+      OWLOntology sourceOntology, OWLReasoner sourceReasoner) {
+
+    IModuleConfigInternal config = null;
+    if (version == 1)
+    {
+      config = ModuleConfigurationV1.getExistingInstance(directory, configMan, sourceMan,
+          sourceOntology, sourceReasoner);
+
+    }
+    return config;
+
   }
 }

@@ -4,14 +4,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
+import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.FileDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
@@ -25,10 +31,11 @@ import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
+import com.essaid.owlcl.command.module.ModuleConstant;
 import com.essaid.owlcl.command.module.ModuleVocab;
-import com.essaid.owlcl.command.module.Owlcl;
 import com.essaid.owlcl.command.module.Util;
 import com.essaid.owlcl.core.util.OntologyLoadingDescriptor;
+import com.essaid.owlcl.core.util.OwlclConstants;
 import com.essaid.owlcl.core.util.OwlclUtil;
 
 public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
@@ -55,7 +62,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     IRI configIri = null;
     for (IRI iri : mapper.getOntologyIRIs())
     {
-      if (iri.toString().endsWith(Owlcl.MODULE_CONFIGURATION_IRI_SUFFIX))
+      if (iri.toString().endsWith(ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX))
       {
         configIri = iri;
         break;
@@ -70,12 +77,12 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     int index = configIri.toString().lastIndexOf("/") + 1;
     String prefix = configIri.toString().substring(0, index);
     String name = configIri.toString().substring(index);
-    name = name.substring(0, name.indexOf(Owlcl.MODULE_CONFIGURATION_IRI_SUFFIX));
+    name = name.substring(0, name.indexOf(ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX));
 
-    File configFile = new File(directory, name + Owlcl.MODULE_CONFIGURATION_IRI_SUFFIX);
+    File configFile = new File(directory, name + ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX);
 
     OWLOntologyLoaderConfiguration lc = new OWLOntologyLoaderConfiguration();
-    lc.addIgnoredImport(IRI.create(prefix + name + Owlcl.MODULE_SOURCE_IRI_SUFFIX));
+    lc.addIgnoredImport(IRI.create(prefix + name + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX));
 
     OWLOntologyDocumentSource ds = new FileDocumentSource(configFile);
 
@@ -127,9 +134,9 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     }
 
     OWLOntology configOntology = OwlclUtil.createOntology(
-        IRI.create(iriPrefix + name + Owlcl.MODULE_CONFIGURATION_IRI_SUFFIX), configManager);
+        IRI.create(iriPrefix + name + ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX), configManager);
     configManager.setOntologyDocumentIRI(configOntology,
-        IRI.create(new File(directory, name + Owlcl.MODULE_CONFIGURATION_IRI_SUFFIX)));
+        IRI.create(new File(directory, name + ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX)));
     File versionFile = new File(directory, "V-1");
     try
     {
@@ -140,7 +147,13 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
           + versionFile.getAbsolutePath(), e);
     }
 
-    saveOntology(configOntology);
+    try
+    {
+      configManager.saveOntology(configOntology);
+    } catch (OWLOntologyStorageException e)
+    {
+      throw new RuntimeException("Failed to save new configuration ontology.", e);
+    }
 
     AbstractModuleConfiguration config = new ModuleConfigurationV1(name, iriPrefix, directoryPath,
         configOntology);
@@ -164,246 +177,710 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
   // ================================================================================
   //
   // ================================================================================
-  
-  @Override
-  public void load() {
-    this.topFile = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_TOP_IRI_SUFFIX);
-    if (topFile.isFile())
-    {
-      OWLOntologyLoaderConfiguration lc;
-    }
-  
-  }
 
   @Override
   public void update() {
-    // TODO Auto-generated method stub
-  
-  }
 
-  @Override
-  public void loadAndUpdate() {
-  
-    // make sure the config manager has the directory as a mapping
-    configMan.addIRIMapper(new AutoIRIMapper(getDirectory().toFile(), false));
-  
-    File file = null;
-    OWLOntology o = null;
-  
-    // ================================================================================
-    // Top check
-    // ================================================================================
-    if (update)
+    //
+    if (getClassifiedBuilderNamesStated() == null)
     {
-  
-      file = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_TOP_IRI_SUFFIX);
-      if (!file.exists())
-      {
-        o = OwlclUtil.createOntology(getTopIri(), configMan);
-        configMan.setOntologyDocumentIRI(o, IRI.create(file));
-  
-      } else
-      {
-        o = OwlclUtil.loadOntologyIgnoreImports(file, configMan);
-      }
-      configMan.applyChange(new AddImport(o, configDf
-          .getOWLImportsDeclaration(getConfigurationIri())));
-      configMan.applyChange(new AddImport(o, configDf.getOWLImportsDeclaration(getIncludeIri())));
-      configMan.applyChange(new AddImport(o, configDf.getOWLImportsDeclaration(getExcludeIri())));
-      configMan.applyChange(new AddImport(o, configDf.getOWLImportsDeclaration(getLegacyIri())));
-      configMan.applyChange(new AddImport(o, configDf
-          .getOWLImportsDeclaration(getLegacyRemovedIri())));
-  
-      if (changedOntologies.contains(o))
-      {
-        changedOntologies.remove(o);
-        saveOntology(o);
-        configMan.removeOntology(o);
-      }
+      List<String> builders = new ArrayList<String>();
+      builders.add("");
+      setClassifiedBuilderNames(builders);
     }
-    // ================================================================================
-    // Configuration check
-    // ================================================================================
-    file = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_CONFIGURATION_IRI_SUFFIX);
+    if (getClassifiedFilenameStated() == null)
+    {
+      setClassifiedFilename(getClassifiedFileName());
+    }
+    if (getClassifiedIriStated() == null)
+    {
+      setClassifiedIri(getClassifiedIri());
+    }
+    if (isClassifiedStated() == null)
+    {
+      setClassified(false);
+    }
+    if (isClassifiedAddlegacyStated() == null)
+    {
+      setClassifiedAddlegacy(false);
+    }
+    if (isClassifiedCleanlegacyStated() == null)
+    {
+      setClassifiedCleanlegacy(false);
+    }
+
+    //
+    if (getUnclassifiedBuilderNamesStated() == null)
+    {
+      List<String> builders = new ArrayList<String>();
+      builders.add("");
+      setUnclassifiedBuilderNames(builders);
+    }
+    if (getUnclassifiedFilenameStated() == null)
+    {
+      setUnclassifiedFilename(getUnclassifiedFileName());
+    }
+    if (getUnclassifiedIriStated() == null)
+    {
+      setUnclassifiedIri(getUnclassifiedIri());
+    }
+    if (isUnclassifiedStated() == null)
+    {
+      setUnclassified(false);
+    }
+    if (isUnclassifiedAddlegacyStated() == null)
+    {
+      setUnclassifiedAddlegacy(false);
+    }
+    if (isUnclassifiedCleanlegacyStated() == null)
+    {
+      setUnclassifiedCleanlegacy(false);
+    }
+
+    configMan.applyChange(new AddImport(getConfigurationOntology(), configDf
+        .getOWLImportsDeclaration(getSourceConfigurationIri())));
+    configMan.applyChange(new AddImport(getConfigurationOntology(), configDf
+        .getOWLImportsDeclaration(OwlclConstants.OWLCL_ONTOLOGY_IRI)));
+
+    // check base files
+
+    // // check include
+    File includeFile = new File(getDirectory().toFile(), getName()
+        + ModuleConstant.MODULE_INCLUDE_IRI_SUFFIX);
+    if (!includeFile.exists())
+    {
+      OWLOntology includeOntology = OwlclUtil.createOntology(getIncludeIri(), configMan);
+      configMan.setOntologyDocumentIRI(includeOntology, IRI.create(includeFile));
+      saveOntology(includeOntology);
+    }
+
+    //
+    // // check exclude
+    File excludeFile = new File(getDirectory().toFile(), getName()
+        + ModuleConstant.MODULE_EXCLUDE_IRI_SUFFIX);
+    if (!excludeFile.exists())
+    {
+      OWLOntology excludeOntology = OwlclUtil.createOntology(getExcludeIri(), configMan);
+      configMan.setOntologyDocumentIRI(excludeOntology, IRI.create(excludeFile));
+      saveOntology(excludeOntology);
+    }
+    //
+    // // check legacy
+    File legacyFile = new File(getDirectory().toFile(), getName() + ModuleConstant.MODULE_LEGACY_IRI_SUFFIX);
+    if (!legacyFile.exists())
+    {
+      OWLOntology legacyOntology = OwlclUtil.createOntology(getLegacyIri(), configMan);
+      configMan.setOntologyDocumentIRI(legacyOntology, IRI.create(legacyFile));
+      saveOntology(legacyOntology);
+    }
+    //
+    // // check legacy removed
+    File legacyRemovedFile = new File(getDirectory().toFile(), getName()
+        + ModuleConstant.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
+    if (!legacyRemovedFile.exists())
+    {
+      OWLOntology legacyRemovedOntology = OwlclUtil
+          .createOntology(getLegacyRemovedIri(), configMan);
+      configMan.setOntologyDocumentIRI(legacyRemovedOntology, IRI.create(legacyRemovedFile));
+      saveOntology(legacyRemovedOntology);
+    }
+    //
+    // // check source
+    File sourcesFile = new File(getDirectory().toFile(), getName() + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
+    if (!sourcesFile.exists())
+    {
+      OWLOntology sourcesOntology = OwlclUtil
+          .createOntology(getSourceConfigurationIri(), configMan);
+      configMan.setOntologyDocumentIRI(sourcesOntology, IRI.create(sourcesFile));
+      saveOntology(sourcesOntology);
+      // the source manager should load this one
+      configMan.removeOntology(sourcesOntology);
+    }
+
+    // top
+    File file = new File(getDirectory().toFile(), getName() + ModuleConstant.MODULE_TOP_IRI_SUFFIX);
+    OWLOntology topOntology;
     if (!file.exists())
     {
-      throw new IllegalStateException(
-          "Module configuration file missing. This should not be possible");
-  
+      topOntology = OwlclUtil.createOntology(getTopIri(), configMan);
+      configMan.setOntologyDocumentIRI(topOntology, IRI.create(file));
+
     } else
     {
-      o = OwlclUtil.getOrLoadOntology(getConfigurationIri(), configMan);
+      topOntology = OwlclUtil.loadOntologyIgnoreImports(file, configMan);
     }
-    // the two imports
-    configMan.applyChange(new AddImport(o, configDf
-        .getOWLImportsDeclaration(getSourceConfigurationIri())));
-    configMan.applyChange(new AddImport(o, configDf.getOWLImportsDeclaration(Owlcl.ISF_TOOLS_IRI)));
-  
-    // annotations
-    checkUnclassifiedIri(o, getUnclassifiedIri(), logger);
-    String value = getAnnotations(o, ModuleVocab.module_unclassified_iri.getAP()).iterator().next()
-        .getValue().toString();
-    this.unclassifiedIri = IRI.create(value);
-  
-    checkClassifiedIri(o, getClassifiedIri(), logger);
-    value = getAnnotations(o, ModuleVocab.module_classified_iri.getAP()).iterator().next()
-        .getValue().toString();
-    this.classifiedIri = IRI.create(value);
-  
-    checkUnclassifiedFilename(o, getName() + Owlcl.MODULE_UNCLASSIFIED_SUFFIX, logger);
-    value = getAnnotations(o, ModuleVocab.module_unclassified_filename.getAP()).iterator().next()
-        .getValue().toString();
-    this.unclassifiedFilename = value;
-  
-    checkClassifiedFilename(o, getName() + Owlcl.MODULE_CLASSIFIED_SUFFIX, logger);
-    value = getAnnotations(o, ModuleVocab.module_classified_filename.getAP()).iterator().next()
-        .getValue().toString();
-    this.classifiedFilename = value;
-  
-    checkIsUnclassified(o, logger);
-    value = getAnnotations(o, ModuleVocab.module_is_unclassified.getAP()).iterator().next()
-        .getValue().toString();
-    this.unclassified = value.equalsIgnoreCase("true");
-  
-    checkIsClassified(o, logger);
-    value = getAnnotations(o, ModuleVocab.module_is_classified.getAP()).iterator().next()
-        .getValue().toString();
-    this.classified = value.equalsIgnoreCase("true");
-  
-    checkUnclassifiedAddlegacy(o, logger);
-    value = getAnnotations(o, ModuleVocab.module_unclassified_addlegacy.getAP()).iterator().next()
-        .getValue().toString();
-    this.unclassifiedAddlegacy = value.equalsIgnoreCase("true");
-  
-    checkClassifiedAddlegacy(o, logger);
-    value = getAnnotations(o, ModuleVocab.module_classified_addlegacy.getAP()).iterator().next()
-        .getValue().toString();
-    this.classifiedAddlegacy = value.equalsIgnoreCase("true");
-  
-    checkUnclassifiedCleanlegacy(o, logger);
-    value = getAnnotations(o, ModuleVocab.module_unclassified_cleanlegacy.getAP()).iterator()
-        .next().getValue().toString();
-    this.unclassifiedCleanlegacy = value.equalsIgnoreCase("true");
-  
-    checkClassifiedCleanlegacy(o, logger);
-    value = getAnnotations(o, ModuleVocab.module_classified_cleanlegacy.getAP()).iterator().next()
-        .getValue().toString();
-    this.classifiedCleanlegacy = value.equalsIgnoreCase("true");
-  
-    checkUnclassifiedBuilders(o, "", logger);
-    value = getAnnotations(o, ModuleVocab.module_unclassified_builders.getAP()).iterator().next()
-        .getValue().toString();
-    List<String> builderNames = new ArrayList<String>();
-    for (String name : value.split(","))
-    {
-      builderNames.add(name.trim());
-    }
-    this.unclassifiedBuilderNames = builderNames;
-  
-    checkClassifiedBuilders(o, "", logger);
-    value = getAnnotations(o, ModuleVocab.module_classified_builders.getAP()).iterator().next()
-        .getValue().toString();
-    builderNames = new ArrayList<String>();
-    for (String name : value.split(","))
-    {
-      builderNames.add(name.trim());
-    }
-    this.classifiedBuilderNames = builderNames;
-  
-    if (changedOntologies.contains(o))
-    {
-      changedOntologies.remove(o);
-      saveOntology(o);
-    }
-  
-    // ================================================================================
-    // Other owl files
-    // ================================================================================
-  
-    // check include
-    file = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_INCLUDE_IRI_SUFFIX);
-    if (!file.exists())
-    {
-      o = OwlclUtil.createOntology(getIncludeIri(), configMan);
-      configMan.setOntologyDocumentIRI(o, IRI.create(file));
-      saveOntology(o);
-    }
-  
-    // check exclude
-    file = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_EXCLUDE_IRI_SUFFIX);
-    if (!file.exists())
-    {
-      o = OwlclUtil.createOntology(getExcludeIri(), configMan);
-      configMan.setOntologyDocumentIRI(o, IRI.create(file));
-      saveOntology(o);
-    }
-  
-    // check legacy
-    file = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_LEGACY_IRI_SUFFIX);
-    if (!file.exists())
-    {
-      o = OwlclUtil.createOntology(getLegacyIri(), configMan);
-      configMan.setOntologyDocumentIRI(o, IRI.create(file));
-      saveOntology(o);
-    }
-  
-    // check legacy removed
-    file = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
-    if (!file.exists())
-    {
-      o = OwlclUtil.createOntology(getLegacyRemovedIri(), configMan);
-      configMan.setOntologyDocumentIRI(o, IRI.create(file));
-      saveOntology(o);
-    }
-  
-    // check source
-    file = new File(getDirectory().toFile(), getName() + Owlcl.MODULE_SOURCE_IRI_SUFFIX);
-    if (!file.exists())
-    {
-      o = OwlclUtil.createOntology(getSourceConfigurationIri(), configMan);
-      configMan.setOntologyDocumentIRI(o, IRI.create(file));
-      saveOntology(o);
-      // the source manager should load this one
-      configMan.removeOntology(o);
-    }
+    configMan.applyChange(new AddImport(topOntology, configDf
+        .getOWLImportsDeclaration(getConfigurationIri())));
+    configMan.applyChange(new AddImport(topOntology, configDf
+        .getOWLImportsDeclaration(getIncludeIri())));
+    configMan.applyChange(new AddImport(topOntology, configDf
+        .getOWLImportsDeclaration(getExcludeIri())));
+    configMan.applyChange(new AddImport(topOntology, configDf
+        .getOWLImportsDeclaration(getLegacyIri())));
+    configMan.applyChange(new AddImport(topOntology, configDf
+        .getOWLImportsDeclaration(getLegacyRemovedIri())));
+    saveOntology(topOntology);
+
   }
+
+  //
+
+  //
+  // checkIsUnclassified(o, logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_is_unclassified.getAP()).iterator().next()
+  // .getValue().toString();
+  // this.unclassified = value.equalsIgnoreCase("true");
+  //
+  // checkIsClassified(o, logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_is_classified.getAP()).iterator().next()
+  // .getValue().toString();
+  // this.classified = value.equalsIgnoreCase("true");
+  //
+  // checkUnclassifiedAddlegacy(o, logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_unclassified_addlegacy.getAP()).iterator().next()
+  // .getValue().toString();
+  // this.unclassifiedAddlegacy = value.equalsIgnoreCase("true");
+  //
+  // checkClassifiedAddlegacy(o, logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_classified_addlegacy.getAP()).iterator().next()
+  // .getValue().toString();
+  // this.classifiedAddlegacy = value.equalsIgnoreCase("true");
+  //
+  // checkUnclassifiedCleanlegacy(o, logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_unclassified_cleanlegacy.getAP()).iterator()
+  // .next().getValue().toString();
+  // this.unclassifiedCleanlegacy = value.equalsIgnoreCase("true");
+  //
+  // checkClassifiedCleanlegacy(o, logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_classified_cleanlegacy.getAP()).iterator().next()
+  // .getValue().toString();
+  // this.classifiedCleanlegacy = value.equalsIgnoreCase("true");
+  //
+  // checkUnclassifiedBuilders(o, "", logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_unclassified_builders.getAP()).iterator().next()
+  // .getValue().toString();
+  // List<String> builderNames = new ArrayList<String>();
+  // for (String name : value.split(","))
+  // {
+  // builderNames.add(name.trim());
+  // }
+  // this.unclassifiedBuilderNames = builderNames;
+  //
+  // checkClassifiedBuilders(o, "", logger);
+  // value = getAnnotations(o,
+  // ModuleVocab.module_classified_builders.getAP()).iterator().next()
+  // .getValue().toString();
+  // builderNames = new ArrayList<String>();
+  // for (String name : value.split(","))
+  // {
+  // builderNames.add(name.trim());
+  // }
+  // this.classifiedBuilderNames = builderNames;
+  //
+  // if (changedOntologies.contains(o))
+  // {
+  // changedOntologies.remove(o);
+  // saveOntology(o);
+  // }
+  //
+  // //
+  // ================================================================================
+  // // Other owl files
+  // //
+  // ================================================================================
+  //
+
+  // }
 
   public Set<OWLAnnotation> getAnnotations() {
     return getConfigurationOntology().getAnnotations();
   }
 
+  // ================================================================================
+  // classified builder names
+  // ================================================================================
+
+  @Override
+  public List<String> getClassifiedBuilderNamesStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_classified_builders.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      List<String> builderNames = new ArrayList<String>();
+      for (String name : i.next().getValue().toString().split(","))
+      {
+        builderNames.add(name.trim());
+      }
+      return builderNames;
+    } else
+    {
+      return null;
+    }
+  }
+
   @Override
   public List<String> getClassifiedBuilderNames() {
+    List<String> names = getClassifiedBuilderNamesStated();
+    return names != null ? names : new ArrayList<String>();
+  }
 
-    return this.classifiedBuilderNames;
+  public void setClassifiedBuilderNames(List<String> names) {
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_classified_builders.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_classified_builders.getAP(), configDf.getOWLLiteral(csv(names)))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // unclassified builder names
+  // ================================================================================
+
+  @Override
+  public List<String> getUnclassifiedBuilderNamesStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_unclassified_builders.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      List<String> builderNames = new ArrayList<String>();
+      for (String name : i.next().getValue().toString().split(","))
+      {
+        builderNames.add(name.trim());
+      }
+      return builderNames;
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public List<String> getUnclassifiedBuilderNames() {
+    List<String> names = getUnclassifiedBuilderNamesStated();
+    return names != null ? names : new ArrayList<String>();
+  }
+
+  public void setUnclassifiedBuilderNames(List<String> builderNames) {
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_unclassified_builders.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co,
+        configDf.getOWLAnnotation(ModuleVocab.module_unclassified_builders.getAP(),
+            configDf.getOWLLiteral(csv(builderNames)))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // classified file name
+  // ================================================================================
+
+  @Override
+  public String getClassifiedFilenameStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_classified_filename.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return i.next().getValue().toString();
+    } else
+    {
+      return null;
+    }
+
   }
 
   @Override
   public String getClassifiedFileName() {
-    if (classifiedFilename == null)
+    String fileName = getClassifiedFilenameStated();
+    return fileName != null ? fileName : getName() + ModuleConstant.MODULE_CLASSIFIED_SUFFIX;
+  }
+
+  @Override
+  public void setClassifiedFilename(String name) {
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_classified_filename.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_classified_filename.getAP(), configDf.getOWLLiteral(name))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // unclassified file name
+  // ================================================================================
+
+  @Override
+  public String getUnclassifiedFilenameStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_unclassified_filename.getAP(), false).iterator();
+    if (i.hasNext())
     {
-      return getName() + Owlcl.MODULE_CLASSIFIED_SUFFIX;
+      return i.next().getValue().toString();
+    } else
+    {
+      return null;
     }
-    return classifiedFilename;
+  }
+
+  @Override
+  public String getUnclassifiedFileName() {
+    String fileName = getUnclassifiedFilenameStated();
+    return fileName != null ? fileName : getName() + ModuleConstant.MODULE_UNCLASSIFIED_SUFFIX;
+  }
+
+  @Override
+  public void setUnclassifiedFilename(String name) {
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_unclassified_filename.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_unclassified_filename.getAP(), configDf.getOWLLiteral(name))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // classified IRI
+  // ================================================================================
+  @Override
+  public IRI getClassifiedIriStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_classified_iri.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return IRI.create(i.next().getValue().toString());
+    } else
+    {
+      return null;
+    }
   }
 
   @Override
   public IRI getClassifiedIri() {
-    if (classifiedIri == null)
-    {
-      return IRI.create(getIriPrefix() + getName() + Owlcl.MODULE_CLASSIFIED_SUFFIX);
-    }
-    return classifiedIri;
+    IRI iri = getClassifiedIriStated();
+    return iri != null ? iri : IRI.create(getIriPrefix() + getName()
+        + ModuleConstant.MODULE_CLASSIFIED_SUFFIX);
   }
+
+  @Override
+  public void setClassifiedIri(IRI iri) {
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_classified_iri.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_classified_iri.getAP(), configDf.getOWLLiteral(iri.toString()))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // unclassified IRI
+  // ================================================================================
+
+  @Override
+  public IRI getUnclassifiedIriStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_unclassified_iri.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return IRI.create(i.next().getValue().toString());
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public IRI getUnclassifiedIri() {
+    IRI iri = getUnclassifiedIriStated();
+    return iri != null ? iri : IRI.create(getIriPrefix() + getName()
+        + ModuleConstant.MODULE_UNCLASSIFIED_SUFFIX);
+  }
+
+  @Override
+  public void setUnclassifiedIri(IRI iri) {
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_unclassified_iri.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_unclassified_iri.getAP(), configDf.getOWLLiteral(iri.toString()))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // excluded source iris
+  // ================================================================================
 
   @Override
   public Set<IRI> getExcludedSourceIris() {
-    return this.excludedIris;
+    OWLOntology so = getSourceConfigurationOntology();
+    Set<IRI> iris = new HashSet<IRI>();
+
+    Iterator<OWLAnnotation> i = getAnnotations(so, ModuleVocab.module_source_exclude.getAP(), false)
+        .iterator();
+    while (i.hasNext())
+    {
+      iris.add(IRI.create(i.next().getValue().toString()));
+    }
+    return iris;
   }
 
   @Override
+  public void setSourceExcludedIris(Set<IRI> iris) {
+    OWLOntology so = getSourceConfigurationOntology();
+    removeAnnotations(so, ModuleVocab.module_source_exclude.getAP());
+    for (IRI iri : iris)
+    {
+      so.getOWLOntologyManager().applyChange(
+          new AddOntologyAnnotation(so, so
+              .getOWLOntologyManager()
+              .getOWLDataFactory()
+              .getOWLAnnotation(ModuleVocab.module_source_exclude.getAP(),
+                  so.getOWLOntologyManager().getOWLDataFactory().getOWLLiteral(iri.toString()))));
+    }
+    saveOntology(so);
+  }
+
+  // ================================================================================
+  // source iris
+  // ================================================================================
+
+  @Override
+  public Set<IRI> getSourceIris() {
+    Set<IRI> iris = new HashSet<IRI>();
+    OWLOntology so = getSourceConfigurationOntology();
+    for (OWLImportsDeclaration id : so.getImportsDeclarations())
+    {
+      iris.add(id.getIRI());
+    }
+    return iris;
+  }
+
+  @Override
+  public void setSourceIris(Set<IRI> iris) {
+    OWLOntology so = getSourceConfigurationOntology();
+    OWLOntologyManager man = so.getOWLOntologyManager();
+    OWLDataFactory df = man.getOWLDataFactory();
+
+    for (OWLImportsDeclaration id : so.getImportsDeclarations())
+    {
+      man.applyChange(new RemoveImport(so, id));
+    }
+    for (IRI iri : iris)
+    {
+      man.applyChange(new AddImport(so, df.getOWLImportsDeclaration(iri)));
+    }
+    saveOntology(so);
+  }
+
+  // ================================================================================
+  // classified
+  // ================================================================================
+
+  @Override
+  public Boolean isClassifiedStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_is_classified.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return i.next().getValue().toString().equalsIgnoreCase("true");
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean isClassified() {
+    Boolean classified = isClassifiedStated();
+    return classified != null ? classified : false;
+  }
+
+  @Override
+  public void setClassified(boolean classified) {
+    String value = classified ? "true" : "false";
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_is_classified.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_is_classified.getAP(), configDf.getOWLLiteral(value))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // unclassified
+  // ================================================================================
+
+  @Override
+  public Boolean isUnclassifiedStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_is_unclassified.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return i.next().getValue().toString().equalsIgnoreCase("true");
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean isUnclassified() {
+    Boolean classified = isUnclassifiedStated();
+    return classified != null ? classified : false;
+  }
+
+  @Override
+  public void setUnclassified(boolean unclassified) {
+    String value = unclassified ? "true" : "false";
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_is_unclassified.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_is_unclassified.getAP(), configDf.getOWLLiteral(value))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // classified add legacy
+  // ================================================================================
+
+  @Override
+  public Boolean isClassifiedAddlegacyStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_classified_addlegacy.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return i.next().getValue().toString().equalsIgnoreCase("true");
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean isClassifiedAddlegacy() {
+    Boolean classified = isClassifiedAddlegacyStated();
+    return classified != null ? classified : false;
+  }
+
+  @Override
+  public void setClassifiedAddlegacy(boolean addlegacy) {
+    String value = addlegacy ? "true" : "false";
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_classified_addlegacy.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_classified_addlegacy.getAP(), configDf.getOWLLiteral(value))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // classified clean legacy
+  // ================================================================================
+
+  @Override
+  public Boolean isClassifiedCleanlegacyStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_classified_cleanlegacy.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return i.next().getValue().toString().equalsIgnoreCase("true");
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean isClassifiedCleanLegacy() {
+    Boolean classified = isClassifiedCleanlegacyStated();
+    return classified != null ? classified : false;
+  }
+
+  @Override
+  public void setClassifiedCleanlegacy(boolean cleanlegacy) {
+    String value = cleanlegacy ? "true" : "false";
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_classified_cleanlegacy.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_classified_cleanlegacy.getAP(), configDf.getOWLLiteral(value))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // unclassified add legacy
+  // ================================================================================
+
+  @Override
+  public Boolean isUnclassifiedAddlegacyStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_unclassified_addlegacy.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return i.next().getValue().toString().equalsIgnoreCase("true");
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean isUnclassifiedAddlegacy() {
+    Boolean classified = isUnclassifiedAddlegacyStated();
+    return classified != null ? classified : false;
+  }
+
+  @Override
+  public void setUnclassifiedAddlegacy(boolean addlegacy) {
+    String value = addlegacy ? "true" : "false";
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_unclassified_addlegacy.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_unclassified_addlegacy.getAP(), configDf.getOWLLiteral(value))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  // unclassified clean legacy
+  // ================================================================================
+
+  @Override
+  public Boolean isUnclassifiedCleanlegacyStated() {
+    Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+        ModuleVocab.module_unclassified_cleanlegacy.getAP(), false).iterator();
+    if (i.hasNext())
+    {
+      return i.next().getValue().toString().equalsIgnoreCase("true");
+    } else
+    {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean isUnclassifiedCleanLegacy() {
+    Boolean classified = isUnclassifiedCleanlegacyStated();
+    return classified != null ? classified : false;
+  }
+
+  @Override
+  public void setUnclassifiedCleanlegacy(boolean cleanlegacy) {
+    String value = cleanlegacy ? "true" : "false";
+    OWLOntology co = getConfigurationOntology();
+    removeAnnotations(co, ModuleVocab.module_unclassified_cleanlegacy.getAP());
+    configMan.applyChange(new AddOntologyAnnotation(co, configDf.getOWLAnnotation(
+        ModuleVocab.module_unclassified_cleanlegacy.getAP(), configDf.getOWLLiteral(value))));
+    saveOntology(co);
+  }
+
+  // ================================================================================
+  //
+  // ================================================================================
+
+  // ================================================================================
+  //
+  // ================================================================================
+
+  @Override
   public IRI getExcludeIri() {
-    return IRI.create(getIriPrefix() + getName() + Owlcl.MODULE_EXCLUDE_IRI_SUFFIX);
+    return IRI.create(getIriPrefix() + getName() + ModuleConstant.MODULE_EXCLUDE_IRI_SUFFIX);
   }
 
   @Override
@@ -413,7 +890,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   @Override
   public IRI getIncludeIri() {
-    return IRI.create(getIriPrefix() + getName() + Owlcl.MODULE_INCLUDE_IRI_SUFFIX);
+    return IRI.create(getIriPrefix() + getName() + ModuleConstant.MODULE_INCLUDE_IRI_SUFFIX);
   }
 
   @Override
@@ -423,7 +900,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   @Override
   public IRI getLegacyIri() {
-    return IRI.create(this.getIriPrefix() + this.getName() + Owlcl.MODULE_LEGACY_IRI_SUFFIX);
+    return IRI.create(this.getIriPrefix() + this.getName() + ModuleConstant.MODULE_LEGACY_IRI_SUFFIX);
   }
 
   @Override
@@ -434,7 +911,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
   @Override
   public IRI getLegacyRemovedIri() {
     return IRI
-        .create(this.getIriPrefix() + this.getName() + Owlcl.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
+        .create(this.getIriPrefix() + this.getName() + ModuleConstant.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
   }
 
   @Override
@@ -444,18 +921,39 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   @Override
   public IRI getSourceConfigurationIri() {
-    return IRI.create(this.getIriPrefix() + this.getName() + Owlcl.MODULE_SOURCE_IRI_SUFFIX);
+    return IRI.create(this.getIriPrefix() + this.getName() + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
   }
 
   @Override
   public OWLOntology getSourceConfigurationOntology() {
     if (sourceConfigurationOntology == null)
     {
-      File sourceFile = new File(getDirectory().toFile(), getName()
-          + Owlcl.MODULE_SOURCE_IRI_SUFFIX);
-      sourceConfigurationOntology = OwlclUtil.loadOntology(sourceFile, getSourcesManager());
+      OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+      man.clearIRIMappers();
+      OWLOntologyLoaderConfiguration lc = new OWLOntologyLoaderConfiguration();
+      lc = lc.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+      try
+      {
+        File sourceFile = new File(getDirectory().toFile(), getName()
+            + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
+        if (sourceFile.exists())
+        {
+          sourceConfigurationOntology = man.loadOntologyFromOntologyDocument(
+              new FileDocumentSource(sourceFile), lc);
+        } else
+        {
+
+          sourceConfigurationOntology = man.createOntology(getSourceConfigurationIri());
+          man.setOntologyDocumentIRI(sourceConfigurationOntology, IRI.create(sourceFile));
+          man.saveOntology(sourceConfigurationOntology);
+        }
+      } catch (Exception e)
+      {
+        throw new RuntimeException("Failed to create or load source configuration ontology.", e);
+      }
     }
-    return this.sourceConfigurationOntology;
+
+    return sourceConfigurationOntology;
   }
 
   public OWLOntology getSourceOntology() {
@@ -501,333 +999,12 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   @Override
   public IRI getTopIri() {
-    return IRI.create(getIriPrefix() + getName() + Owlcl.MODULE_TOP_IRI_SUFFIX);
+    return IRI.create(getIriPrefix() + getName() + ModuleConstant.MODULE_TOP_IRI_SUFFIX);
   }
 
   @Override
   public OWLOntology getTopOntology() {
     return OwlclUtil.getOrLoadOntology(getTopIri(), configMan);
-  }
-
-  @Override
-  public List<String> getUnclassifiedBuilderNames() {
-
-    return this.unclassifiedBuilderNames;
-  }
-
-  public IRI getUnclassifiedIri() {
-    if (unclassifiedIri == null)
-    {
-      return IRI.create(getIriPrefix() + getName() + Owlcl.MODULE_UNCLASSIFIED_SUFFIX);
-    }
-    return unclassifiedIri;
-  }
-
-  @Override
-  public String getUnclassifiedFileName() {
-    if (unclassifiedFilename == null)
-    {
-      return getName() + Owlcl.MODULE_UNCLASSIFIED_SUFFIX;
-    }
-    return unclassifiedFilename;
-  }
-
-  @Override
-  public boolean isClassified() {
-    return classified;
-  }
-
-  @Override
-  public boolean isClassifiedAddlegacy() {
-    return this.classifiedAddlegacy;
-  }
-
-  @Override
-  public boolean isClassifiedCleanLegacy() {
-    return this.classifiedCleanlegacy;
-  }
-
-  @Override
-  public boolean isUnclassified() {
-    return unclassified;
-  }
-
-  @Override
-  public boolean isUnclassifiedAddlegacy() {
-    return this.unclassifiedAddlegacy;
-  }
-
-  @Override
-  public boolean isUnclassifiedCleanLegacy() {
-    return this.unclassifiedCleanlegacy;
-  }
-
-  @Override
-  public void setClassified(boolean classified) {
-    this.classified = classified;
-    String value = classified ? "true" : "false";
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_is_classified.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_is_classified.getAP(), df.getOWLLiteral(value))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  @Override
-  public void setClassifiedAddlegacy(boolean addlegacy) {
-    this.classifiedAddlegacy = addlegacy;
-    String value = addlegacy ? "true" : "false";
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_classified_addlegacy.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_classified_addlegacy.getAP(), df.getOWLLiteral(value))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  public void setClassifiedBuilderNames(List<String> names) {
-    // these are not changable for now
-    this.classifiedBuilderNames = names;
-  }
-
-  @Override
-  public void setClassifiedCleanlegacy(boolean cleanlegacy) {
-    this.classifiedCleanlegacy = cleanlegacy;
-    String value = cleanlegacy ? "true" : "false";
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_classified_cleanlegacy.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_classified_cleanlegacy.getAP(), df.getOWLLiteral(value))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  @Override
-  public void setClassifiedFilename(String name) {
-    this.classifiedFilename = name;
-
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_classified_filename.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_classified_filename.getAP(), df.getOWLLiteral(name))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  @Override
-  public void setClassifiedIri(IRI iri) {
-    this.classifiedIri = iri;
-
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_classified_iri.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_classified_iri.getAP(), df.getOWLLiteral(iri.toString()))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  @Override
-  public void setSourceExcludedIris(Set<IRI> iris) {
-    OWLOntology so = getSourceConfigurationOntology();
-    OWLOntologyManager man = so.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : so.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_source_exclude.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(so, a));
-      }
-    }
-
-    for (IRI iri : iris)
-    {
-      man.applyChange(new AddOntologyAnnotation(so, df.getOWLAnnotation(
-          ModuleVocab.module_source_exclude.getAP(), df.getOWLLiteral(iri.toString()))));
-    }
-    saveOntology(so);
-  }
-
-  @Override
-  public void setSourceIris(Set<IRI> iris) {
-    OWLOntology so = getSourceConfigurationOntology();
-    OWLOntologyManager man = so.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLImportsDeclaration id : so.getImportsDeclarations())
-    {
-      man.applyChange(new RemoveImport(so, id));
-    }
-    for (IRI iri : iris)
-    {
-      man.applyChange(new AddImport(so, df.getOWLImportsDeclaration(iri)));
-    }
-    saveOntology(so);
-  }
-
-  @Override
-  public void setUnclassified(boolean unclassified) {
-    this.unclassified = unclassified;
-    String value = unclassified ? "true" : "false";
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_is_unclassified.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_is_unclassified.getAP(), df.getOWLLiteral(value))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  @Override
-  public void setUnclassifiedAddlegacy(boolean addlegacy) {
-    this.unclassifiedAddlegacy = addlegacy;
-    String value = addlegacy ? "true" : "false";
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_unclassified_addlegacy.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_unclassified_addlegacy.getAP(), df.getOWLLiteral(value))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  public void setUnclassifiedBuilderNames(List<String> builderNames) {
-    // these are not changable for now
-    this.unclassifiedBuilderNames = builderNames;
-  }
-
-  @Override
-  public void setUnclassifiedCleanlegacy(boolean cleanlegacy) {
-    this.unclassifiedCleanlegacy = cleanlegacy;
-    String value = cleanlegacy ? "true" : "false";
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_unclassified_cleanlegacy.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_unclassified_cleanlegacy.getAP(), df.getOWLLiteral(value))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  @Override
-  public void setUnclassifiedFilename(String name) {
-    this.unclassifiedFilename = name;
-
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_unclassified_filename.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_unclassified_filename.getAP(), df.getOWLLiteral(name))));
-
-    saveOntology(getConfigurationOntology());
-
-  }
-
-  @Override
-  public void setUnclassifiedIri(IRI iri) {
-    this.unclassifiedIri = iri;
-
-    OWLOntology co = getConfigurationOntology();
-    OWLOntologyManager man = co.getOWLOntologyManager();
-    OWLDataFactory df = man.getOWLDataFactory();
-
-    for (OWLAnnotation a : co.getAnnotations())
-    {
-      if (a.getProperty().equals(ModuleVocab.module_unclassified_iri.getAP()))
-      {
-        man.applyChange(new RemoveOntologyAnnotation(co, a));
-      }
-    }
-    man.applyChange(new AddOntologyAnnotation(co, df.getOWLAnnotation(
-        ModuleVocab.module_unclassified_iri.getAP(), df.getOWLLiteral(iri.toString()))));
-
-    saveOntology(getConfigurationOntology());
   }
 
 }

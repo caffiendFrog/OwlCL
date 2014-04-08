@@ -97,7 +97,6 @@ public class OntologyFiles {
         {
           continue;
         }
-        file.equals(null);
         OWLOntology o = null;
         OWLOntologyManager man = OWLManager.createOWLOntologyManager();
         man.clearIRIMappers();

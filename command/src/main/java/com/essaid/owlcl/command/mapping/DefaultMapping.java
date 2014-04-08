@@ -12,12 +12,11 @@ import org.semanticweb.owlapi.model.OWLAnnotationSubject;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLOntology;
 
-import com.essaid.owlcl.command.module.OwlclVocab;
 import com.essaid.owlcl.core.util.OwlclUtil;
 
 public class DefaultMapping implements Mapping {
 
-	private OWLAnnotationProperty property = OwlclVocab.iri_mapps_to.getAP();
+	private OWLAnnotationProperty property = com.essaid.owlcl.core.util.OwlclVocab.iri_mapps_to.getAP();
 
 	private Map<IRI, Set<IRI>> forwardMap = new HashMap<IRI, Set<IRI>>();
 	private Map<IRI, Set<IRI>> backwardMap = new HashMap<IRI, Set<IRI>>();

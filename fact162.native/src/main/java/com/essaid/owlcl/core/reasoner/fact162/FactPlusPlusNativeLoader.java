@@ -35,6 +35,13 @@ public class FactPlusPlusNativeLoader implements IInitializable {
 
     String libPath = manager.getNativeResourcePrefix("fact162") + libName;
 
+    // for Daniela's CentOS build server
+    String qualifiers = System.getProperty(IOwlclManager.OWLCL_ARCH_QUALIFIERS_PROPERTY);
+    if (qualifiers != null && qualifiers.contains("glibc2.2"))
+    {
+      libPath += "-glibc2.2";
+    }
+
     ClassLoader cl = this.getClass().getClassLoader();
 
     InputStream is = cl.getResourceAsStream(libPath);

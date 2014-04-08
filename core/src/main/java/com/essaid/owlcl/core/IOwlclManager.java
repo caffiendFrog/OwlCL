@@ -10,6 +10,7 @@ public interface IOwlclManager {
   String OWLCL_WORK_DIR_PROPERTY = "owlcl.work.dir";
   String OWLCL_OUTPUT_DIR_PROPERTY = "owlcl.output.dir";
   String OWLCL_OUTPUT_DIR_NAME = "owlcl-jobs";
+  String OWLCL_ARCH_QUALIFIERS_PROPERTY = "owlcl.arch.qualifiers";
 
   public File getTemporaryDirectory();
 

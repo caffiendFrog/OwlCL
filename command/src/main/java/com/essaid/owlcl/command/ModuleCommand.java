@@ -1,7 +1,9 @@
 package com.essaid.owlcl.command;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -223,6 +225,8 @@ public class ModuleCommand extends AbstractCommand {
   OWLOntology sourceOntology;
   IModule module = null;
 
+  Set<ModuleCommand> imports = new HashSet<ModuleCommand>();
+
   protected void doInitialize() {
     configure();
   };
@@ -237,12 +241,12 @@ public class ModuleCommand extends AbstractCommand {
 
     int version = Util.getModuleVersion(getDirectory());
     getLogger().info("Module version is: {}", version);
-    if (version != IModule.VERSION)
+    if (version != IModuleConfig.CURRENT_VERSION)
     {
       getLogger()
           .error(
               "Module version {} does not match this tools's version {} , skipping. Please update module {} at: {}",
-              version, IModule.VERSION, moduleName, getDirectory().getAbsolutePath());
+              version, IModuleConfig.CURRENT_VERSION, moduleName, getDirectory().getAbsolutePath());
       return false;
     }
     return true;
@@ -259,27 +263,30 @@ public class ModuleCommand extends AbstractCommand {
     }
 
     output.mkdirs();
+    if (module == null)
+    {
 
-    IModuleConfig moduleComfig = new ModuleConfigurationV1(directory, getMain()
-        .getSharedBaseManager(), getMain().getSharedBaseManager());
+      IModuleConfig moduleComfig = new ModuleConfigurationV1(directory, getMain()
+          .getSharedBaseManager(), getMain().getSharedBaseManager());
 
-    injector.injectMembers(moduleComfig);
+      injector.injectMembers(moduleComfig);
 
-    moduleComfig.loadConfiguration();
+      moduleComfig.loadConfiguration();
 
-    module = new DefaultModule(moduleComfig, output);
-    injector.injectMembers(module);
-    ;
+      module = new DefaultModule(moduleComfig, output);
+
+      injector.injectMembers(module);
+    }
 
     // override the configuration from command line
     if (reasonedSet)
     {
-      module.setGenerateInferred(reasoned);
+      module.setClassified(reasoned);
     }
 
     if (unReasonedSet)
     {
-      module.setGenerateInferred(unReasoned);
+      module.setClassified(unReasoned);
     }
 
     if (addLegacySet)
@@ -290,6 +297,16 @@ public class ModuleCommand extends AbstractCommand {
     if (cleanLegacySet)
     {
       module.setCleanLegacy(cleanLegacy);
+    }
+
+    if (sourceOntology != null)
+    {
+      module.getModuleConfiguration().setSourceOntology(sourceOntology);
+    }
+
+    if (sourceReasoner != null)
+    {
+      module.getModuleConfiguration().setSourceReasoner(sourceReasoner);
     }
 
     module.generateModule();

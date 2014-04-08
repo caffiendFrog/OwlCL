@@ -21,6 +21,8 @@ public interface IModuleConfig {
   IRI getConfigurationIri();
 
   OWLOntology getConfigurationOntology();
+  
+  Set<IRI> getSourceIris();
 
   IRI getTopIri();
 

@@ -3,6 +3,7 @@ package com.essaid.owlcl.command.module;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,9 +64,8 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   private OWLOntology generatedModule;
   private OWLOntology generatedModuleInferred;
 
-  private Map<IModule, Boolean> generateImports = new HashMap<IModule, Boolean>();
-  private Map<IModule, Boolean> generateInferredImports = new HashMap<IModule, Boolean>();
-  private Map<IModule, Boolean> bothImports = new HashMap<IModule, Boolean>();
+  // private Map<IModule, Boolean> bothImports = new HashMap<IModule,
+  // Boolean>();
 
   private Boolean addLegacy;
   private Boolean cleanLegacy;
@@ -78,57 +78,16 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   private boolean saved;
 
+  private boolean finalUnclassified;
+
+  private boolean finalClassified;
+
   public DefaultModule(IModuleConfig config, File outputDirectory) {
     this.moduleConfiguration = config;
     this.outputDirectory = outputDirectory;
+    this.outputDirectory.mkdirs();
     this.genManager = OWLManager.createOWLOntologyManager();
     this.df = genManager.getOWLDataFactory();
-  }
-
-  // ================================================================================
-  // generated module imports
-  // ================================================================================
-
-  @Override
-  public void importModuleIntoGenerated(IModule module, Boolean inferred) {
-    generateImports.put(module, inferred);
-    setGenerationType(module, inferred);
-  }
-
-  @Override
-  public void importModuleIntoGeneratedInferred(IModule module, Boolean inferred) {
-    generateInferredImports.put(module, inferred);
-    setGenerationType(module, inferred);
-  }
-
-  @Override
-  public void importModuleIntoBoth(IModule module, Boolean inferred) {
-    bothImports.put(module, inferred);
-    setGenerationType(module, inferred);
-  }
-
-  private void setGenerationType(IModule module, Boolean inferred) {
-    if (inferred == null)
-    {
-      module.setGenerate(true);
-      module.setGenerateInferred(true);
-    } else
-    {
-      if (inferred)
-      {
-        module.setGenerateInferred(true);
-        module.setGenerate(false);
-      } else
-      {
-        module.setGenerateInferred(false);
-        module.setGenerate(true);
-      }
-    }
-
-  }
-
-  public OWLOntologyManager getGenerationManager() {
-    return this.genManager;
   }
 
   @Override
@@ -136,354 +95,456 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
     return this.moduleConfiguration;
   }
 
-  //
-  // @Override
-  // public IRI getModuleIri() {
-  // return this.moduleConfiguration.getGeneratedModuleIri();
-  // }
-  //
-  // @Override
-  // public IRI getModuleIriInferred() {
-  // return generatedModuleInferredIri;
-  // }
-  //
-  // public File getModuleDirectory() {
-  // return moduleDirectory;
-  // }
-  //
-  // @Override
-  // public String getName() {
-  // return name;
-  // }
-  //
-  // @Override
-  // public OWLReasoner getSourceReasoned() {
-  // return sourceReasoner;
-  // }
-
   @Override
-  public void generateModule() {
-    if (generated)
+  public OWLOntology getBuildUnclassified() {
+    if (generatedModule == null)
     {
-      return;
-    }
-    generated = true;
-
-    logger.info("Generating module: " + getModuleConfiguration().getModuleName());
-
-    List<IModuleBuilder> builders = new ArrayList<IModuleBuilder>();
-    List<IModuleBuilder> buildersInferred = new ArrayList<IModuleBuilder>();
-
-    Set<OWLAxiom> includeAxioms = OwlclUtil.getAxioms(
-        this.moduleConfiguration.getIncludeOntology(), true);
-    Set<OWLAxiom> excludeAxioms = OwlclUtil.getAxioms(
-        this.moduleConfiguration.getExcludeOntology(), true);
-
-    if (isGenerate())
-    {
-      report.info("Is generate is true.");
-      generatedModule = OwlclUtil.createOntology(this.moduleConfiguration.getGeneratedModuleIri(),
+      logger
+          .info("Generating unclassified module for: " + getModuleConfiguration().getName());
+      List<IModuleBuilder> builders = new ArrayList<IModuleBuilder>();
+      generatedModule = OwlclUtil.createOntology(this.moduleConfiguration.getUnclassifiedIri(),
           genManager);
-      for (String builderName : this.moduleConfiguration.getBuildersNames())
+      for (String builderName : this.moduleConfiguration.getUnclassifiedBuilderNames())
       {
         report.info("Doing builder name: " + builderName);
         IModuleBuilder builder = builderManager.getBuilder(builderName, this);
         if (builder == null)
         {
           logger.error("No builder named {} was found for module {}", builderName,
-              moduleConfiguration.getModuleName());
+              moduleConfiguration.getName());
           continue;
         }
         report.info("Found builder: " + builder.getClass().getName());
         builder.build(this, false);
         builders.add(builder);
       }
-      addAxioms(includeAxioms);
-      removeAxioms(excludeAxioms);
 
-      if (isAddLegacy())
+      // notify builders
+      Iterator<IModuleBuilder> i = builders.iterator();
+      while (i.hasNext())
       {
-        addAxioms(OwlclUtil.getAxioms(this.moduleConfiguration.getLegacyOntology(), true));
+        IModuleBuilder builder = i.next();
+        i.remove();
+        builder.buildFinished(this);
       }
-    }
 
-    if (isGenerateInferred())
+    }
+    return new OWLOntologyWrapper(generatedModule);
+  }
+
+  @Override
+  public OWLOntology getFinalUnclassified() {
+    if (!finalUnclassified)
     {
-      report.info("Is generate inferred is true.");
-      generatedModuleInferred = OwlclUtil.createOntology(
-          this.moduleConfiguration.getGeneratedInferredModuleIri(), genManager);
-      for (String builderName : this.moduleConfiguration.getBuildersInferredNames())
+      finalUnclassified = true;
+      getBuildUnclassified();
+      addAnnotationsUnclassified(moduleConfiguration.getIncludeOntology().getAnnotations(), null);
+      addAxiomsUnclassified(OwlclUtil.getAxioms(moduleConfiguration.getIncludeOntology(), true),
+          null);
+      removeAxiomsUnclassified(OwlclUtil.getAxioms(moduleConfiguration.getExcludeOntology(), true),
+          null);
+
+      if (isAddLegacyUnclassified())
+      {
+        addAxiomsUnclassified(OwlclUtil.getAxioms(moduleConfiguration.getLegacyOntology(), true),
+            null);
+      }
+
+    }
+    return generatedModule;
+  }
+
+  @Override
+  public OWLOntology getBuildClassified() {
+
+    if (generatedModuleInferred == null)
+    {
+      logger.info("Generating classified module for: " + getModuleConfiguration().getName());
+      List<IModuleBuilder> builders = new ArrayList<IModuleBuilder>();
+      generatedModule = OwlclUtil.createOntology(
+          this.moduleConfiguration.getClassifiedIri(), genManager);
+      for (String builderName : this.moduleConfiguration.getClassifiedBuilderNames())
       {
         report.info("Doing builder name: " + builderName);
         IModuleBuilder builder = builderManager.getBuilder(builderName, this);
         if (builder == null)
         {
-          logger.error("No inferred builder named {} was found for module {}", builderName,
-              moduleConfiguration.getModuleName());
+          logger.error("No builder named {} was found for module {}", builderName,
+              moduleConfiguration.getName());
           continue;
         }
         report.info("Found builder: " + builder.getClass().getName());
-        builder.build(this, true);
-        buildersInferred.add(builder);
+        builder.build(this, false);
+        builders.add(builder);
       }
-      addAxiomsInferred(includeAxioms);
-      removeAxiomsInferred(excludeAxioms);
 
-      if (isAddLegacy())
+      // notify builders
+      Iterator<IModuleBuilder> i = builders.iterator();
+      while (i.hasNext())
       {
-
-        addAxiomsInferred(OwlclUtil.getAxioms(this.moduleConfiguration.getLegacyOntology(), true));
+        IModuleBuilder builder = i.next();
+        i.remove();
+        builder.buildFinished(this);
       }
-    }
 
-    // notify builders, finished
-    Iterator<IModuleBuilder> i = builders.iterator();
-    while (i.hasNext())
-    {
-      IModuleBuilder builder = i.next();
-      i.remove();
-      builder.buildFinished(this);
-    }
-
-    i = buildersInferred.iterator();
-    while (i.hasNext())
-    {
-      IModuleBuilder builder = i.next();
-      i.remove();
-      builder.buildFinished(this);
-    }
-
-    // clean legacy
-    if (isCleanLegacy())
-    {
-      OWLOntology legacyOntology = this.moduleConfiguration.getLegacyOntology();
-      if (legacyOntology != null)
+      if (isAddLegacyClassified())
       {
-        Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
-        if (generatedModule != null)
-        {
-          axioms = generatedModule.getAxioms();
-        }
-        if (generatedModuleInferred != null)
-        {
-          axioms.addAll(generatedModuleInferred.getAxioms());
-        }
-        axioms.addAll(OwlclUtil.getAxioms(this.moduleConfiguration.getExcludeOntology(), true));
-
-        Set<OWLAxiom> removedAxioms = new HashSet<OWLAxiom>();
-
-        for (OWLOntology o : legacyOntology.getImportsClosure())
-        {
-          List<OWLOntologyChange> changes = o.getOWLOntologyManager().removeAxioms(o, axioms);
-          logger.info("Cleaned legacy ontology: " + o.getOntologyID() + ", change count: "
-              + changes.size());
-
-          for (OWLOntologyChange change : changes)
-          {
-            removedAxioms.add(change.getAxiom());
-          }
-        }
-
-        OWLOntology legacyRemovedOntology = this.moduleConfiguration.getLegacyRemovedOntology();
-        if (legacyRemovedOntology != null)
-        {
-          legacyRemovedOntology.getOWLOntologyManager().addAxioms(legacyRemovedOntology,
-              removedAxioms);
-        }
+        addAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getLegacyOntology(), true),
+            null);
       }
+
     }
 
-    Set<IModule> imports = new HashSet<IModule>();
-    imports.addAll(generateImports.keySet());
-    imports.addAll(generateInferredImports.keySet());
-    imports.addAll(bothImports.keySet());
-
-    for (IModule module : imports)
+    return new OWLOntologyWrapper(generatedModuleInferred);
+  }
+  
+  @Override
+  public OWLOntology getFinalClassified() {
+    if (!finalClassified)
     {
-      module.generateModule();
-    }
+      finalClassified = true;
+      getBuildClassified();
+      addAnnotationsClassified(moduleConfiguration.getIncludeOntology().getAnnotations(), null);
+      addAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getIncludeOntology(), true),
+          null);
+      removeAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getExcludeOntology(), true),
+          null);
 
-    report.finish();
+      if (isAddLegacyClassified())
+      {
+        addAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getLegacyOntology(), true),
+            null);
+      }
+
+    }
+    return generatedModuleInferred;
+  }
+
+  // ================================================================================
+  // properties
+  // ================================================================================
+
+  private Boolean generate = null;
+
+  @Override
+  public void setUnclassified(Boolean generate) {
+    this.generate = generate;
   }
 
   @Override
-  public boolean isAddLegacy() {
-    if (addLegacy == null)
+  public boolean isUnclassified() {
+    if (this.generate == null)
     {
-      return this.moduleConfiguration.isAddLegacy();
+      return this.moduleConfiguration.isUnclassified();
     }
-    return addLegacy;
+    return this.generate;
+  }
+
+  private Boolean generateInferred = null;
+
+  @Override
+  public void setClassified(Boolean generateInferred) {
+    this.generateInferred = generateInferred;
   }
 
   @Override
-  public boolean isCleanLegacy() {
-    if (cleanLegacy == null)
+  public boolean isClassified() {
+    if (this.generateInferred == null)
     {
-      return this.moduleConfiguration.isCleanLegacy();
+      return this.moduleConfiguration.isClassified();
     }
-    return cleanLegacy;
+    return this.generateInferred;
+  }
+
+  // ================================================================================
+  // module imports
+  // ================================================================================
+
+  private Map<IModule, Boolean> generateImports = new HashMap<IModule, Boolean>();
+  private Map<IModule, Boolean> generateInferredImports = new HashMap<IModule, Boolean>();
+
+  @Override
+  public void importModuleIntoUnclassified(IModule module, Boolean inferred) {
+    generateImports.put(module, inferred);
+    // setGenerationType(module, inferred);
   }
 
   @Override
-  public void saveGeneratedModule() {
-    if (saved)
+  public void importModuleIntoClassified(IModule module, Boolean inferred) {
+    generateInferredImports.put(module, inferred);
+    // setGenerationType(module, inferred);
+  }
+
+  private void setGenerationType(IModule module, Boolean inferred) {
+    if (inferred == null)
     {
-      return;
-    }
-    saved = true;
-
-    // Set<Entry<Module, Boolean>> mergedImports = new HashSet<>();
-    Set<IModule> allImportedModules = new HashSet<IModule>();
-
-    if (isGenerate())
+      module.setUnclassified(true);
+      module.setClassified(true);
+    } else
     {
-      report.info("Saving generate module.");
-      allImportedModules.addAll(bothImports.keySet());
-      allImportedModules.addAll(generateImports.keySet());
-
-      for (Entry<IModule, Boolean> entry : bothImports.entrySet())
+      if (inferred)
       {
-        if (entry.getValue() == null || entry.getValue() == false)
-        {
-          // import matching type
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
-        } else if (entry.getValue() == true)
-        {
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModule);
-        }
+        module.setClassified(true);
+        module.setUnclassified(false);
+      } else
+      {
+        module.setClassified(false);
+        module.setUnclassified(true);
       }
-
-      for (Entry<IModule, Boolean> entry : generateImports.entrySet())
-      {
-        if (entry.getValue() == false)
-        {
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
-        } else if (entry.getValue() == true)
-        {
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModule);
-        }
-      }
-
-      try
-      {
-        logger.info("Saving module: " + getModuleConfiguration().getModuleName()
-            + " into ontology: " + generatedModule.getOntologyID() + " in  directory: "
-            + getOutputDirectory() + " and file: "
-            + this.moduleConfiguration.getGenerateModuleFileName());
-
-        genManager.saveOntology(generatedModule, new FileOutputStream(new File(
-            getOutputDirectory(), this.moduleConfiguration.getGenerateModuleFileName())));
-      } catch (OWLOntologyStorageException | FileNotFoundException e)
-      {
-        throw new RuntimeException("Failed to save module generated "
-            + getModuleConfiguration().getModuleName() + " with file name "
-            + this.moduleConfiguration.getGenerateModuleFileName(), e);
-      }
-
-    }
-
-    if (isGenerateInferred())
-    {
-      allImportedModules.addAll(bothImports.keySet());
-      allImportedModules.addAll(generateInferredImports.keySet());
-
-      for (Entry<IModule, Boolean> entry : bothImports.entrySet())
-      {
-        if (entry.getValue() == null || entry.getValue() == true)
-        {
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModuleInferred);
-        } else
-        {
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedModuleIri(), generatedModuleInferred);
-        }
-      }
-
-      for (Entry<IModule, Boolean> entry : generateInferredImports.entrySet())
-      {
-        if (entry.getValue() == true)
-        {
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModuleInferred);
-        } else
-        {
-          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-              .getModuleConfiguration().getGeneratedModuleIri(), generatedModuleInferred);
-        }
-      }
-
-      try
-      {
-        logger.info("Saving module: " + getModuleConfiguration().getModuleName()
-            + " into ontology: " + generatedModuleInferred.getOntologyID() + " in  directory: "
-            + getOutputDirectory() + " and file: "
-            + this.moduleConfiguration.getGenerateInferredModuleFileName());
-
-        genManager.saveOntology(generatedModuleInferred, new FileOutputStream(new File(
-            getOutputDirectory(), this.moduleConfiguration.getGenerateInferredModuleFileName())));
-      } catch (FileNotFoundException | OWLOntologyStorageException e)
-      {
-        throw new RuntimeException("Failed to save module inferred "
-            + getModuleConfiguration().getModuleName() + " with file name "
-            + this.moduleConfiguration.getGenerateInferredModuleFileName(), e);
-      }
-
-    }
-
-    for (IModule module : allImportedModules)
-    {
-      module.saveGeneratedModule();
     }
 
   }
+
+  // ================================================================================
+  // legacy related
+  // ================================================================================
+
+  @Override
+  public void cleanLegacyUnclassified() {
+    // TODO
+  }
+
+  @Override
+  public boolean isCleanLegacyUnclassified() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public void setCleanLegacyUnclassified(Boolean generate) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void cleanLegacyClassified() {
+    // TODO
+  }
+
+  @Override
+  public boolean isCleanLegacyClassified() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public void setCleanLegacyClassified(Boolean generate) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public boolean isAddLegacyClassified() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public void setAddLegacyClassified(Boolean generate) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public boolean isAddLegacyUnclassified() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public void setAddLegacyUnclassified(Boolean generate) {
+    // TODO Auto-generated method stub
+
+  }
+
+  // ================================================================================
+  // utility
+  // ================================================================================
+
+  @Override
+  public void saveModule() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void saveUnclassifiedModule() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void saveUnclassifiedModule(Path fielOrDirectory) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void saveClassifiedModule() {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void saveClassifiedModule(Path fielOrDirectory) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public Report getReportClassified() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Report getReportUnclassified() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  // ================================================================================
+  // for builders
+  // ================================================================================
+
+  @Override
+  public void addAnnotationUnclassified(OWLAnnotation annotation, IModuleBuilder builder) {
+
+    genManager.applyChange(new AddOntologyAnnotation(generatedModule, annotation));
+
+  }
+
+  @Override
+  public void addAnnotationsUnclassified(Set<OWLAnnotation> annotations, IModuleBuilder builder) {
+    for (OWLAnnotation a : annotations)
+    {
+      addAnnotationUnclassified(a, builder);
+    }
+  }
+
+  @Override
+  public void removeAnnotationUnclassified(OWLAnnotation annotation, IModuleBuilder builder) {
+    genManager.applyChange(new RemoveOntologyAnnotation(generatedModule, annotation));
+
+  }
+
+  @Override
+  public void removeAnnotationsUnclassified(Set<OWLAnnotation> annotations, IModuleBuilder builder) {
+    for (OWLAnnotation a : annotations)
+    {
+      removeAnnotationUnclassified(a, builder);
+    }
+
+  }
+
+  // inferred versions
+
+  @Override
+  public void addAnnotationClassified(OWLAnnotation annotation, IModuleBuilder builder) {
+    genManager.applyChange(new AddOntologyAnnotation(generatedModuleInferred, annotation));
+
+  }
+
+  @Override
+  public void addAnnotationsClassified(Set<OWLAnnotation> annotations, IModuleBuilder builder) {
+    for (OWLAnnotation a : annotations)
+    {
+      addAnnotationClassified(a, builder);
+    }
+
+  }
+
+  @Override
+  public void removeAnnotationClassified(OWLAnnotation annotation, IModuleBuilder builder) {
+    genManager.applyChange(new RemoveOntologyAnnotation(generatedModuleInferred, annotation));
+
+  }
+
+  @Override
+  public void removeAnnotationsClassified(Set<OWLAnnotation> annotations, IModuleBuilder builder) {
+    for (OWLAnnotation a : annotations)
+    {
+      removeAnnotationClassified(a, builder);
+    }
+  }
+
+  @Override
+  public void addAxiomUnclassified(OWLAxiom axiom, IModuleBuilder builder) {
+    genManager.addAxiom(generatedModule, axiom);
+
+  }
+
+  @Override
+  public void addAxiomsUnclassified(Set<OWLAxiom> axioms, IModuleBuilder builder) {
+    for (OWLAxiom a : axioms)
+    {
+      addAxiomUnclassified(a, builder);
+    }
+
+  }
+
+  @Override
+  public void removeAxiomUnclassified(OWLAxiom axiom, IModuleBuilder builder) {
+    genManager.removeAxiom(generatedModule, axiom);
+
+  }
+
+  @Override
+  public void removeAxiomsUnclassified(Set<OWLAxiom> axioms, IModuleBuilder builder) {
+    for (OWLAxiom a : axioms)
+    {
+      removeAxiomUnclassified(a, builder);
+    }
+
+  }
+
+  @Override
+  public void addAxiomClassified(OWLAxiom axiom, IModuleBuilder builder) {
+    genManager.addAxiom(generatedModuleInferred, axiom);
+
+  }
+
+  @Override
+  public void addAxiomsClassified(Set<OWLAxiom> axioms, IModuleBuilder builder) {
+    for (OWLAxiom a : axioms)
+    {
+      addAxiomClassified(a, builder);
+    }
+
+  }
+
+  @Override
+  public void removeAxiomClassified(OWLAxiom axiom, IModuleBuilder builder) {
+    genManager.removeAxiom(generatedModuleInferred, axiom);
+
+  }
+
+  @Override
+  public void removeAxiomsClassified(Set<OWLAxiom> axioms, IModuleBuilder builder) {
+    for (OWLAxiom a : axioms)
+    {
+      removeAxiomClassified(a, builder);
+    }
+
+  }
+
+  // ================================================================================
+  // not reviewed
+  // ================================================================================
+
+  public OWLOntologyManager getGenerationManager() {
+    return this.genManager;
+  }
+  
 
   private void addImport(String moduleName, IRI iri, OWLOntology ontology) {
     OWLImportsDeclaration id = df.getOWLImportsDeclaration(iri);
     AddImport i = new AddImport(ontology, id);
     logger.info("Adding generated module import for module: " + moduleName
-        + " imported into generated: " + getModuleConfiguration().getModuleName());
+        + " imported into generated: " + getModuleConfiguration().getName());
     genManager.applyChange(i);
   }
 
-  // @Override
-  // public void saveModuleConfiguration() {
-  //
-  // // TODO: do this only for changed ontologies ???
-  // try
-  // {
-  // moduleManager.saveOntology(configurationOntology);
-  //
-  // moduleManager.saveOntology(includeOntology);
-  // moduleManager.saveOntology(excludeOntology);
-  // if (legacySupport)
-  // {
-  // if (cleanLegacy)
-  // {
-  // moduleManager.saveOntology(legacyOntology);
-  // moduleManager.saveOntology(legacyRemovedOntology);
-  // }
-  // }
-  // } catch (OWLOntologyStorageException e)
-  // {
-  // throw new RuntimeException("Failed to save module configuration: " +
-  // getName(), e);
-  // }
-  //
-  // for (IModule module : generateImports.keySet())
-  // {
-  // module.saveModuleConfiguration();
-  // }
-  //
-  // for (IModule module : generateInferredImports.keySet())
-  // {
-  // module.saveModuleConfiguration();
-  // }
-  // }
 
   @Override
   public void dispose() {
@@ -496,191 +557,19 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   }
 
-  private Boolean generate = null;
-
-  @Override
-  public void setGenerate(Boolean generate) {
-    this.generate = generate;
-  }
-
-  @Override
-  public boolean isGenerate() {
-    if (this.generate == null)
-    {
-      return this.moduleConfiguration.isGenerate();
-    }
-    return this.generate;
-  }
-
-  private Boolean generateInferred = null;
-
-  @Override
-  public void setGenerateInferred(Boolean generateInferred) {
-    this.generateInferred = generateInferred;
-  }
-
-  @Override
-  public boolean isGenerateInferred() {
-    if (this.generateInferred == null)
-    {
-      return this.moduleConfiguration.isGenerateInferred();
-    }
-    return this.generateInferred;
-  }
-
-  @Override
-  public OWLOntology getGeneratedModule() {
-    return new OWLOntologyWrapper(generatedModule);
-  }
-
   public File getOutputDirectory() {
     return outputDirectory;
   }
 
   @Override
-  public com.essaid.owlcl.core.util.Report getReport() {
-    return report;
-  }
-
-  @Override
   public int hashCode() {
-    return this.moduleConfiguration.getModuleName().hashCode();
+    return this.moduleConfiguration.getName().hashCode();
   }
 
   public void setReport(Report report) {
     this.report = report;
   }
-
-  @Override
-  public OWLOntology getGeneratedModuleInferred() {
-    return new OWLOntologyWrapper(generatedModuleInferred);
-  }
-
-  // ================================================================================
-  // Builder related
-  // ================================================================================
-
-  // generated version
-  @Override
-  public void addModuleAnnotation(OWLAnnotation annotation) {
-
-    genManager.applyChange(new AddOntologyAnnotation(generatedModule, annotation));
-
-  }
-
-  @Override
-  public void addModuleAnnotations(Set<OWLAnnotation> annotations) {
-    for (OWLAnnotation a : annotations)
-    {
-      addModuleAnnotation(a);
-    }
-  }
-
-  @Override
-  public void removeModuleAnnotation(OWLAnnotation annotation) {
-    genManager.applyChange(new RemoveOntologyAnnotation(generatedModule, annotation));
-
-  }
-
-  @Override
-  public void removeModuleAnnotations(Set<OWLAnnotation> annotations) {
-    for (OWLAnnotation a : annotations)
-    {
-      removeModuleAnnotation(a);
-    }
-
-  }
-
-  // inferred versions
-
-  @Override
-  public void addModuleAnnotationInferred(OWLAnnotation annotation) {
-    genManager.applyChange(new AddOntologyAnnotation(generatedModuleInferred, annotation));
-
-  }
-
-  @Override
-  public void addModuleAnnotationsInferred(Set<OWLAnnotation> annotations) {
-    for (OWLAnnotation a : annotations)
-    {
-      addModuleAnnotationInferred(a);
-    }
-
-  }
-
-  @Override
-  public void removeModuleAnnotationInferred(OWLAnnotation annotation) {
-    genManager.applyChange(new RemoveOntologyAnnotation(generatedModuleInferred, annotation));
-
-  }
-
-  @Override
-  public void removeModuleAnnotationsInferred(Set<OWLAnnotation> annotations) {
-    for (OWLAnnotation a : annotations)
-    {
-      removeModuleAnnotationInferred(a);
-    }
-  }
-
-  @Override
-  public void addAxiom(OWLAxiom axiom) {
-    genManager.addAxiom(generatedModule, axiom);
-
-  }
-
-  @Override
-  public void addAxioms(Set<OWLAxiom> axioms) {
-    for (OWLAxiom a : axioms)
-    {
-      addAxiom(a);
-    }
-
-  }
-
-  @Override
-  public void removeAxiom(OWLAxiom axiom) {
-    genManager.removeAxiom(generatedModule, axiom);
-
-  }
-
-  @Override
-  public void removeAxioms(Set<OWLAxiom> axioms) {
-    for (OWLAxiom a : axioms)
-    {
-      removeAxiom(a);
-    }
-
-  }
-
-  @Override
-  public void addAxiomInferred(OWLAxiom axiom) {
-    genManager.addAxiom(generatedModuleInferred, axiom);
-
-  }
-
-  @Override
-  public void addAxiomsInferred(Set<OWLAxiom> axioms) {
-    for (OWLAxiom a : axioms)
-    {
-      addAxiomInferred(a);
-    }
-
-  }
-
-  @Override
-  public void removeAxiomInferred(OWLAxiom axiom) {
-    genManager.removeAxiom(generatedModuleInferred, axiom);
-
-  }
-
-  @Override
-  public void removeAxiomsInferred(Set<OWLAxiom> axioms) {
-    for (OWLAxiom a : axioms)
-    {
-      removeAxiomInferred(a);
-    }
-
-  }
+  
 
   @Override
   public OWLDataFactory getDataFactory() {
@@ -698,33 +587,311 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
     }
     if (obj instanceof IModule)
     {
-      return this.moduleConfiguration.getModuleName().equals(
-          ((IModule) obj).getModuleConfiguration().getModuleName());
+      return this.moduleConfiguration.getName().equals(
+          ((IModule) obj).getModuleConfiguration().getName());
     }
     return false;
   }
 
-  @Override
-  public void setAddLegacy(Boolean generate) {
-    addLegacy = generate;
-
-  }
-
-  @Override
-  public void setCleanLegacy(Boolean generate) {
-    cleanLegacy = generate;
-
-  }
+//  @Override
+//  public void setAddLegacy(Boolean generate) {
+//    addLegacy = generate;
+//
+//  }
+//
+//  @Override
+//  public void setCleanLegacy(Boolean generate) {
+//    cleanLegacy = generate;
+//
+//  }
 
   @Override
   public void initialize() {
     this.report = reportFactory.createReport(
-        "GenerateModule-" + this.moduleConfiguration.getModuleName(), outputDirectory, this);
+        "GenerateModule-" + this.moduleConfiguration.getName(), outputDirectory, this);
   }
 
   @Override
   public Logger getLogger() {
     return this.logger;
   }
+
+  
+  //
+  // @Override
+  // public void generateModule() {
+  // if (generated)
+  // {
+  // return;
+  // }
+  // generated = true;
+  //
+  // List<IModuleBuilder> buildersInferred = new ArrayList<IModuleBuilder>();
+  //
+  // Set<OWLAxiom> includeAxioms = OwlclUtil.getAxioms(
+  // this.moduleConfiguration.getIncludeOntology(), true);
+  // Set<OWLAxiom> excludeAxioms = OwlclUtil.getAxioms(
+  // this.moduleConfiguration.getExcludeOntology(), true);
+  //
+  // if (isUnclassified())
+  // {
+  // report.info("Is generate is true.");
+  //
+  // addAxiomsUnclassified(includeAxioms);
+  // removeAxiomsUnclassified(excludeAxioms);
+  //
+  // if (isAddLegacy())
+  // {
+  // addAxiomsUnclassified(OwlclUtil.getAxioms(this.moduleConfiguration.getLegacyOntology(),
+  // true));
+  // }
+  // }
+  //
+  // if (isClassified())
+  // {
+  // report.info("Is generate inferred is true.");
+  // generatedModuleInferred = OwlclUtil.createOntology(
+  // this.moduleConfiguration.getGeneratedInferredModuleIri(), genManager);
+  // for (String builderName :
+  // this.moduleConfiguration.getBuildersInferredNames())
+  // {
+  // report.info("Doing builder name: " + builderName);
+  // IModuleBuilder builder = builderManager.getBuilder(builderName, this);
+  // if (builder == null)
+  // {
+  // logger.error("No inferred builder named {} was found for module {}",
+  // builderName,
+  // moduleConfiguration.getModuleName());
+  // continue;
+  // }
+  // report.info("Found builder: " + builder.getClass().getName());
+  // builder.build(this, true);
+  // buildersInferred.add(builder);
+  // }
+  // addAxiomsClassified(includeAxioms);
+  // removeAxiomsClassified(excludeAxioms);
+  //
+  // if (isAddLegacy())
+  // {
+  //
+  // addAxiomsClassified(OwlclUtil.getAxioms(this.moduleConfiguration.getLegacyOntology(),
+  // true));
+  // }
+  // }
+  //
+  // // notify builders, finished
+  // Iterator<IModuleBuilder> i = builders.iterator();
+  // while (i.hasNext())
+  // {
+  // IModuleBuilder builder = i.next();
+  // i.remove();
+  // builder.buildFinished(this);
+  // }
+  //
+  // i = buildersInferred.iterator();
+  // while (i.hasNext())
+  // {
+  // IModuleBuilder builder = i.next();
+  // i.remove();
+  // builder.buildFinished(this);
+  // }
+  //
+  // // clean legacy
+  // if (isCleanLegacy())
+  // {
+  // OWLOntology legacyOntology = this.moduleConfiguration.getLegacyOntology();
+  // if (legacyOntology != null)
+  // {
+  // Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
+  // if (generatedModule != null)
+  // {
+  // axioms = generatedModule.getAxioms();
+  // }
+  // if (generatedModuleInferred != null)
+  // {
+  // axioms.addAll(generatedModuleInferred.getAxioms());
+  // }
+  // axioms.addAll(OwlclUtil.getAxioms(this.moduleConfiguration.getExcludeOntology(),
+  // true));
+  //
+  // Set<OWLAxiom> removedAxioms = new HashSet<OWLAxiom>();
+  //
+  // for (OWLOntology o : legacyOntology.getImportsClosure())
+  // {
+  // List<OWLOntologyChange> changes = o.getOWLOntologyManager().removeAxioms(o,
+  // axioms);
+  // logger.info("Cleaned legacy ontology: " + o.getOntologyID() +
+  // ", change count: "
+  // + changes.size());
+  //
+  // for (OWLOntologyChange change : changes)
+  // {
+  // removedAxioms.add(change.getAxiom());
+  // }
+  // }
+  //
+  // OWLOntology legacyRemovedOntology =
+  // this.moduleConfiguration.getLegacyRemovedOntology();
+  // if (legacyRemovedOntology != null)
+  // {
+  // legacyRemovedOntology.getOWLOntologyManager().addAxioms(legacyRemovedOntology,
+  // removedAxioms);
+  // }
+  // }
+  // }
+  //
+  // Set<IModule> imports = new HashSet<IModule>();
+  // imports.addAll(generateImports.keySet());
+  // imports.addAll(generateInferredImports.keySet());
+  // imports.addAll(bothImports.keySet());
+  //
+  // for (IModule module : imports)
+  // {
+  // module.generateModule();
+  // }
+  //
+  // report.finish();
+  // }
+//
+//  @Override
+//  public boolean isAddLegacy() {
+//    if (addLegacy == null)
+//    {
+//      return this.moduleConfiguration.isAddLegacy();
+//    }
+//    return addLegacy;
+//  }
+//
+//  @Override
+//  public boolean isCleanLegacy() {
+//    if (cleanLegacy == null)
+//    {
+//      return this.moduleConfiguration.isCleanLegacy();
+//    }
+//    return cleanLegacy;
+//  }
+
+//  @Override
+//  public void saveGeneratedModule() {
+//    if (saved)
+//    {
+//      return;
+//    }
+//    saved = true;
+//
+//    Set<IModule> allImportedModules = new HashSet<IModule>();
+//
+//    if (isUnclassified())
+//    {
+//      report.info("Saving generate module.");
+//      allImportedModules.addAll(bothImports.keySet());
+//      allImportedModules.addAll(generateImports.keySet());
+//
+//      for (Entry<IModule, Boolean> entry : bothImports.entrySet())
+//      {
+//        if (entry.getValue() == null || entry.getValue() == false)
+//        {
+//          // import matching type
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
+//        } else if (entry.getValue() == true)
+//        {
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModule);
+//        }
+//      }
+//
+//      for (Entry<IModule, Boolean> entry : generateImports.entrySet())
+//      {
+//        if (entry.getValue() == false)
+//        {
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
+//        } else if (entry.getValue() == true)
+//        {
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModule);
+//        }
+//      }
+//
+//      try
+//      {
+//        logger.info("Saving module: " + getModuleConfiguration().getModuleName()
+//            + " into ontology: " + generatedModule.getOntologyID() + " in  directory: "
+//            + getOutputDirectory() + " and file: "
+//            + this.moduleConfiguration.getGenerateModuleFileName());
+//
+//        genManager.saveOntology(generatedModule, new FileOutputStream(new File(
+//            getOutputDirectory(), this.moduleConfiguration.getGenerateModuleFileName())));
+//      } catch (OWLOntologyStorageException | FileNotFoundException e)
+//      {
+//        throw new RuntimeException("Failed to save module generated "
+//            + getModuleConfiguration().getModuleName() + " with file name "
+//            + this.moduleConfiguration.getGenerateModuleFileName(), e);
+//      }
+//
+//    }
+//
+//    if (isClassified())
+//    {
+//      allImportedModules.addAll(bothImports.keySet());
+//      allImportedModules.addAll(generateInferredImports.keySet());
+//
+//      for (Entry<IModule, Boolean> entry : bothImports.entrySet())
+//      {
+//        if (entry.getValue() == null || entry.getValue() == true)
+//        {
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModuleInferred);
+//        } else
+//        {
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModuleInferred);
+//        }
+//      }
+//
+//      for (Entry<IModule, Boolean> entry : generateInferredImports.entrySet())
+//      {
+//        if (entry.getValue() == true)
+//        {
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModuleInferred);
+//        } else
+//        {
+//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
+//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModuleInferred);
+//        }
+//      }
+//
+//      try
+//      {
+//        logger.info("Saving module: " + getModuleConfiguration().getModuleName()
+//            + " into ontology: " + generatedModuleInferred.getOntologyID() + " in  directory: "
+//            + getOutputDirectory() + " and file: "
+//            + this.moduleConfiguration.getGenerateInferredModuleFileName());
+//
+//        genManager.saveOntology(generatedModuleInferred, new FileOutputStream(new File(
+//            getOutputDirectory(), this.moduleConfiguration.getGenerateInferredModuleFileName())));
+//      } catch (FileNotFoundException | OWLOntologyStorageException e)
+//      {
+//        throw new RuntimeException("Failed to save module inferred "
+//            + getModuleConfiguration().getModuleName() + " with file name "
+//            + this.moduleConfiguration.getGenerateInferredModuleFileName(), e);
+//      }
+//
+//    }
+//
+//    for (IModule module : allImportedModules)
+//    {
+//      module.saveGeneratedModule();
+//    }
+//
+//  }
+
+
+
+  // ================================================================================
+  // Builder related
+  // ================================================================================
 
 }

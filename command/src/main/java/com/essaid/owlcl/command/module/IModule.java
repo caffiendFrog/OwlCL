@@ -1,13 +1,12 @@
 package com.essaid.owlcl.command.module;
 
+import java.nio.file.Path;
 import java.util.Set;
 
-import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 import com.essaid.owlcl.command.module.builder.IModuleBuilder;
 import com.essaid.owlcl.command.module.config.IModuleConfig;
@@ -41,23 +40,62 @@ import com.essaid.owlcl.command.module.config.IModuleConfig;
  */
 public interface IModule {
 
-  int VERSION = 1;
+  IModuleConfig getModuleConfiguration();
 
-  com.essaid.owlcl.core.util.Report getReport();
+  OWLOntology getBuildUnclassified();
 
-  void generateModule();
+  OWLOntology getFinalUnclassified();
+
+  OWLOntology getBuildClassified();
+
+  OWLOntology getFinalClassified();
+
+  // ================================================================================
+  // properties
+  // ================================================================================
+
+  boolean isUnclassified();
+
+  void setUnclassified(Boolean generate);
+
+  boolean isClassified();
+
+  void setClassified(Boolean generateInferred);
+
+  // ================================================================================
+  // module imports
+  // ================================================================================
 
   /**
-   * This will cause any axiom in the legacy ontologies to be also included in
-   * the module. This method, and the cleanLegacyOntologies() can help with
-   * migrating a legacy ontology to become an ISF module. This call will allow
-   * the module to include legacy content that is not yet in the ISF, or content
-   * that will not be in the ISF but is still needed in the generated module.
+   * Adds and import into this "classified" module and the specific OWL import
+   * will be based on the boolean option. If false, the unclassified module will
+   * be imported into this unclassified module. If true, the classified module
+   * from the imported module will be imported into this "unclassified" file. If
+   * null, both versions of the imported module will be imported to this
+   * unclassified module (not sure if this is useful but the null option is used
+   * for this third possible case. The fourth case is not needed because not
+   * calling this method is the fourth case).
+   * 
+   * The idea is that one might want to mix classified and unclassified when
+   * composing modules.
+   * 
+   * 
+   * @param module
+   * @param inferred
    */
-  // void addLegacyOntologies();
-  //
-  // void addLegacyOntologiesTransitive();
+  void importModuleIntoUnclassified(IModule module, Boolean inferred);
 
+  /**
+   * See importModuleIntoUnclassified
+   * 
+   * @param module
+   * @param inferred
+   */
+  void importModuleIntoClassified(IModule module, Boolean inferred);
+
+  // ================================================================================
+  // Legacy related
+  // ================================================================================
   /**
    * This will remove all axioms from all legacy ontologies based on what is
    * currently in the module ontology. The idea is that after the module
@@ -66,134 +104,86 @@ public interface IModule {
    * simplify migrating legacy ontologies to being ISF modules (i.e. being an
    * ISF module based on the ISF ontology).
    */
-  // void cleanLegacyOntologies();
-  //
-  // void cleanLegacyOntologiesTransitive();
+  void cleanLegacyUnclassified();
 
+  void cleanLegacyClassified();
 
-  OWLOntology getGeneratedModule();
+  boolean isAddLegacyUnclassified();
 
-  OWLOntology getGeneratedModuleInferred();
+  void setAddLegacyUnclassified(Boolean generate);
 
+  boolean isAddLegacyClassified();
 
-  /**
-   * This allows a client to set the source ontology (which includes the
-   * imports) in case there are multiple modules being generated and they all
-   * share the same sources. Otherwise, the module will build its own source
-   * ontology based on its configuration.
-   * 
-   * this has to be set after constructing the module and before calling any
-   * other methods.
-   * 
-   * @param source
-   */
-  // void setSource(OWLOntology source);
+  void setAddLegacyClassified(Boolean generate);
 
-  /**
-   * This allows a client to set the reasoned source ontology instead of having
-   * the module reason its source ontology. This would be useful when multiple
-   * modules are being generated with the same reasoned sources and the
-   * reasoning is lengthy. Otherwise, the module will reason its sources.
-   * 
-   * this has to be set after constructing the module and before calling any
-   * other methods.
-   * 
-   * @param sourceReasoner
-   */
-  // void setSourceReasoned(OWLReasoner sourceReasoner);
+  boolean isCleanLegacyClassified();
 
-  /**
-   * Adds and import into this "generated" module and the specific OWL import
-   * will be based on the boolean option. If true, the inferred module from the
-   * imported module will be imprted into this "generated" file.
-   * 
-   * The idea is that one might want to mix inferred with un-inferred when
-   * composing modules.
-   * 
-   * 
-   * @param module
-   * @param inferred
-   */
-  void importModuleIntoGenerated(IModule module, Boolean inferred);
+  void setCleanLegacyClassified(Boolean generate);
 
-  /**
-   * See importModuleIntoGenerated
-   * 
-   * @param module
-   * @param inferred
-   */
-  void importModuleIntoGeneratedInferred(IModule module, Boolean inferred);
+  boolean isCleanLegacyUnclassified();
 
-  /**
-   * See importModuleIntoGenerated
-   * 
-   * If the Boolean is null, both versions of the imported module will be
-   * imported into this module, by matching type. Otherwise, false means the
-   * "generated" will be imported to both and true means that the "inferred"
-   * will be imported into both.
-   * 
-   * @param module
-   * @param inferred
-   */
-  void importModuleIntoBoth(IModule module, Boolean inferred);
+  void setCleanLegacyUnclassified(Boolean generate);
 
-  void addModuleAnnotation(OWLAnnotation annotation);
+  // ================================================================================
+  // Utility
+  // ================================================================================
 
-  void removeModuleAnnotation(OWLAnnotation annotation);
+  void saveModule();
 
-  void addModuleAnnotations(Set<OWLAnnotation> annotations);
+  void saveUnclassifiedModule();
 
-  void removeModuleAnnotations(Set<OWLAnnotation> annotations);
+  void saveClassifiedModule();
 
-  void addModuleAnnotationInferred(OWLAnnotation annotation);
+  void saveUnclassifiedModule(Path fielOrDirectory);
 
-  void removeModuleAnnotationInferred(OWLAnnotation annotation);
+  void saveClassifiedModule(Path fielOrDirectory);
 
-  void addModuleAnnotationsInferred(Set<OWLAnnotation> annotations);
+  com.essaid.owlcl.core.util.Report getReportUnclassified();
 
-  void removeModuleAnnotationsInferred(Set<OWLAnnotation> annotations);
-
-  void addAxiom(OWLAxiom axiom);
-
-  void removeAxiom(OWLAxiom axiom);
-
-  void addAxioms(Set<OWLAxiom> axioms);
-
-  void removeAxioms(Set<OWLAxiom> axioms);
-
-  void addAxiomInferred(OWLAxiom axiom);
-
-  void removeAxiomInferred(OWLAxiom axiom);
-
-  void addAxiomsInferred(Set<OWLAxiom> axioms);
-
-  void removeAxiomsInferred(Set<OWLAxiom> axioms);
-
-  //
-  // void saveModuleConfiguration();
-
-  void saveGeneratedModule();
+  com.essaid.owlcl.core.util.Report getReportClassified();
 
   void dispose();
 
-  boolean isGenerate();
-
-  void setGenerate(Boolean generate);
-
-  boolean isGenerateInferred();
-
-  void setGenerateInferred(Boolean generateInferred);
-
-  boolean isAddLegacy();
-
-  void setAddLegacy(Boolean generate);
-
-  boolean isCleanLegacy();
-
-  void setCleanLegacy(Boolean generate);
-
   OWLDataFactory getDataFactory();
 
-  IModuleConfig getModuleConfiguration();
+  // ================================================================================
+  // for builders
+  // ================================================================================
+
+  void addAnnotationUnclassified(OWLAnnotation annotation, IModuleBuilder builder);
+
+  void removeAnnotationUnclassified(OWLAnnotation annotation, IModuleBuilder builder);
+
+  void addAnnotationsUnclassified(Set<OWLAnnotation> annotations, IModuleBuilder builder);
+
+  void removeAnnotationsUnclassified(Set<OWLAnnotation> annotations, IModuleBuilder builder);
+
+  void addAnnotationClassified(OWLAnnotation annotation, IModuleBuilder builder);
+
+  void removeAnnotationClassified(OWLAnnotation annotation, IModuleBuilder builder);
+
+  void addAnnotationsClassified(Set<OWLAnnotation> annotations, IModuleBuilder builder);
+
+  void removeAnnotationsClassified(Set<OWLAnnotation> annotations, IModuleBuilder builder);
+
+  void addAxiomUnclassified(OWLAxiom axiom, IModuleBuilder builder);
+
+  void removeAxiomUnclassified(OWLAxiom axiom, IModuleBuilder builder);
+
+  void addAxiomsUnclassified(Set<OWLAxiom> axioms, IModuleBuilder builder);
+
+  void removeAxiomsUnclassified(Set<OWLAxiom> axioms, IModuleBuilder builder);
+
+  void addAxiomClassified(OWLAxiom axiom, IModuleBuilder builder);
+
+  void removeAxiomClassified(OWLAxiom axiom, IModuleBuilder builder);
+
+  void addAxiomsClassified(Set<OWLAxiom> axioms, IModuleBuilder builder);
+
+  void removeAxiomsClassified(Set<OWLAxiom> axioms, IModuleBuilder builder);
+
+  // ================================================================================
+  //
+  // ================================================================================
 
 }
