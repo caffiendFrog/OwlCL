@@ -87,7 +87,7 @@ public class MainCommand extends AbstractCommand {
   public static final String JOB_NAME_PROPERTY = "job.name";
   public static final String JOB_QUALIFIER_PROPERTY = "job.qualifier";
 
-  public static final String OFFLINE_PROPERTY = "offline";
+  public static final String ONLINE_PROPERTY = "online";
   public static final String QUIET_PROPERTY = "quiet";
   public static final String OVERWRITE_PROPERTY = "overwrite";
 
@@ -332,29 +332,28 @@ public class MainCommand extends AbstractCommand {
   private boolean jobQualifierSet = false;
 
   // ================================================================================
-  // Offline mode?
+  // Online mode?
   // ================================================================================
 
   @Parameter(
-      names = "-offline",
-      arity = 1,
+      names = "-online",
       description = "Enables online loading of ontologies where needed. Ontology "
           + "and import files take priority over online resolution. The tools operate in offline mode by default.")
-  public void setOffline(boolean offline) {
-    this.offline = offline;
-    this.offlineSet = true;
+  public void setOnline(boolean online) {
+    this.online = online;
+    this.onlineSet = true;
   }
 
-  public boolean isOffline() {
-    return offline;
+  public boolean isOnline() {
+    return online;
   }
 
-  public boolean isOfflineSet() {
-    return offlineSet;
+  public boolean isOnlineSet() {
+    return onlineSet;
   }
 
-  private boolean offline;
-  private boolean offlineSet;
+  private boolean online;
+  private boolean onlineSet;
 
   // ================================================================================
   // Quiet?
@@ -587,15 +586,15 @@ public class MainCommand extends AbstractCommand {
     }
 
     // offline
-    if (!offlineSet)
+    if (!onlineSet)
     {
-      String offline = configProperties.getProperty(OFFLINE_PROPERTY);
-      if (offline != null)
+      String online = configProperties.getProperty(ONLINE_PROPERTY);
+      if (online != null)
       {
-        this.offline = Boolean.valueOf(offline.trim());
+        this.online = Boolean.valueOf(online.trim());
       } else
       {
-        this.offline = true;
+        this.online = true;
       }
     }
 
@@ -676,17 +675,16 @@ public class MainCommand extends AbstractCommand {
   }
 
   public File getJobDirectory() {
-    if (jobDirectory == null)
-    {
-      jobDirectory = new File(getOutputDirectory(), jobName + "_" + jobQualifier);
-      jobDirectory.mkdirs();
-    }
+
+    jobDirectory = new File(getOutputDirectory(), jobName + "_" + jobQualifier);
+    jobDirectory.mkdirs();
+
     return jobDirectory;
   }
 
   public OWLOntologyManager getNewBaseManager() {
     OWLOntologyManager man = OWLManager.createOWLOntologyManager();
-    if (offline)
+    if (!online)
     {
       man.clearIRIMappers();
     }

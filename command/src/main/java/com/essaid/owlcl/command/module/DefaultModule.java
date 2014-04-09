@@ -317,7 +317,11 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public boolean isCleanLegacyUnclassified() {
-    return this.cleanLegacyUnclassified;
+    if (cleanLegacyUnclassified != null)
+    {
+      return this.cleanLegacyUnclassified;
+    }
+    return getModuleConfiguration().isUnclassifiedCleanLegacy();
   }
 
   @Override
@@ -328,7 +332,11 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public boolean isCleanLegacyClassified() {
-    return this.cleanLegacyClassified;
+    if (cleanLegacyClassified != null)
+    {
+      return this.cleanLegacyClassified;
+    }
+    return getModuleConfiguration().isClassifiedCleanLegacy();
   }
 
   @Override
@@ -339,7 +347,11 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public boolean isAddLegacyClassified() {
-    return addLegacyClassified;
+    if (addLegacyClassified != null)
+    {
+      return addLegacyClassified;
+    }
+    return getModuleConfiguration().isClassifiedAddlegacy();
   }
 
   @Override
@@ -350,7 +362,11 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public boolean isAddLegacyUnclassified() {
-    return addLegacyUnclassified;
+    if (addLegacyUnclassified != null)
+    {
+      return addLegacyUnclassified;
+    }
+    return getModuleConfiguration().isUnclassifiedAddlegacy();
   }
 
   @Override

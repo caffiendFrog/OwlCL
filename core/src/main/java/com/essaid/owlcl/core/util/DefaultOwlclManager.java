@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.essaid.owlcl.core.IOwlclManager;
 
@@ -28,9 +29,6 @@ public class DefaultOwlclManager implements IOwlclManager {
 
   private static Logger logger;
 
-  public static void setLogger(Logger logger) {
-    DefaultOwlclManager.logger = logger;
-  }
 
   private URL codeLocationUrl;
   private File codeJar;
@@ -68,6 +66,7 @@ public class DefaultOwlclManager implements IOwlclManager {
     this.workExtDirectory = workExtDirectory;
     this.temporaryDirectory = temporaryDirectory;
     this.initted = true;
+    logger = LoggerFactory.getLogger(DefaultOwlclManager.class);
 
   }
 
@@ -83,6 +82,7 @@ public class DefaultOwlclManager implements IOwlclManager {
       initDirectories();
       initClasspath();
       initTemporaryDirectory();
+      logger = LoggerFactory.getLogger(DefaultOwlclManager.class);
     }
 
   }
@@ -166,8 +166,7 @@ public class DefaultOwlclManager implements IOwlclManager {
         workDirectory = new File(workDir).getCanonicalFile();
         if (!workDirectory.exists())
         {
-          throw new IllegalStateException("The work directory: " + workDirectory
-              + " does not exist.");
+          workDirectory.mkdirs();
         }
       } catch (IOException e)
       {

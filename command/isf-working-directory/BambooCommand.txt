@@ -1,0 +1,7 @@
+java -Dowlcl.work.dir=/home/essaids/owlcl-work-dir -Dowlcl.output.dir=/home/essaids/owlcl-output-dir -jar owlcl.jar @EroBuildParameters
+
+
+The above assumes that EroBuildParameters is in the current directory. Otherwise, the path has to be specified, absolute or from the current directory.
+
+On the server add a -Dowlcl.arch.qualifiers=glibc2.2 to the JVM system properties shown above to load the Fact++ library for libgc2.2.
+

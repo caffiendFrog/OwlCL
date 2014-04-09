@@ -19,8 +19,9 @@
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.essaid.owlcl.core.cli.Main"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="ero -addLegacy"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="@EroBuildParameters"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="owlcl.core"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dowlcl.work.dir=/srv/pass-through/git/github/ShahimEssaid/isf-tools/command/isf-working-directory"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dowlcl.work.dir=/home/essaids/owlcl-work-dir&#10;-Dowlcl.output.dir=/home/essaids/owlcl-output-dir"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:owlcl.command/isf-working-directory}"/>
 </launchConfiguration>

@@ -73,120 +73,192 @@ public class ModuleCommand extends AbstractCommand {
   private boolean directorySet;
 
   // ================================================================================
-  // The directory where the module output will go
+  // The directory where the module's classified output will go
   // ================================================================================
 
-  @Parameter(names = "-output", converter = CanonicalFileConverter.class,
-      description = "The location where the module output will go.")
-  public void setOutput(File directory) {
-    this.output = directory;
-    this.outputSet = true;
+  @Parameter(names = "-outputClassified", converter = CanonicalFileConverter.class,
+      description = "The location where the module's classified output will go.")
+  public void setOutputClassified(File directoryClassified) {
+    this.outputClassified = directoryClassified;
+    this.outputClassifiedSet = true;
   }
 
-  public File getOutput() {
-    return output;
+  public File getOutputClassified() {
+    return outputClassified;
   }
 
-  public boolean isOutputSet() {
-    return outputSet;
+  public boolean isOutputClassifiedSet() {
+    return outputClassifiedSet;
   }
 
-  private File output = null;
-  private boolean outputSet;
+  private File outputClassified;
+  private boolean outputClassifiedSet;
+
+  // ================================================================================
+  // The directory where the module's classified output will go
+  // ================================================================================
+
+  @Parameter(names = "-outputUnclassified", converter = CanonicalFileConverter.class,
+      description = "The location where the module's unclassified output will go.")
+  public void setOutputUnclassified(File directoryUnclassified) {
+    this.outputUnclassified = directoryUnclassified;
+    this.outputUnclassifiedSet = true;
+  }
+
+  public File getOutputUnclassified() {
+    return outputUnclassified;
+  }
+
+  public boolean isOutputUnclassifiedSet() {
+    return outputUnclassifiedSet;
+  }
+
+  private File outputUnclassified;
+  private boolean outputUnclassifiedSet;
 
   // ================================================================================
   // do unreasoned
   // ================================================================================
 
-  @Parameter(names = "-unInferred", arity = 1,
-      description = "Set the module to generate the un-reasoned version. "
+  @Parameter(names = "-unclassified", arity = 1,
+      description = "Set the module to generate the unclassified version. "
           + "Use it to overrides the default module configuration if needed."
           + "Ignore the shown default on the command line, the default is what "
           + "is set in the module configuration file.")
-  public void setUnReasoned(boolean unReasoned) {
-    this.unReasoned = unReasoned;
-    this.unReasonedSet = true;
+  public void setUnclassified(boolean unclassified) {
+    this.unclassified = unclassified;
+    this.unclassifiedSet = true;
   }
 
-  public boolean isUnReasoned() {
-    return unReasoned;
+  public boolean isUnclassified() {
+    return unclassified;
   }
 
-  public boolean isUnReasonedSet() {
-    return unReasonedSet;
+  public boolean isUnclassifiedSet() {
+    return unclassifiedSet;
   }
 
-  private boolean unReasoned;
-  private boolean unReasonedSet;
+  private boolean unclassified;
+  private boolean unclassifiedSet;
 
   // ================================================================================
   // do reasoned
   // ================================================================================
 
-  @Parameter(names = "-inferred", arity = 1,
-      description = "Set the module to generate the reasoned version. "
+  @Parameter(names = "-classified", arity = 1,
+      description = "Set the module to generate the classified version. "
           + "Use it to overrides the default module configuration if needed."
           + "Ignore the shown default on the command line, the default is what "
           + "is set in the module configuration file.")
-  public void setReasoned(boolean reasoned) {
-    this.reasoned = reasoned;
-    this.reasonedSet = true;
+  public void setClassified(boolean classified) {
+    this.classified = classified;
+    this.classifiedSet = true;
   }
 
-  public boolean isReasoned() {
-    return reasoned;
+  public boolean isClassified() {
+    return classified;
   }
 
-  public boolean isReasonedSet() {
-    return reasonedSet;
+  public boolean isClassifiedSet() {
+    return classifiedSet;
   }
 
-  private boolean reasoned;
-  private boolean reasonedSet;
+  private boolean classified;
+  private boolean classifiedSet;
 
   // ================================================================================
-  // Add legacy
+  // Add legacy unclassified
   // ================================================================================
 
-  @Parameter(names = "-addLegacy",
-      description = "If this option is set, legacy content will be added.")
-  public void setAddLegacy(boolean addLegacy) {
-    this.addLegacy = addLegacy;
-    this.addLegacySet = true;
+  @Parameter(
+      names = "-addLegacyUnclassified",
+      description = "If this option is set, legacy content will be added to the unclassified version.")
+  public void setAddLegacyUnclassified(boolean addLegacy) {
+    this.addLegacyUnclassified = addLegacy;
+    this.addLegacyUnclassifiedSet = true;
   }
 
-  public boolean isAddLegacy() {
-    return addLegacy;
+  public boolean isAddLegacyUnclassified() {
+    return addLegacyUnclassified;
   }
 
-  public boolean isAddLegacySet() {
-    return addLegacySet;
+  public boolean isAddLegacyUnclassifiedSet() {
+    return addLegacyUnclassifiedSet;
   }
 
-  private boolean addLegacy;
-  private boolean addLegacySet;
+  private boolean addLegacyUnclassified;
+  private boolean addLegacyUnclassifiedSet;
 
   // ================================================================================
-  // clean legacy
+  // Add legacy classified
   // ================================================================================
 
-  @Parameter(names = "-cleanLegacy",
-      description = "If this option is set, legacy content will be cleaned.")
-  public void setCleanLegacy(boolean cleanLegacy) {
-    this.cleanLegacy = cleanLegacy;
-    this.cleanLegacySet = true;
+  @Parameter(
+      names = "-addLegacyClassified",
+      description = "If this option is set, legacy content will be added to the classified version.")
+  public void setAddLegacyClassified(boolean addLegacy) {
+    this.addLegacyClassified = addLegacy;
+    this.addLegacyClassifiedSet = true;
   }
 
-  public boolean isCleanLegacy() {
-    return cleanLegacy;
+  public boolean isAddLegacyClassified() {
+    return addLegacyClassified;
   }
 
-  public boolean isCleanLegacySet() {
-    return cleanLegacySet;
+  public boolean isAddLegacyClassifiedSet() {
+    return addLegacyClassifiedSet;
   }
 
-  private boolean cleanLegacy;
-  private boolean cleanLegacySet;
+  private boolean addLegacyClassified;
+  private boolean addLegacyClassifiedSet;
+
+  // ================================================================================
+  // clean legacy unclassified
+  // ================================================================================
+
+  @Parameter(
+      names = "-cleanLegacyUnclassified",
+      description = "If this option is set, legacy content will be cleaned based on the content of the classified"
+          + "version.")
+  public void setCleanLegacyUnclassified(boolean cleanLegacy) {
+    this.cleanLegacyUnclassified = cleanLegacy;
+    this.cleanLegacyUnclassifiedSet = true;
+  }
+
+  public boolean isCleanLegacyUnclassified() {
+    return cleanLegacyUnclassified;
+  }
+
+  public boolean isCleanLegacyUnclassifiedSet() {
+    return cleanLegacyUnclassifiedSet;
+  }
+
+  private boolean cleanLegacyUnclassified;
+  private boolean cleanLegacyUnclassifiedSet;
+
+  // ================================================================================
+  // clean legacy classified
+  // ================================================================================
+
+  @Parameter(
+      names = "-cleanLegacyClassified",
+      description = "If this option is set, legacy content will be cleaned based on the content of the classified"
+          + "version.")
+  public void setCleanLegacyClassified(boolean cleanLegacy) {
+    this.cleanLegacyClassified = cleanLegacy;
+    this.cleanLegacyClassifiedSet = true;
+  }
+
+  public boolean isCleanLegacyClassified() {
+    return cleanLegacyClassified;
+  }
+
+  public boolean isCleanLegacyClassifiedSet() {
+    return cleanLegacyClassifiedSet;
+  }
+
+  private boolean cleanLegacyClassified;
+  private boolean cleanLegacyClassifiedSet;
 
   // ================================================================================
   // Initialization
@@ -203,9 +275,16 @@ public class ModuleCommand extends AbstractCommand {
       directory = new File(getMain().getProject(), "module/" + moduleName);
     }
 
-    if (!outputSet)
+    if (!outputClassifiedSet)
     {
-      output = new File(getMain().getJobDirectory(), "module-output/" + moduleName);
+      outputClassified = new File(getMain().getJobDirectory(), "module-output/" + moduleName
+          + "/classified");
+    }
+
+    if (!outputUnclassifiedSet)
+    {
+      outputUnclassified = new File(getMain().getJobDirectory(), "module-output/" + moduleName
+          + "/unclassified");
     }
 
   }
@@ -221,10 +300,6 @@ public class ModuleCommand extends AbstractCommand {
   public ModuleCommand(@Assisted OwlclCommand main) {
     super(main);
   }
-
-  private OWLReasoner sourceReasoner;
-  private OWLOntology sourceOntology;
-  private IModule module = null;
 
   Set<ModuleCommand> imports = new HashSet<ModuleCommand>();
 
@@ -263,55 +338,67 @@ public class ModuleCommand extends AbstractCommand {
       return null;
     }
 
-    output.mkdirs();
+    // IModuleConfig moduleComfig = new ModuleConfigurationV1(directory,
+    // getMain()
+    // .getSharedBaseManager(), getMain().getSharedBaseManager());
 
+    IModuleConfigInternal moduleComfig = ModuleConfigurationV1.getExistingInstance(
+        directory.toPath(), getMain().getSharedBaseManager(), getMain().getSharedBaseManager(),
+        null, null, false);
 
-      // IModuleConfig moduleComfig = new ModuleConfigurationV1(directory,
-      // getMain()
-      // .getSharedBaseManager(), getMain().getSharedBaseManager());
+    injector.injectMembers(moduleComfig);
 
-      IModuleConfigInternal moduleComfig = ModuleConfigurationV1.getExistingInstance(directory.toPath(),
-          getMain().getSharedBaseManager(), getMain().getSharedBaseManager(), sourceOntology, null);
+    IModule module = new DefaultModule(moduleComfig, outputUnclassified.toPath(),
+        outputClassified.toPath());
 
-      injector.injectMembers(moduleComfig);
-
-      module = new DefaultModule(moduleComfig, output);
-
-      injector.injectMembers(module);
+    injector.injectMembers(module);
 
     // override the configuration from command line
-    if (reasonedSet)
+    if (classifiedSet)
     {
-      module.setClassified(reasoned);
+      module.setClassified(classified);
     }
 
-    if (unReasonedSet)
+    if (unclassifiedSet)
     {
-      module.setClassified(unReasoned);
+      module.setClassified(unclassified);
     }
 
-    if (addLegacySet)
+    if (addLegacyUnclassifiedSet)
     {
-      module.setAddLegacyClassified(addLegacy);
-
-    if (cleanLegacySet)
-    {
-      module.setCleanLegacy(cleanLegacy);
+      module.setAddLegacyClassified(addLegacyUnclassified);
     }
 
-    if (sourceOntology != null)
+    if (addLegacyClassifiedSet)
     {
-      module.getModuleConfiguration().setSourceOntology(sourceOntology);
+      module.setAddLegacyClassified(addLegacyClassified);
     }
 
-    if (sourceReasoner != null)
-    {
-      module.getModuleConfiguration().setSourceReasoner(sourceReasoner);
-    }
-
-    module.generateModule();
-    module.saveGeneratedModule();
-
+    module.saveModule();
+    
+    // if (addLegacySet)
+    // {
+    // module.setAddLegacyClassified(addLegacy);
+    //
+    // if (cleanLegacySet)
+    // {
+    // module.setCleanLegacy(cleanLegacy);
+    // }
+    //
+    // if (sourceOntology != null)
+    // {
+    // module.getModuleConfiguration().setSourceOntology(sourceOntology);
+    // }
+    //
+    // if (sourceReasoner != null)
+    // {
+    // module.getModuleConfiguration().setSourceReasoner(sourceReasoner);
+    // }
+    //
+    // module.generateModule();
+    // module.saveGeneratedModule();
+    //
+    // }
     return null;
   }
 

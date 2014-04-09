@@ -4,13 +4,14 @@ import static com.essaid.owlcl.command.EroCommand.Action.generate;
 import static com.essaid.owlcl.command.EroCommand.Action.save;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
-import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
@@ -27,7 +28,6 @@ import com.essaid.owlcl.core.util.OwlclUtil;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.Assisted;
-import com.google.inject.name.Named;
 
 @Parameters(commandNames = { "ero" }, commandDescription = "Creates the ERO modules.")
 public class EroCommand extends AbstractCommand {
@@ -102,41 +102,57 @@ public class EroCommand extends AbstractCommand {
   private boolean previousDirectorySet;
 
   // ================================================================================
-  // Output directory
+  // Output directory unclassified
   // ================================================================================
 
-  @Parameter(names = "-output", description = "The directory where the generate modules will "
-      + "be saved.")
-  public void setEroOutput(File eroOutput) {
-    this.eroOutput = eroOutput;
-    this.eroOutputSet = true;
+  @Parameter(names = "-outputUnclassified",
+      description = "The directory where the unclassified modules will " + "be saved.")
+  public void setEroOutputUnclassified(File eroOutput) {
+    this.eroOutputUnclassified = eroOutput;
+    this.eroOutputUnclassifiedSet = true;
   }
 
-  public File getEroOutput() {
-    return eroOutput;
+  public File getEroOutputUnclassified() {
+    return eroOutputUnclassified;
   }
 
-  public boolean isEroOutputSet() {
-    return eroOutputSet;
+  public boolean isEroOutputUnclassifiedSet() {
+    return eroOutputUnclassifiedSet;
   }
 
-  private File eroOutput;
-  private boolean eroOutputSet;
+  private File eroOutputUnclassified;
+  private boolean eroOutputUnclassifiedSet;
+
+  // ================================================================================
+  // Output directory classified
+  // ================================================================================
+
+  @Parameter(names = "-outputClassified",
+      description = "The directory where the generate modules will " + "be saved.")
+  public void setEroOutputClassified(File eroOutput) {
+    this.eroOutputClassified = eroOutput;
+    this.eroOutputClassifiedSet = true;
+  }
+
+  public File getEroOutputClassified() {
+    return eroOutputClassified;
+  }
+
+  public boolean isEroOutputClassifiedSet() {
+    return eroOutputClassifiedSet;
+  }
+
+  private File eroOutputClassified;
+  private boolean eroOutputClassifiedSet;
 
   // ================================================================================
   // Implementation
   // ================================================================================
 
-  IModule topModule = null;
-
   OWLOntology isfOntology = null;
   OWLOntologyManager man = null;
   OWLReasoner reasoner = null;
   File outputDirectory = null;
-
-  // @Inject
-  // @Named(IReasonerManager.FACT_PLUS_PLUS_FACTORY_BINDING_NAME)
-  // OWLReasonerFactory fact;
 
   @Inject
   IReasonerManager reasonerManager;
@@ -158,9 +174,14 @@ public class EroCommand extends AbstractCommand {
   }
 
   protected void configure() {
-    if (!isEroOutputSet())
+    if (!isEroOutputClassifiedSet())
     {
-      this.eroOutput = new File(getMain().getJobDirectory(), "ero-release");
+      this.eroOutputClassified = new File(getMain().getJobDirectory(), "classified");
+    }
+
+    if (!isEroOutputUnclassifiedSet())
+    {
+      this.eroOutputUnclassified = new File(getMain().getJobDirectory(), "unclassified");
     }
 
   }
@@ -171,8 +192,8 @@ public class EroCommand extends AbstractCommand {
     File moduleDirecotry;
     DefaultModule module;
     IModuleConfig mc;
-    File classifiedOutput;
-    File unclassifiedOutput;
+    Path classifiedOutput;
+    Path unclassifiedOutput;
 
     man = getMain().getSharedBaseManager();
     isfOntology = OwlclUtil.getOrLoadOntology(EroCommand.ISF_DEV_IRI, man);
@@ -188,9 +209,9 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/core");
-    unclassifiedOutput = new File(eroOutput, "unclassified/core");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "core").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "core").toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -227,10 +248,11 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/imports");
-    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "imports").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "imports").toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
+
     if (addLegacySet)
     {
       module.setAddLegacyClassified(addLegacy);
@@ -267,9 +289,9 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/imports");
-    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "imports").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "imports").toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -308,9 +330,9 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/imports");
-    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "imports").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "imports").toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -353,9 +375,9 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/imports");
-    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "imports").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "imports").toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -395,9 +417,9 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/imports");
-    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "imports").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "imports").toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -435,9 +457,9 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    unclassifiedOutput = new File(eroOutput, "unclassified/core");
-    classifiedOutput = new File(eroOutput, "classified/core");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "core").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "core").toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -509,9 +531,10 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -544,9 +567,10 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -583,9 +607,10 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -617,9 +642,10 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -661,10 +687,10 @@ public class EroCommand extends AbstractCommand {
     mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
-
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -706,9 +732,10 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -752,9 +779,10 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -797,9 +825,10 @@ public class EroCommand extends AbstractCommand {
         .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
     injector.injectMembers(mc);
 
-    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
-    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
-    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    classifiedOutput = new File(eroOutputClassified, "application-specific-files").toPath();
+    unclassifiedOutput = new File(eroOutputUnclassified, "unclassified/application-specific-files")
+        .toPath();
+    module = new DefaultModule(mc, unclassifiedOutput, classifiedOutput);
     injector.injectMembers(module);
     if (addLegacySet)
     {
@@ -830,33 +859,31 @@ public class EroCommand extends AbstractCommand {
     // eagleiExtendedUberonApp.module.importModuleIntoBoth(eagleiAppDef.module,
     // null);
     //
-    
-    //================================================================================
-    // 
-    //================================================================================
-    
+
+    // ================================================================================
+    //
+    // ================================================================================
+
     eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtended, false);
     eagleiExtendedApp.importModuleIntoClassified(eagleiExtended, true);
-    
+
     eagleiExtendedApp.importModuleIntoUnclassified(eagleiApp, false);
     eagleiExtendedApp.importModuleIntoClassified(eagleiApp, true);
-    
+
     eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedGoApp, false);
     eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedGoApp, true);
-    
+
     eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedMeshApp, false);
     eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedMeshApp, true);
-    
+
     eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedMpApp, false);
     eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedMpApp, true);
-    
+
     eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedPatoApp, false);
     eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedPatoApp, true);
-    
+
     eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedUberonApp, false);
     eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedUberonApp, true);
-    
-
 
     // eagleiExtendedApp.module.importModuleIntoBoth(eagleiExtended.module,
     // null);
@@ -871,7 +898,7 @@ public class EroCommand extends AbstractCommand {
     // null);
     // eagleiExtendedApp.module.importModuleIntoBoth(eagleiExtendedUberonApp.module,
     // null);
-    
+
     // ================================================================================
     //
     // ================================================================================
@@ -880,7 +907,7 @@ public class EroCommand extends AbstractCommand {
 
     CatalogCommand catalog = new CatalogCommand(getMain());
     injector.injectMembers(catalog);
-    catalog.setDirectory(new File(eroOutput, "classified"));
+    catalog.setDirectory(eroOutputClassified);
     try
     {
       catalog.call();
@@ -891,7 +918,7 @@ public class EroCommand extends AbstractCommand {
 
     catalog = new CatalogCommand(getMain());
     injector.injectMembers(catalog);
-    catalog.setDirectory(new File(eroOutput, "unclassified"));
+    catalog.setDirectory(eroOutputUnclassified);
     try
     {
       catalog.call();
@@ -961,21 +988,21 @@ public class EroCommand extends AbstractCommand {
 
       @Override
       public void execute(EroCommand command) {
-        CompareCommand cc = new CompareCommand(command.getMain());
-
-        cc.setFromIri(IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl"));
-        cc.getFromFiles().add(command.previousDirectory);
-
-        cc.setToIri(IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl"));
-        cc.getToFiles().add(command.eroOutput);
-        cc.setReportDirectory(command.eroOutput);
-        try
-        {
-          cc.call();
-        } catch (Exception e)
-        {
-          throw new RuntimeException("Failed to compare the ero versions.", e);
-        }
+//        CompareCommand cc = new CompareCommand(command.getMain());
+//
+//        cc.setFromIri(IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl"));
+//        cc.getFromFiles().add(command.previousDirectory);
+//
+//        cc.setToIri(IRI.create("http://eagle-i.org/ont/app/1.0/eagle-i-extended-app.owl"));
+//        cc.getToFiles().add(command.eroOutput);
+//        cc.setReportDirectory(command.eroOutput);
+//        try
+//        {
+//          cc.call();
+//        } catch (Exception e)
+//        {
+//          throw new RuntimeException("Failed to compare the ero versions.", e);
+//        }
       }
     };
 
