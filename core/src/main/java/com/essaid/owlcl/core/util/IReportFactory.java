@@ -1,9 +1,9 @@
 package com.essaid.owlcl.core.util;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public interface IReportFactory {
 
-  Report createReport(String name, File directory, ILoggerOwner loggerOwner);
+  Report createReport(String name, Path directory, ILoggerOwner loggerOwner);
 
 }

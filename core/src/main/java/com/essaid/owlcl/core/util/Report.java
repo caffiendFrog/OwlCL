@@ -3,6 +3,7 @@ package com.essaid.owlcl.core.util;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 
 import org.slf4j.Logger;
 
@@ -17,13 +18,13 @@ public class Report {
   private Logger logger;
 
   @Inject
-  public Report(@Assisted String name, @Assisted File directory, @Assisted ILoggerOwner loggerOwner) {
+  public Report(@Assisted String name, @Assisted Path directory, @Assisted ILoggerOwner loggerOwner) {
     this.logger = loggerOwner.getLogger();
 
     try
     {
-      pw = new PrintWriter(new File(directory, name + ".txt"));
-      pwDetailed = new PrintWriter(new File(directory, name + "-detailed.txt"));
+      pw = new PrintWriter(new File(directory.toFile(), name + ".txt"));
+      pwDetailed = new PrintWriter(new File(directory.toFile(), name + "-detailed.txt"));
     } catch (FileNotFoundException e)
     {
       throw new RuntimeException("Failed to create report files", e);

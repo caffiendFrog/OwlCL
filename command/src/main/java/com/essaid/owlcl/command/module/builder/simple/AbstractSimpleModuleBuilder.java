@@ -16,97 +16,108 @@ import org.semanticweb.owlapi.model.OWLEntityVisitor;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.slf4j.Logger;
 
 import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.builder.IModuleBuilder;
-import com.essaid.owlcl.command.module.builder.IModuleBuilderFactory;
+import com.essaid.owlcl.core.annotation.InjectLogger;
+import com.essaid.owlcl.core.util.IInitializable;
+import com.essaid.owlcl.core.util.ILoggerOwner;
 
-public abstract class AbstractSimpleModuleBuilder implements IModuleBuilder {
+public abstract class AbstractSimpleModuleBuilder implements IModuleBuilder, IInitializable,
+    ILoggerOwner {
 
-	IModule module;
-	com.essaid.owlcl.core.util.Report report;
-	OWLDataFactory df;
+  IModule module;
+  OWLDataFactory df;
 
-	public AbstractSimpleModuleBuilder(IModule simpleModule) {
-		this.module = simpleModule;
-		this.report = module.getReport();
-		this.df = module.getDataFactory();
-	}
+  @InjectLogger
+  private Logger logger;
 
-	protected void addOntologyAnnotations() {
-		for (OWLAnnotation a : module.getModuleConfiguration().getAnnotations())
-		{
-			if (!a.getProperty().getIRI().toString().contains("isftools-"))
-			{
-				module.addAnnotationUnclassified(a);
-			}
-		}
-	}
+  @Override
+  public Logger getLogger() {
+    return logger;
+  }
 
-	public static Set<OWLAxiom> getDefiningAxioms(final OWLEntity entity,
-			Set<OWLOntology> ontologies, boolean includeImports) {
-		Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
-		for (OWLOntology o : ontologies)
-		{
-			axioms.addAll(AbstractSimpleModuleBuilder.getDefiningAxioms(entity, o, includeImports));
-		}
-		return axioms;
-	}
+  public AbstractSimpleModuleBuilder(IModule simpleModule) {
+    this.module = simpleModule;
+    this.df = module.getDataFactory();
+  }
 
-	public static Set<OWLAxiom> getDefiningAxioms(final OWLEntity entity, OWLOntology ontology,
-			boolean includeImports) {
-		final Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
-		Set<OWLOntology> ontologies;
-		if (includeImports)
-		{
-			ontologies = ontology.getImportsClosure();
-		} else
-		{
-			ontologies = Collections.singleton(ontology);
-		}
+  protected void addOntologyAnnotations() {
+    for (OWLAnnotation a : module.getModuleConfiguration().getIncludeOntology().getAnnotations())
+    {
+      if (!a.getProperty().getIRI().toString().contains("isftools-"))
+      {
+        module.addAnnotationClassified(a, this);
+        module.addAnnotationUnclassified(a, this);
+      }
+    }
+  }
 
-		for (final OWLOntology o : ontologies)
-		{
-			entity.accept(new OWLEntityVisitor() {
+  public static Set<OWLAxiom> getDefiningAxioms(final OWLEntity entity,
+      Set<OWLOntology> ontologies, boolean includeImports) {
+    Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
+    for (OWLOntology o : ontologies)
+    {
+      axioms.addAll(AbstractSimpleModuleBuilder.getDefiningAxioms(entity, o, includeImports));
+    }
+    return axioms;
+  }
 
-				@Override
-				public void visit(OWLAnnotationProperty property) {
-					axioms.addAll(o.getAxioms(property));
-				}
+  public static Set<OWLAxiom> getDefiningAxioms(final OWLEntity entity, OWLOntology ontology,
+      boolean includeImports) {
+    final Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
+    Set<OWLOntology> ontologies;
+    if (includeImports)
+    {
+      ontologies = ontology.getImportsClosure();
+    } else
+    {
+      ontologies = Collections.singleton(ontology);
+    }
 
-				@Override
-				public void visit(OWLDatatype datatype) {
-					axioms.addAll(o.getAxioms(datatype));
+    for (final OWLOntology o : ontologies)
+    {
+      entity.accept(new OWLEntityVisitor() {
 
-				}
+        @Override
+        public void visit(OWLAnnotationProperty property) {
+          axioms.addAll(o.getAxioms(property));
+        }
 
-				@Override
-				public void visit(OWLNamedIndividual individual) {
-					axioms.addAll(o.getAxioms(individual));
+        @Override
+        public void visit(OWLDatatype datatype) {
+          axioms.addAll(o.getAxioms(datatype));
 
-				}
+        }
 
-				@Override
-				public void visit(OWLDataProperty property) {
-					axioms.addAll(o.getAxioms(property));
+        @Override
+        public void visit(OWLNamedIndividual individual) {
+          axioms.addAll(o.getAxioms(individual));
 
-				}
+        }
 
-				@Override
-				public void visit(OWLObjectProperty property) {
-					axioms.addAll(o.getAxioms(property));
+        @Override
+        public void visit(OWLDataProperty property) {
+          axioms.addAll(o.getAxioms(property));
 
-				}
+        }
 
-				@Override
-				public void visit(OWLClass cls) {
-					axioms.addAll(o.getAxioms(cls));
+        @Override
+        public void visit(OWLObjectProperty property) {
+          axioms.addAll(o.getAxioms(property));
 
-				}
-			});
-		}
+        }
 
-		return axioms;
-	}
+        @Override
+        public void visit(OWLClass cls) {
+          axioms.addAll(o.getAxioms(cls));
+
+        }
+      });
+    }
+
+    return axioms;
+  }
 
 }

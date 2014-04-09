@@ -17,6 +17,7 @@ import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.module.DefaultModule;
 import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.ModuleNames;
+import com.essaid.owlcl.command.module.config.IModuleConfig;
 import com.essaid.owlcl.command.module.config.ModuleConfigurationV1;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
@@ -143,7 +144,7 @@ public class EroCommand extends AbstractCommand {
   @Inject
   Injector injector;
   public static final IRI ISF_DEV_IRI = IRI
-  .create("http://purl.obolibrary.org/obo/arg/isf-dev.owl");
+      .create("http://purl.obolibrary.org/obo/arg/isf-dev.owl");
 
   @Inject
   public EroCommand(@Assisted OwlclCommand main) {
@@ -169,8 +170,9 @@ public class EroCommand extends AbstractCommand {
     configure();
     File moduleDirecotry;
     DefaultModule module;
-    ModuleConfigurationV1 mc;
-    File moduleOutput;
+    IModuleConfig mc;
+    File classifiedOutput;
+    File unclassifiedOutput;
 
     man = getMain().getSharedBaseManager();
     isfOntology = OwlclUtil.getOrLoadOntology(EroCommand.ISF_DEV_IRI, man);
@@ -181,44 +183,21 @@ public class EroCommand extends AbstractCommand {
     // ================================================================================
 
     moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI);
-    mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
-    injector.injectMembers(mc);
-    mc.setSourceOntology(isfOntology);
-    mc.setSourceReasoner(reasoner);
-    mc.loadConfiguration();
 
-    moduleOutput = new File(eroOutput, "core");
-    module = new DefaultModule(mc, moduleOutput);
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/core");
+    unclassifiedOutput = new File(eroOutput, "unclassified/core");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
     injector.injectMembers(module);
     if (addLegacySet)
     {
-      module.setAddLegacy(addLegacy);
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
     }
     DefaultModule eaglei = module;
-
-    // ================================================================================
-    // eaglei extended
-    // ================================================================================
-
-    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_EXTENDED);
-    injector.injectMembers(mc);
-    mc.setSourceOntology(isfOntology);
-    mc.setSourceReasoner(reasoner);
-    mc.loadConfiguration();
-    
-    moduleOutput = new File(eroOutput, "core");
-    module = new DefaultModule(mc, moduleOutput);
-    injector.injectMembers(module);
-    if (addLegacySet)
-    {
-      module.setAddLegacy(addLegacy);
-    }
-    
-    DefaultModule eagleiExtended = module;
-
-    
-    eagleiExtended.generateModule();
-    eagleiExtended.saveGeneratedModule();
 
     // ModuleCommand eaglei = new ModuleCommand(getMain());
     // eaglei.setModuleName(ModuleNames.EAGLEI);
@@ -237,6 +216,254 @@ public class EroCommand extends AbstractCommand {
     // mc.loadConfiguration();
     // module = new DefaultModule(mc, new File(outputDirectory, "core"));
     // eaglei.module = module;
+
+    // ================================================================================
+    // extended GO
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_EXTENDED_GO);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/imports");
+    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule exgtendedGo = module;
+
+    // //
+    // ModuleCommand eagleiExtendedGo = new ModuleCommand(getMain());
+    // eagleiExtendedGo.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO);
+    // eagleiExtendedGo.setOutput(new File(outputDirectory, "imports"));
+    // // eagleiExtendedGo.sourceOntology = isfOntology;
+    // // eagleiExtendedGo.sourceReasoner = reasoner;
+    // eagleiExtendedGo.setAddLegacy(addLegacy);
+    // eagleiExtendedGo.setCleanLegacy(cleanLegacy);
+    // eagleiExtendedGo.setReasoned(true);
+    // eagleiExtendedGo.setUnReasoned(true);
+    // moduleDirecotry = new File(getMain().getProject(), "module/" +
+    // ModuleNames.EAGLEI_EXTENDED_GO);
+    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
+    // mc.setSourceOntology(isfOntology);
+    // mc.setSourceReasoner(reasoner);
+    // mc.loadConfiguration();
+    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
+    // eagleiExtendedGo.module = module;
+    //
+
+    // ================================================================================
+    // extended mesh
+    // ================================================================================
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_EXTENDED_MESH);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/imports");
+    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule exgtendedMesh = module;
+
+    // //
+    // ModuleCommand eagleiExtendedMesh = new ModuleCommand(getMain());
+    // eagleiExtendedMesh.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH);
+    // eagleiExtendedMesh.setOutput(new File(outputDirectory, "imports"));
+    // // eagleiExtendedMesh.sourceOntology = isfOntology;
+    // // eagleiExtendedMesh.sourceReasoner = reasoner;
+    // eagleiExtendedMesh.setAddLegacy(addLegacy);
+    // eagleiExtendedMesh.setCleanLegacy(cleanLegacy);
+    // eagleiExtendedMesh.setReasoned(true);
+    // eagleiExtendedMesh.setUnReasoned(true);
+    // moduleDirecotry = new File(getMain().getProject(), "module/" +
+    // ModuleNames.EAGLEI_EXTENDED_MESH);
+    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
+    // mc.setSourceOntology(isfOntology);
+    // mc.setSourceReasoner(reasoner);
+    // mc.loadConfiguration();
+    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
+    // eagleiExtendedMesh.module = module;
+    //
+
+    // ================================================================================
+    // extended MP
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_EXTENDED_MP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/imports");
+    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule exgtendedMP = module;
+
+    // //
+    // ModuleCommand eagleiExtendedMp = new ModuleCommand(getMain());
+    // eagleiExtendedMp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP);
+    // eagleiExtendedMp.setOutput(new File(outputDirectory, "imports"));
+    // // eagleiExtendedMp.sourceOntology = isfOntology;
+    // // eagleiExtendedMp.sourceReasoner = reasoner;
+    // eagleiExtendedMp.setAddLegacy(addLegacy);
+    // eagleiExtendedMp.setCleanLegacy(cleanLegacy);
+    // eagleiExtendedMp.setReasoned(true);
+    // eagleiExtendedMp.setUnReasoned(true);
+    // moduleDirecotry = new File(getMain().getProject(), "module/" +
+    // ModuleNames.EAGLEI_EXTENDED_MP);
+    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
+    // mc.setSourceOntology(isfOntology);
+    // mc.setSourceReasoner(reasoner);
+    // mc.loadConfiguration();
+    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
+    // eagleiExtendedMp.module = module;
+    //
+
+    // ================================================================================
+    //
+    // ================================================================================
+
+    // ================================================================================
+    // extended Pato
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_EXTENDED_PATO);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/imports");
+    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule exgtendedPato = module;
+
+    // //
+    // ModuleCommand eagleiExtendedPato = new ModuleCommand(getMain());
+    // eagleiExtendedPato.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO);
+    // eagleiExtendedPato.setOutput(new File(outputDirectory, "imports"));
+    // // eagleiExtendedPato.sourceOntology = isfOntology;
+    // // eagleiExtendedPato.sourceReasoner = reasoner;
+    // eagleiExtendedPato.setAddLegacy(addLegacy);
+    // eagleiExtendedPato.setCleanLegacy(cleanLegacy);
+    // eagleiExtendedPato.setReasoned(true);
+    // eagleiExtendedPato.setUnReasoned(true);
+    // moduleDirecotry = new File(getMain().getProject(), "module/" +
+    // ModuleNames.EAGLEI_EXTENDED_PATO);
+    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
+    // mc.setSourceOntology(isfOntology);
+    // mc.setSourceReasoner(reasoner);
+    // mc.loadConfiguration();
+    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
+    // eagleiExtendedPato.module = module;
+    //
+
+    // ================================================================================
+    // Extended uberon
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/"
+        + ModuleNames.EAGLEI_EXTENDED_UBERON);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/imports");
+    unclassifiedOutput = new File(eroOutput, "unclassified/imports");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule exgtendedUberon = module;
+
+    // //
+    // ModuleCommand eagleiExtendedUberon = new ModuleCommand(getMain());
+    // eagleiExtendedUberon.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON);
+    // eagleiExtendedUberon.setOutput(new File(outputDirectory, "imports"));
+    // // eagleiExtendedUberon.sourceOntology = isfOntology;
+    // // eagleiExtendedUberon.sourceReasoner = reasoner;
+    // eagleiExtendedUberon.setAddLegacy(addLegacy);
+    // eagleiExtendedUberon.setCleanLegacy(cleanLegacy);
+    // eagleiExtendedUberon.setReasoned(true);
+    // eagleiExtendedUberon.setUnReasoned(true);
+    // moduleDirecotry = new File(getMain().getProject(), "module/"
+    // + ModuleNames.EAGLEI_EXTENDED_UBERON);
+    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
+    // mc.loadConfiguration();
+    // mc.setSourceOntology(isfOntology);
+    // mc.setSourceReasoner(reasoner);
+    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
+    // eagleiExtendedUberon.module = module;
+    //
+
+    // ================================================================================
+    // eaglei extended
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_EXTENDED);
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    unclassifiedOutput = new File(eroOutput, "unclassified/core");
+    classifiedOutput = new File(eroOutput, "classified/core");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiExtended = module;
+
+    eagleiExtended.importModuleIntoUnclassified(eaglei, false);
+    eagleiExtended.importModuleIntoClassified(eaglei, true);
+
+    eagleiExtended.importModuleIntoUnclassified(exgtendedGo, false);
+    eagleiExtended.importModuleIntoClassified(exgtendedGo, true);
+
+    eagleiExtended.importModuleIntoUnclassified(exgtendedMesh, false);
+    eagleiExtended.importModuleIntoClassified(exgtendedMesh, true);
+
+    eagleiExtended.importModuleIntoUnclassified(exgtendedMP, false);
+    eagleiExtended.importModuleIntoClassified(exgtendedMP, true);
+
+    eagleiExtended.importModuleIntoUnclassified(exgtendedPato, false);
+    eagleiExtended.importModuleIntoClassified(exgtendedPato, true);
+
+    eagleiExtended.importModuleIntoUnclassified(exgtendedUberon, false);
+    eagleiExtended.importModuleIntoClassified(exgtendedUberon, true);
+
     //
     // //
     // ModuleCommand eagleiExtended = new ModuleCommand(getMain());
@@ -257,101 +484,7 @@ public class EroCommand extends AbstractCommand {
     // module = new DefaultModule(mc, new File(outputDirectory, "core"));
     // eagleiExtended.module = module;
     //
-    // //
-    // ModuleCommand eagleiExtendedGo = new ModuleCommand(getMain());
-    // eagleiExtendedGo.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO);
-    // eagleiExtendedGo.setOutput(new File(outputDirectory, "imports"));
-    // // eagleiExtendedGo.sourceOntology = isfOntology;
-    // // eagleiExtendedGo.sourceReasoner = reasoner;
-    // eagleiExtendedGo.setAddLegacy(addLegacy);
-    // eagleiExtendedGo.setCleanLegacy(cleanLegacy);
-    // eagleiExtendedGo.setReasoned(true);
-    // eagleiExtendedGo.setUnReasoned(true);
-    // moduleDirecotry = new File(getMain().getProject(), "module/" +
-    // ModuleNames.EAGLEI_EXTENDED_GO);
-    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
-    // mc.setSourceOntology(isfOntology);
-    // mc.setSourceReasoner(reasoner);
-    // mc.loadConfiguration();
-    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
-    // eagleiExtendedGo.module = module;
-    //
-    // //
-    // ModuleCommand eagleiExtendedMesh = new ModuleCommand(getMain());
-    // eagleiExtendedMesh.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH);
-    // eagleiExtendedMesh.setOutput(new File(outputDirectory, "imports"));
-    // // eagleiExtendedMesh.sourceOntology = isfOntology;
-    // // eagleiExtendedMesh.sourceReasoner = reasoner;
-    // eagleiExtendedMesh.setAddLegacy(addLegacy);
-    // eagleiExtendedMesh.setCleanLegacy(cleanLegacy);
-    // eagleiExtendedMesh.setReasoned(true);
-    // eagleiExtendedMesh.setUnReasoned(true);
-    // moduleDirecotry = new File(getMain().getProject(), "module/" +
-    // ModuleNames.EAGLEI_EXTENDED_MESH);
-    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
-    // mc.setSourceOntology(isfOntology);
-    // mc.setSourceReasoner(reasoner);
-    // mc.loadConfiguration();
-    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
-    // eagleiExtendedMesh.module = module;
-    //
-    // //
-    // ModuleCommand eagleiExtendedMp = new ModuleCommand(getMain());
-    // eagleiExtendedMp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MP);
-    // eagleiExtendedMp.setOutput(new File(outputDirectory, "imports"));
-    // // eagleiExtendedMp.sourceOntology = isfOntology;
-    // // eagleiExtendedMp.sourceReasoner = reasoner;
-    // eagleiExtendedMp.setAddLegacy(addLegacy);
-    // eagleiExtendedMp.setCleanLegacy(cleanLegacy);
-    // eagleiExtendedMp.setReasoned(true);
-    // eagleiExtendedMp.setUnReasoned(true);
-    // moduleDirecotry = new File(getMain().getProject(), "module/" +
-    // ModuleNames.EAGLEI_EXTENDED_MP);
-    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
-    // mc.setSourceOntology(isfOntology);
-    // mc.setSourceReasoner(reasoner);
-    // mc.loadConfiguration();
-    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
-    // eagleiExtendedMp.module = module;
-    //
-    // //
-    // ModuleCommand eagleiExtendedPato = new ModuleCommand(getMain());
-    // eagleiExtendedPato.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO);
-    // eagleiExtendedPato.setOutput(new File(outputDirectory, "imports"));
-    // // eagleiExtendedPato.sourceOntology = isfOntology;
-    // // eagleiExtendedPato.sourceReasoner = reasoner;
-    // eagleiExtendedPato.setAddLegacy(addLegacy);
-    // eagleiExtendedPato.setCleanLegacy(cleanLegacy);
-    // eagleiExtendedPato.setReasoned(true);
-    // eagleiExtendedPato.setUnReasoned(true);
-    // moduleDirecotry = new File(getMain().getProject(), "module/" +
-    // ModuleNames.EAGLEI_EXTENDED_PATO);
-    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
-    // mc.setSourceOntology(isfOntology);
-    // mc.setSourceReasoner(reasoner);
-    // mc.loadConfiguration();
-    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
-    // eagleiExtendedPato.module = module;
-    //
-    // //
-    // ModuleCommand eagleiExtendedUberon = new ModuleCommand(getMain());
-    // eagleiExtendedUberon.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON);
-    // eagleiExtendedUberon.setOutput(new File(outputDirectory, "imports"));
-    // // eagleiExtendedUberon.sourceOntology = isfOntology;
-    // // eagleiExtendedUberon.sourceReasoner = reasoner;
-    // eagleiExtendedUberon.setAddLegacy(addLegacy);
-    // eagleiExtendedUberon.setCleanLegacy(cleanLegacy);
-    // eagleiExtendedUberon.setReasoned(true);
-    // eagleiExtendedUberon.setUnReasoned(true);
-    // moduleDirecotry = new File(getMain().getProject(), "module/"
-    // + ModuleNames.EAGLEI_EXTENDED_UBERON);
-    // mc = new ModuleConfigurationV1(moduleDirecotry, man, man);
-    // mc.loadConfiguration();
-    // mc.setSourceOntology(isfOntology);
-    // mc.setSourceReasoner(reasoner);
-    // module = new DefaultModule(mc, new File(outputDirectory, "imports"));
-    // eagleiExtendedUberon.module = module;
-    //
+
     // eagleiExtended.module.importModuleIntoBoth(eaglei.module, null);
     // eagleiExtended.module.importModuleIntoBoth(eagleiExtendedGo.module,
     // null);
@@ -366,7 +499,26 @@ public class EroCommand extends AbstractCommand {
     // eagleiExtended.module.importModuleIntoBoth(eagleiExtendedGo.module,
     // null);
 
-    // topModule = eagleiExtended.module;
+    // ================================================================================
+    //
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_APP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiApp = module;
 
     // //
     // ModuleCommand eagleiApp = new ModuleCommand(getMain());
@@ -381,6 +533,31 @@ public class EroCommand extends AbstractCommand {
     // eagleiApp.setUnReasoned(true);
     //
     // //
+
+    // ================================================================================
+    // eageli app def
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_APP_DEF);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiAppDef = module;
+
+    eagleiApp.importModuleIntoUnclassified(eagleiAppDef, false);
+    eagleiApp.importModuleIntoClassified(eagleiAppDef, true);
+
     // ModuleCommand eagleiAppDef = new ModuleCommand(getMain());
     // eagleiAppDef.setModuleName(ModuleNames.EAGLEI_APP_DEF);
     // eagleiAppDef.setOutput(new File(outputDirectory,
@@ -395,6 +572,28 @@ public class EroCommand extends AbstractCommand {
     // eagleiApp.module.importModuleIntoBoth(eagleiAppDef.module, null);
     //
     // //
+
+    // ================================================================================
+    // eaglei app extended
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/" + ModuleNames.EAGLEI_EXTENDED_APP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiExtendedApp = module;
+
     // ModuleCommand eagleiExtendedApp = new ModuleCommand(getMain());
     // eagleiExtendedApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_APP);
     // eagleiExtendedApp.setOutput(new File(outputDirectory,
@@ -406,6 +605,35 @@ public class EroCommand extends AbstractCommand {
     // eagleiExtendedApp.setReasoned(true);
     // eagleiExtendedApp.setUnReasoned(true);
     //
+
+    // ================================================================================
+    // extended go app
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/"
+        + ModuleNames.EAGLEI_EXTENDED_GO_APP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiExtendedGoApp = module;
+
+    eagleiExtendedGoApp.importModuleIntoUnclassified(exgtendedGo, false);
+    eagleiExtendedGoApp.importModuleIntoClassified(exgtendedGo, true);
+
+    eagleiExtendedGoApp.importModuleIntoUnclassified(eagleiAppDef, false);
+    eagleiExtendedGoApp.importModuleIntoClassified(eagleiAppDef, true);
+
     // //
     // ModuleCommand eagleiExtendedGoApp = new ModuleCommand(getMain());
     // eagleiExtendedGoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_GO_APP);
@@ -422,6 +650,35 @@ public class EroCommand extends AbstractCommand {
     // eagleiExtendedGoApp.module.importModuleIntoBoth(eagleiAppDef.module,
     // null);
     //
+
+    // ================================================================================
+    // extended mesh app
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/"
+        + ModuleNames.EAGLEI_EXTENDED_MESH_APP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiExtendedMeshApp = module;
+
+    eagleiExtendedMeshApp.importModuleIntoUnclassified(exgtendedMesh, false);
+    eagleiExtendedMeshApp.importModuleIntoClassified(exgtendedMesh, true);
+
+    eagleiExtendedMeshApp.importModuleIntoUnclassified(eagleiAppDef, false);
+    eagleiExtendedMeshApp.importModuleIntoClassified(eagleiAppDef, true);
+
     // //
     // ModuleCommand eagleiExtendedMeshApp = new ModuleCommand(getMain());
     // eagleiExtendedMeshApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_MESH_APP);
@@ -437,6 +694,35 @@ public class EroCommand extends AbstractCommand {
     // null);
     // eagleiExtendedMeshApp.module.importModuleIntoBoth(eagleiAppDef.module,
     // null);
+
+    // ================================================================================
+    // extended MP app
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/"
+        + ModuleNames.EAGLEI_EXTENDED_MP_APP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiExtendedMpApp = module;
+
+    eagleiExtendedMpApp.importModuleIntoUnclassified(exgtendedMP, false);
+    eagleiExtendedMpApp.importModuleIntoClassified(exgtendedMP, true);
+
+    eagleiExtendedMpApp.importModuleIntoUnclassified(eagleiAppDef, false);
+    eagleiExtendedMpApp.importModuleIntoClassified(eagleiAppDef, true);
+
     //
     // //
     // ModuleCommand eagleiExtendedMpApp = new ModuleCommand(getMain());
@@ -454,6 +740,35 @@ public class EroCommand extends AbstractCommand {
     // eagleiExtendedMpApp.module.importModuleIntoBoth(eagleiAppDef.module,
     // null);
     //
+
+    // ================================================================================
+    // extended pato app
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/"
+        + ModuleNames.EAGLEI_EXTENDED_PATO_APP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiExtendedPatoApp = module;
+
+    eagleiExtendedPatoApp.importModuleIntoUnclassified(exgtendedPato, false);
+    eagleiExtendedPatoApp.importModuleIntoClassified(exgtendedPato, true);
+
+    eagleiExtendedPatoApp.importModuleIntoUnclassified(eagleiAppDef, false);
+    eagleiExtendedPatoApp.importModuleIntoClassified(eagleiAppDef, true);
+
     // //
     // ModuleCommand eagleiExtendedPatoApp = new ModuleCommand(getMain());
     // eagleiExtendedPatoApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_PATO_APP);
@@ -470,6 +785,35 @@ public class EroCommand extends AbstractCommand {
     // eagleiExtendedPatoApp.module.importModuleIntoBoth(eagleiAppDef.module,
     // null);
     //
+
+    // ================================================================================
+    // uberon app
+    // ================================================================================
+
+    moduleDirecotry = new File(getMain().getProject(), "module/"
+        + ModuleNames.EAGLEI_EXTENDED_UBERON_APP);
+
+    mc = ModuleConfigurationV1.getExistingInstance(moduleDirecotry.toPath(), getMain()
+        .getSharedBaseManager(), getMain().getSharedBaseManager(), isfOntology, reasoner, false);
+    injector.injectMembers(mc);
+
+    classifiedOutput = new File(eroOutput, "classified/application-specific-files");
+    unclassifiedOutput = new File(eroOutput, "unclassified/application-specific-files");
+    module = new DefaultModule(mc, unclassifiedOutput.toPath(), classifiedOutput.toPath());
+    injector.injectMembers(module);
+    if (addLegacySet)
+    {
+      module.setAddLegacyClassified(addLegacy);
+      module.setAddLegacyUnclassified(addLegacy);
+    }
+    DefaultModule eagleiExtendedUberonApp = module;
+
+    eagleiExtendedUberonApp.importModuleIntoUnclassified(exgtendedUberon, false);
+    eagleiExtendedUberonApp.importModuleIntoClassified(exgtendedUberon, true);
+
+    eagleiExtendedUberonApp.importModuleIntoUnclassified(eagleiAppDef, false);
+    eagleiExtendedUberonApp.importModuleIntoClassified(eagleiAppDef, true);
+
     // //
     // ModuleCommand eagleiExtendedUberonApp = new ModuleCommand(getMain());
     // eagleiExtendedUberonApp.setModuleName(ModuleNames.EAGLEI_EXTENDED_UBERON_APP);
@@ -486,6 +830,34 @@ public class EroCommand extends AbstractCommand {
     // eagleiExtendedUberonApp.module.importModuleIntoBoth(eagleiAppDef.module,
     // null);
     //
+    
+    //================================================================================
+    // 
+    //================================================================================
+    
+    eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtended, false);
+    eagleiExtendedApp.importModuleIntoClassified(eagleiExtended, true);
+    
+    eagleiExtendedApp.importModuleIntoUnclassified(eagleiApp, false);
+    eagleiExtendedApp.importModuleIntoClassified(eagleiApp, true);
+    
+    eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedGoApp, false);
+    eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedGoApp, true);
+    
+    eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedMeshApp, false);
+    eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedMeshApp, true);
+    
+    eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedMpApp, false);
+    eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedMpApp, true);
+    
+    eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedPatoApp, false);
+    eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedPatoApp, true);
+    
+    eagleiExtendedApp.importModuleIntoUnclassified(eagleiExtendedUberonApp, false);
+    eagleiExtendedApp.importModuleIntoClassified(eagleiExtendedUberonApp, true);
+    
+
+
     // eagleiExtendedApp.module.importModuleIntoBoth(eagleiExtended.module,
     // null);
     // eagleiExtendedApp.module.importModuleIntoBoth(eagleiApp.module, null);
@@ -499,6 +871,37 @@ public class EroCommand extends AbstractCommand {
     // null);
     // eagleiExtendedApp.module.importModuleIntoBoth(eagleiExtendedUberonApp.module,
     // null);
+    
+    // ================================================================================
+    //
+    // ================================================================================
+
+    eagleiExtendedApp.saveModule();
+
+    CatalogCommand catalog = new CatalogCommand(getMain());
+    injector.injectMembers(catalog);
+    catalog.setDirectory(new File(eroOutput, "classified"));
+    try
+    {
+      catalog.call();
+    } catch (Exception e)
+    {
+      throw new RuntimeException("Error creating ERO catalog files.", e);
+    }
+
+    catalog = new CatalogCommand(getMain());
+    injector.injectMembers(catalog);
+    catalog.setDirectory(new File(eroOutput, "unclassified"));
+    try
+    {
+      catalog.call();
+    } catch (Exception e)
+    {
+      throw new RuntimeException("Error creating ERO catalog files.", e);
+    }
+
+    // topModule = eagleiExtended.module;
+
     //
     // topModule = eagleiExtendedApp.module;
     return null;
@@ -528,7 +931,7 @@ public class EroCommand extends AbstractCommand {
       @Override
       public void execute(EroCommand command) {
         System.out.println("Saving top module to: ");
-        command.topModule.generateModule();
+        // command.topModule.generateModule();
       }
     },
 
@@ -536,7 +939,7 @@ public class EroCommand extends AbstractCommand {
 
       @Override
       public void execute(EroCommand command) {
-        command.topModule.saveGeneratedModule();
+        // command.topModule.saveGeneratedModule();
       }
     },
     catalog {

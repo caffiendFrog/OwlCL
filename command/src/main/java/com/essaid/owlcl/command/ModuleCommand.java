@@ -14,6 +14,7 @@ import com.essaid.owlcl.command.module.DefaultModule;
 import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.Util;
 import com.essaid.owlcl.command.module.config.IModuleConfig;
+import com.essaid.owlcl.command.module.config.IModuleConfigInternal;
 import com.essaid.owlcl.command.module.config.ModuleConfigurationV1;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
@@ -221,9 +222,9 @@ public class ModuleCommand extends AbstractCommand {
     super(main);
   }
 
-  OWLReasoner sourceReasoner;
-  OWLOntology sourceOntology;
-  IModule module = null;
+  private OWLReasoner sourceReasoner;
+  private OWLOntology sourceOntology;
+  private IModule module = null;
 
   Set<ModuleCommand> imports = new HashSet<ModuleCommand>();
 
@@ -263,20 +264,20 @@ public class ModuleCommand extends AbstractCommand {
     }
 
     output.mkdirs();
-    if (module == null)
-    {
 
-      IModuleConfig moduleComfig = new ModuleConfigurationV1(directory, getMain()
-          .getSharedBaseManager(), getMain().getSharedBaseManager());
+
+      // IModuleConfig moduleComfig = new ModuleConfigurationV1(directory,
+      // getMain()
+      // .getSharedBaseManager(), getMain().getSharedBaseManager());
+
+      IModuleConfigInternal moduleComfig = ModuleConfigurationV1.getExistingInstance(directory.toPath(),
+          getMain().getSharedBaseManager(), getMain().getSharedBaseManager(), sourceOntology, null);
 
       injector.injectMembers(moduleComfig);
-
-      moduleComfig.loadConfiguration();
 
       module = new DefaultModule(moduleComfig, output);
 
       injector.injectMembers(module);
-    }
 
     // override the configuration from command line
     if (reasonedSet)
@@ -291,8 +292,7 @@ public class ModuleCommand extends AbstractCommand {
 
     if (addLegacySet)
     {
-      module.setAddLegacy(addLegacy);
-    }
+      module.setAddLegacyClassified(addLegacy);
 
     if (cleanLegacySet)
     {

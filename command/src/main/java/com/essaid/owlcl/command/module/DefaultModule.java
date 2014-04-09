@@ -1,12 +1,11 @@
 package com.essaid.owlcl.command.module;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,15 +13,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.FileDocumentTarget;
+import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
@@ -55,20 +54,23 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   @Inject
   IReportFactory reportFactory;
 
-  private Report report;
+  private Report reportClassified;
+  private Report reportUnclassified;
 
-  private File outputDirectory;
+  private Path outputClassified;
 
-  private OWLOntologyManager genManager;
+  private OWLOntologyManager classifiedManager;
   private OWLDataFactory df;
-  private OWLOntology generatedModule;
-  private OWLOntology generatedModuleInferred;
+  private OWLOntology unclassifiedModule;
+  private OWLOntology classifiedModule;
 
   // private Map<IModule, Boolean> bothImports = new HashMap<IModule,
   // Boolean>();
 
-  private Boolean addLegacy;
-  private Boolean cleanLegacy;
+  private Boolean addLegacyClassified;
+  private Boolean addLegacyUnclassified;
+  private Boolean cleanLegacyClassified;
+  private Boolean cleanLegacyUnclassified;
 
   private IModuleConfig moduleConfiguration;
 
@@ -82,12 +84,30 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   private boolean finalClassified;
 
-  public DefaultModule(IModuleConfig config, File outputDirectory) {
-    this.moduleConfiguration = config;
-    this.outputDirectory = outputDirectory;
-    this.outputDirectory.mkdirs();
-    this.genManager = OWLManager.createOWLOntologyManager();
-    this.df = genManager.getOWLDataFactory();
+  private Path outputUnclassified;
+
+  private OWLOntologyManager unclassifiedManager;
+
+  public DefaultModule(IModuleConfig configIModuleConfig, Path outputUnclassified,
+      Path outputClassified) {
+    this.moduleConfiguration = configIModuleConfig;
+
+    this.outputClassified = outputClassified;
+
+    this.outputUnclassified = outputUnclassified;
+
+    try
+    {
+      Files.createDirectories(outputClassified);
+      Files.createDirectories(outputUnclassified);
+    } catch (IOException e)
+    {
+      throw new RuntimeException("Error creating module's output directories", e);
+    }
+
+    this.classifiedManager = OWLManager.createOWLOntologyManager();
+    this.unclassifiedManager = OWLManager.createOWLOntologyManager();
+    this.df = classifiedManager.getOWLDataFactory();
   }
 
   @Override
@@ -96,17 +116,26 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   }
 
   @Override
+  public Path getOutputClassified() {
+    return outputClassified;
+  }
+
+  @Override
+  public Path getOutputUnclassified() {
+    return outputUnclassified;
+  }
+
+  @Override
   public OWLOntology getBuildUnclassified() {
-    if (generatedModule == null)
+    if (unclassifiedModule == null)
     {
-      logger
-          .info("Generating unclassified module for: " + getModuleConfiguration().getName());
+      logger.info("Generating unclassified module for: " + getModuleConfiguration().getName());
       List<IModuleBuilder> builders = new ArrayList<IModuleBuilder>();
-      generatedModule = OwlclUtil.createOntology(this.moduleConfiguration.getUnclassifiedIri(),
-          genManager);
+      unclassifiedModule = OwlclUtil.createOntology(this.moduleConfiguration.getUnclassifiedIri(),
+          unclassifiedManager);
       for (String builderName : this.moduleConfiguration.getUnclassifiedBuilderNames())
       {
-        report.info("Doing builder name: " + builderName);
+        reportUnclassified.info("Doing builder name: " + builderName);
         IModuleBuilder builder = builderManager.getBuilder(builderName, this);
         if (builder == null)
         {
@@ -114,7 +143,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
               moduleConfiguration.getName());
           continue;
         }
-        report.info("Found builder: " + builder.getClass().getName());
+        reportUnclassified.info("Found builder: " + builder.getClass().getName());
         builder.build(this, false);
         builders.add(builder);
       }
@@ -129,7 +158,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
       }
 
     }
-    return new OWLOntologyWrapper(generatedModule);
+    return new OWLOntologyWrapper(unclassifiedModule);
   }
 
   @Override
@@ -151,21 +180,21 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
       }
 
     }
-    return generatedModule;
+    return unclassifiedModule;
   }
 
   @Override
   public OWLOntology getBuildClassified() {
 
-    if (generatedModuleInferred == null)
+    if (classifiedModule == null)
     {
       logger.info("Generating classified module for: " + getModuleConfiguration().getName());
       List<IModuleBuilder> builders = new ArrayList<IModuleBuilder>();
-      generatedModule = OwlclUtil.createOntology(
-          this.moduleConfiguration.getClassifiedIri(), genManager);
+      classifiedModule = OwlclUtil.createOntology(this.moduleConfiguration.getClassifiedIri(),
+          classifiedManager);
       for (String builderName : this.moduleConfiguration.getClassifiedBuilderNames())
       {
-        report.info("Doing builder name: " + builderName);
+        reportClassified.info("Doing builder name: " + builderName);
         IModuleBuilder builder = builderManager.getBuilder(builderName, this);
         if (builder == null)
         {
@@ -173,7 +202,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
               moduleConfiguration.getName());
           continue;
         }
-        report.info("Found builder: " + builder.getClass().getName());
+        reportClassified.info("Found builder: " + builder.getClass().getName());
         builder.build(this, false);
         builders.add(builder);
       }
@@ -195,9 +224,9 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
     }
 
-    return new OWLOntologyWrapper(generatedModuleInferred);
+    return new OWLOntologyWrapper(classifiedModule);
   }
-  
+
   @Override
   public OWLOntology getFinalClassified() {
     if (!finalClassified)
@@ -205,8 +234,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
       finalClassified = true;
       getBuildClassified();
       addAnnotationsClassified(moduleConfiguration.getIncludeOntology().getAnnotations(), null);
-      addAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getIncludeOntology(), true),
-          null);
+      addAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getIncludeOntology(), true), null);
       removeAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getExcludeOntology(), true),
           null);
 
@@ -217,82 +245,60 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
       }
 
     }
-    return generatedModuleInferred;
+    return classifiedModule;
   }
 
   // ================================================================================
   // properties
   // ================================================================================
 
-  private Boolean generate = null;
+  private Boolean unclassified = null;
 
   @Override
-  public void setUnclassified(Boolean generate) {
-    this.generate = generate;
+  public void setUnclassified(Boolean isUnclassified) {
+    this.unclassified = isUnclassified;
   }
 
   @Override
   public boolean isUnclassified() {
-    if (this.generate == null)
+    if (this.unclassified == null)
     {
       return this.moduleConfiguration.isUnclassified();
     }
-    return this.generate;
+    return this.unclassified;
   }
 
-  private Boolean generateInferred = null;
+  private Boolean classified = null;
 
   @Override
-  public void setClassified(Boolean generateInferred) {
-    this.generateInferred = generateInferred;
+  public void setClassified(Boolean isClassified) {
+    this.classified = isClassified;
   }
 
   @Override
   public boolean isClassified() {
-    if (this.generateInferred == null)
+    if (this.classified == null)
     {
       return this.moduleConfiguration.isClassified();
     }
-    return this.generateInferred;
+    return this.classified;
   }
 
   // ================================================================================
   // module imports
   // ================================================================================
 
-  private Map<IModule, Boolean> generateImports = new HashMap<IModule, Boolean>();
-  private Map<IModule, Boolean> generateInferredImports = new HashMap<IModule, Boolean>();
+  private Map<IModule, Boolean> unclassifiedImports = new HashMap<IModule, Boolean>();
+  private Map<IModule, Boolean> classifiedImports = new HashMap<IModule, Boolean>();
 
   @Override
   public void importModuleIntoUnclassified(IModule module, Boolean inferred) {
-    generateImports.put(module, inferred);
-    // setGenerationType(module, inferred);
+    unclassifiedImports.put(module, inferred);
   }
 
   @Override
   public void importModuleIntoClassified(IModule module, Boolean inferred) {
-    generateInferredImports.put(module, inferred);
-    // setGenerationType(module, inferred);
-  }
-
-  private void setGenerationType(IModule module, Boolean inferred) {
-    if (inferred == null)
-    {
-      module.setUnclassified(true);
-      module.setClassified(true);
-    } else
-    {
-      if (inferred)
-      {
-        module.setClassified(true);
-        module.setUnclassified(false);
-      } else
-      {
-        module.setClassified(false);
-        module.setUnclassified(true);
-      }
-    }
-
+    classifiedImports.put(module, inferred);
   }
 
   // ================================================================================
@@ -305,55 +311,51 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   }
 
   @Override
-  public boolean isCleanLegacyUnclassified() {
-    // TODO Auto-generated method stub
-    return false;
-  }
-
-  @Override
-  public void setCleanLegacyUnclassified(Boolean generate) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
   public void cleanLegacyClassified() {
     // TODO
   }
 
   @Override
+  public boolean isCleanLegacyUnclassified() {
+    return this.cleanLegacyUnclassified;
+  }
+
+  @Override
+  public void setCleanLegacyUnclassified(Boolean generate) {
+    this.cleanLegacyUnclassified = generate;
+
+  }
+
+  @Override
   public boolean isCleanLegacyClassified() {
-    // TODO Auto-generated method stub
-    return false;
+    return this.cleanLegacyClassified;
   }
 
   @Override
   public void setCleanLegacyClassified(Boolean generate) {
-    // TODO Auto-generated method stub
+    this.cleanLegacyClassified = generate;
 
   }
 
   @Override
   public boolean isAddLegacyClassified() {
-    // TODO Auto-generated method stub
-    return false;
+    return addLegacyClassified;
   }
 
   @Override
-  public void setAddLegacyClassified(Boolean generate) {
-    // TODO Auto-generated method stub
+  public void setAddLegacyClassified(Boolean isAddLegacy) {
+    this.addLegacyClassified = isAddLegacy;
 
   }
 
   @Override
   public boolean isAddLegacyUnclassified() {
-    // TODO Auto-generated method stub
-    return false;
+    return addLegacyUnclassified;
   }
 
   @Override
-  public void setAddLegacyUnclassified(Boolean generate) {
-    // TODO Auto-generated method stub
+  public void setAddLegacyUnclassified(Boolean addLegacy) {
+    this.addLegacyUnclassified = addLegacy;
 
   }
 
@@ -363,44 +365,109 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void saveModule() {
-    // TODO Auto-generated method stub
+    saveUnclassifiedModule();
+    saveClassifiedModule();
 
   }
 
   @Override
   public void saveUnclassifiedModule() {
-    // TODO Auto-generated method stub
 
-  }
+    getFinalUnclassified();
 
-  @Override
-  public void saveUnclassifiedModule(Path fielOrDirectory) {
-    // TODO Auto-generated method stub
+    for (Entry<IModule, Boolean> entry : unclassifiedImports.entrySet())
+    {
+      IModule module = entry.getKey();
+      IRI classifiedIri = module.getModuleConfiguration().getClassifiedIri();
+      IRI unclassifiedIri = module.getModuleConfiguration().getClassifiedIri();
+
+      if (entry.getValue() == null)
+      {
+        unclassifiedManager.applyChange(new AddImport(unclassifiedModule, df
+            .getOWLImportsDeclaration(classifiedIri)));
+        unclassifiedManager.applyChange(new AddImport(unclassifiedModule, df
+            .getOWLImportsDeclaration(unclassifiedIri)));
+      } else if (entry.getValue() == true)
+      {
+        unclassifiedManager.applyChange(new AddImport(unclassifiedModule, df
+            .getOWLImportsDeclaration(classifiedIri)));
+
+      } else
+      {
+        unclassifiedManager.applyChange(new AddImport(unclassifiedModule, df
+            .getOWLImportsDeclaration(unclassifiedIri)));
+      }
+
+      module.saveUnclassifiedModule();
+    }
+
+    String fileName = getModuleConfiguration().getUnclassifiedFileName();
+    RDFXMLOntologyFormat of = new RDFXMLOntologyFormat();
+    try
+    {
+      unclassifiedManager.saveOntology(unclassifiedModule, of, new FileDocumentTarget(new File(
+          outputUnclassified.toFile(), fileName)));
+    } catch (OWLOntologyStorageException e)
+    {
+      throw new RuntimeException("Error savign unclassified module to file: "
+          + outputUnclassified.toAbsolutePath(), e);
+    }
 
   }
 
   @Override
   public void saveClassifiedModule() {
-    // TODO Auto-generated method stub
 
-  }
+    getFinalClassified();
 
-  @Override
-  public void saveClassifiedModule(Path fielOrDirectory) {
-    // TODO Auto-generated method stub
+    for (Entry<IModule, Boolean> entry : classifiedImports.entrySet())
+    {
+      IModule module = entry.getKey();
+      IRI classifiedIri = module.getModuleConfiguration().getClassifiedIri();
+      IRI unclassifiedIri = module.getModuleConfiguration().getClassifiedIri();
+
+      if (entry.getValue() == null)
+      {
+        classifiedManager.applyChange(new AddImport(classifiedModule, df
+            .getOWLImportsDeclaration(classifiedIri)));
+        classifiedManager.applyChange(new AddImport(classifiedModule, df
+            .getOWLImportsDeclaration(unclassifiedIri)));
+      } else if (entry.getValue() == true)
+      {
+        classifiedManager.applyChange(new AddImport(classifiedModule, df
+            .getOWLImportsDeclaration(classifiedIri)));
+
+      } else
+      {
+        classifiedManager.applyChange(new AddImport(classifiedModule, df
+            .getOWLImportsDeclaration(unclassifiedIri)));
+      }
+
+      module.saveClassifiedModule();
+    }
+
+    String fileName = getModuleConfiguration().getClassifiedFileName();
+    RDFXMLOntologyFormat of = new RDFXMLOntologyFormat();
+    try
+    {
+      classifiedManager.saveOntology(classifiedModule, of, new FileDocumentTarget(new File(
+          outputClassified.toFile(), fileName)));
+    } catch (OWLOntologyStorageException e)
+    {
+      throw new RuntimeException("Error savign classified module to file: "
+          + outputClassified.toAbsolutePath(), e);
+    }
 
   }
 
   @Override
   public Report getReportClassified() {
-    // TODO Auto-generated method stub
-    return null;
+    return reportClassified;
   }
 
   @Override
   public Report getReportUnclassified() {
-    // TODO Auto-generated method stub
-    return null;
+    return reportUnclassified;
   }
 
   // ================================================================================
@@ -410,7 +477,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   @Override
   public void addAnnotationUnclassified(OWLAnnotation annotation, IModuleBuilder builder) {
 
-    genManager.applyChange(new AddOntologyAnnotation(generatedModule, annotation));
+    unclassifiedManager.applyChange(new AddOntologyAnnotation(unclassifiedModule, annotation));
 
   }
 
@@ -424,7 +491,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void removeAnnotationUnclassified(OWLAnnotation annotation, IModuleBuilder builder) {
-    genManager.applyChange(new RemoveOntologyAnnotation(generatedModule, annotation));
+    unclassifiedManager.applyChange(new RemoveOntologyAnnotation(unclassifiedModule, annotation));
 
   }
 
@@ -441,7 +508,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void addAnnotationClassified(OWLAnnotation annotation, IModuleBuilder builder) {
-    genManager.applyChange(new AddOntologyAnnotation(generatedModuleInferred, annotation));
+    classifiedManager.applyChange(new AddOntologyAnnotation(classifiedModule, annotation));
 
   }
 
@@ -456,7 +523,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void removeAnnotationClassified(OWLAnnotation annotation, IModuleBuilder builder) {
-    genManager.applyChange(new RemoveOntologyAnnotation(generatedModuleInferred, annotation));
+    classifiedManager.applyChange(new RemoveOntologyAnnotation(classifiedModule, annotation));
 
   }
 
@@ -470,7 +537,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void addAxiomUnclassified(OWLAxiom axiom, IModuleBuilder builder) {
-    genManager.addAxiom(generatedModule, axiom);
+    unclassifiedManager.addAxiom(unclassifiedModule, axiom);
 
   }
 
@@ -485,7 +552,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void removeAxiomUnclassified(OWLAxiom axiom, IModuleBuilder builder) {
-    genManager.removeAxiom(generatedModule, axiom);
+    unclassifiedManager.removeAxiom(unclassifiedModule, axiom);
 
   }
 
@@ -500,7 +567,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void addAxiomClassified(OWLAxiom axiom, IModuleBuilder builder) {
-    genManager.addAxiom(generatedModuleInferred, axiom);
+    classifiedManager.addAxiom(classifiedModule, axiom);
 
   }
 
@@ -515,7 +582,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void removeAxiomClassified(OWLAxiom axiom, IModuleBuilder builder) {
-    genManager.removeAxiom(generatedModuleInferred, axiom);
+    classifiedManager.removeAxiom(classifiedModule, axiom);
 
   }
 
@@ -532,20 +599,6 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   // not reviewed
   // ================================================================================
 
-  public OWLOntologyManager getGenerationManager() {
-    return this.genManager;
-  }
-  
-
-  private void addImport(String moduleName, IRI iri, OWLOntology ontology) {
-    OWLImportsDeclaration id = df.getOWLImportsDeclaration(iri);
-    AddImport i = new AddImport(ontology, id);
-    logger.info("Adding generated module import for module: " + moduleName
-        + " imported into generated: " + getModuleConfiguration().getName());
-    genManager.applyChange(i);
-  }
-
-
   @Override
   public void dispose() {
     if (this.disposed)
@@ -557,19 +610,10 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   }
 
-  public File getOutputDirectory() {
-    return outputDirectory;
-  }
-
   @Override
   public int hashCode() {
     return this.moduleConfiguration.getName().hashCode();
   }
-
-  public void setReport(Report report) {
-    this.report = report;
-  }
-  
 
   @Override
   public OWLDataFactory getDataFactory() {
@@ -593,22 +637,13 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
     return false;
   }
 
-//  @Override
-//  public void setAddLegacy(Boolean generate) {
-//    addLegacy = generate;
-//
-//  }
-//
-//  @Override
-//  public void setCleanLegacy(Boolean generate) {
-//    cleanLegacy = generate;
-//
-//  }
-
   @Override
   public void initialize() {
-    this.report = reportFactory.createReport(
-        "GenerateModule-" + this.moduleConfiguration.getName(), outputDirectory, this);
+    this.reportClassified = reportFactory.createReport(getModuleConfiguration()
+        .getClassifiedFileName() + ".report", outputClassified, this);
+
+    this.reportUnclassified = reportFactory.createReport(getModuleConfiguration()
+        .getUnclassifiedFileName() + ".report", outputUnclassified, this);
   }
 
   @Override
@@ -616,7 +651,6 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
     return this.logger;
   }
 
-  
   //
   // @Override
   // public void generateModule() {
@@ -752,143 +786,159 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   //
   // report.finish();
   // }
-//
-//  @Override
-//  public boolean isAddLegacy() {
-//    if (addLegacy == null)
-//    {
-//      return this.moduleConfiguration.isAddLegacy();
-//    }
-//    return addLegacy;
-//  }
-//
-//  @Override
-//  public boolean isCleanLegacy() {
-//    if (cleanLegacy == null)
-//    {
-//      return this.moduleConfiguration.isCleanLegacy();
-//    }
-//    return cleanLegacy;
-//  }
+  //
+  // @Override
+  // public boolean isAddLegacy() {
+  // if (addLegacy == null)
+  // {
+  // return this.moduleConfiguration.isAddLegacy();
+  // }
+  // return addLegacy;
+  // }
+  //
+  // @Override
+  // public boolean isCleanLegacy() {
+  // if (cleanLegacy == null)
+  // {
+  // return this.moduleConfiguration.isCleanLegacy();
+  // }
+  // return cleanLegacy;
+  // }
 
-//  @Override
-//  public void saveGeneratedModule() {
-//    if (saved)
-//    {
-//      return;
-//    }
-//    saved = true;
-//
-//    Set<IModule> allImportedModules = new HashSet<IModule>();
-//
-//    if (isUnclassified())
-//    {
-//      report.info("Saving generate module.");
-//      allImportedModules.addAll(bothImports.keySet());
-//      allImportedModules.addAll(generateImports.keySet());
-//
-//      for (Entry<IModule, Boolean> entry : bothImports.entrySet())
-//      {
-//        if (entry.getValue() == null || entry.getValue() == false)
-//        {
-//          // import matching type
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
-//        } else if (entry.getValue() == true)
-//        {
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModule);
-//        }
-//      }
-//
-//      for (Entry<IModule, Boolean> entry : generateImports.entrySet())
-//      {
-//        if (entry.getValue() == false)
-//        {
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
-//        } else if (entry.getValue() == true)
-//        {
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModule);
-//        }
-//      }
-//
-//      try
-//      {
-//        logger.info("Saving module: " + getModuleConfiguration().getModuleName()
-//            + " into ontology: " + generatedModule.getOntologyID() + " in  directory: "
-//            + getOutputDirectory() + " and file: "
-//            + this.moduleConfiguration.getGenerateModuleFileName());
-//
-//        genManager.saveOntology(generatedModule, new FileOutputStream(new File(
-//            getOutputDirectory(), this.moduleConfiguration.getGenerateModuleFileName())));
-//      } catch (OWLOntologyStorageException | FileNotFoundException e)
-//      {
-//        throw new RuntimeException("Failed to save module generated "
-//            + getModuleConfiguration().getModuleName() + " with file name "
-//            + this.moduleConfiguration.getGenerateModuleFileName(), e);
-//      }
-//
-//    }
-//
-//    if (isClassified())
-//    {
-//      allImportedModules.addAll(bothImports.keySet());
-//      allImportedModules.addAll(generateInferredImports.keySet());
-//
-//      for (Entry<IModule, Boolean> entry : bothImports.entrySet())
-//      {
-//        if (entry.getValue() == null || entry.getValue() == true)
-//        {
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModuleInferred);
-//        } else
-//        {
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModuleInferred);
-//        }
-//      }
-//
-//      for (Entry<IModule, Boolean> entry : generateInferredImports.entrySet())
-//      {
-//        if (entry.getValue() == true)
-//        {
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedInferredModuleIri(), generatedModuleInferred);
-//        } else
-//        {
-//          addImport(entry.getKey().getModuleConfiguration().getModuleName(), entry.getKey()
-//              .getModuleConfiguration().getGeneratedModuleIri(), generatedModuleInferred);
-//        }
-//      }
-//
-//      try
-//      {
-//        logger.info("Saving module: " + getModuleConfiguration().getModuleName()
-//            + " into ontology: " + generatedModuleInferred.getOntologyID() + " in  directory: "
-//            + getOutputDirectory() + " and file: "
-//            + this.moduleConfiguration.getGenerateInferredModuleFileName());
-//
-//        genManager.saveOntology(generatedModuleInferred, new FileOutputStream(new File(
-//            getOutputDirectory(), this.moduleConfiguration.getGenerateInferredModuleFileName())));
-//      } catch (FileNotFoundException | OWLOntologyStorageException e)
-//      {
-//        throw new RuntimeException("Failed to save module inferred "
-//            + getModuleConfiguration().getModuleName() + " with file name "
-//            + this.moduleConfiguration.getGenerateInferredModuleFileName(), e);
-//      }
-//
-//    }
-//
-//    for (IModule module : allImportedModules)
-//    {
-//      module.saveGeneratedModule();
-//    }
-//
-//  }
-
-
+  // @Override
+  // public void saveGeneratedModule() {
+  // if (saved)
+  // {
+  // return;
+  // }
+  // saved = true;
+  //
+  // Set<IModule> allImportedModules = new HashSet<IModule>();
+  //
+  // if (isUnclassified())
+  // {
+  // report.info("Saving generate module.");
+  // allImportedModules.addAll(bothImports.keySet());
+  // allImportedModules.addAll(generateImports.keySet());
+  //
+  // for (Entry<IModule, Boolean> entry : bothImports.entrySet())
+  // {
+  // if (entry.getValue() == null || entry.getValue() == false)
+  // {
+  // // import matching type
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
+  // } else if (entry.getValue() == true)
+  // {
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedInferredModuleIri(),
+  // generatedModule);
+  // }
+  // }
+  //
+  // for (Entry<IModule, Boolean> entry : generateImports.entrySet())
+  // {
+  // if (entry.getValue() == false)
+  // {
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedModuleIri(), generatedModule);
+  // } else if (entry.getValue() == true)
+  // {
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedInferredModuleIri(),
+  // generatedModule);
+  // }
+  // }
+  //
+  // try
+  // {
+  // logger.info("Saving module: " + getModuleConfiguration().getModuleName()
+  // + " into ontology: " + generatedModule.getOntologyID() + " in  directory: "
+  // + getOutputDirectory() + " and file: "
+  // + this.moduleConfiguration.getGenerateModuleFileName());
+  //
+  // genManager.saveOntology(generatedModule, new FileOutputStream(new File(
+  // getOutputDirectory(),
+  // this.moduleConfiguration.getGenerateModuleFileName())));
+  // } catch (OWLOntologyStorageException | FileNotFoundException e)
+  // {
+  // throw new RuntimeException("Failed to save module generated "
+  // + getModuleConfiguration().getModuleName() + " with file name "
+  // + this.moduleConfiguration.getGenerateModuleFileName(), e);
+  // }
+  //
+  // }
+  //
+  // if (isClassified())
+  // {
+  // allImportedModules.addAll(bothImports.keySet());
+  // allImportedModules.addAll(generateInferredImports.keySet());
+  //
+  // for (Entry<IModule, Boolean> entry : bothImports.entrySet())
+  // {
+  // if (entry.getValue() == null || entry.getValue() == true)
+  // {
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedInferredModuleIri(),
+  // generatedModuleInferred);
+  // } else
+  // {
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedModuleIri(),
+  // generatedModuleInferred);
+  // }
+  // }
+  //
+  // for (Entry<IModule, Boolean> entry : generateInferredImports.entrySet())
+  // {
+  // if (entry.getValue() == true)
+  // {
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedInferredModuleIri(),
+  // generatedModuleInferred);
+  // } else
+  // {
+  // addImport(entry.getKey().getModuleConfiguration().getModuleName(),
+  // entry.getKey()
+  // .getModuleConfiguration().getGeneratedModuleIri(),
+  // generatedModuleInferred);
+  // }
+  // }
+  //
+  // try
+  // {
+  // logger.info("Saving module: " + getModuleConfiguration().getModuleName()
+  // + " into ontology: " + generatedModuleInferred.getOntologyID() +
+  // " in  directory: "
+  // + getOutputDirectory() + " and file: "
+  // + this.moduleConfiguration.getGenerateInferredModuleFileName());
+  //
+  // genManager.saveOntology(generatedModuleInferred, new FileOutputStream(new
+  // File(
+  // getOutputDirectory(),
+  // this.moduleConfiguration.getGenerateInferredModuleFileName())));
+  // } catch (FileNotFoundException | OWLOntologyStorageException e)
+  // {
+  // throw new RuntimeException("Failed to save module inferred "
+  // + getModuleConfiguration().getModuleName() + " with file name "
+  // + this.moduleConfiguration.getGenerateInferredModuleFileName(), e);
+  // }
+  //
+  // }
+  //
+  // for (IModule module : allImportedModules)
+  // {
+  // module.saveGeneratedModule();
+  // }
+  //
+  // }
 
   // ================================================================================
   // Builder related

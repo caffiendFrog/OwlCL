@@ -163,7 +163,7 @@ public class ValidateIriCommand extends AbstractCommand {
     files.add(directory);
     of = new OntologyFiles(files, true);
 
-    report = reportFactory.createReport(reportName, reportDirectory, this);
+    report = reportFactory.createReport(reportName, reportDirectory.toPath(), this);
 
     for (String action : getAllActions())
     {

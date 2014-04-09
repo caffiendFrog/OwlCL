@@ -9,8 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import javax.management.RuntimeErrorException;
-
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.FileDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
@@ -21,20 +19,19 @@ import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveImport;
-import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.essaid.owlcl.command.module.ModuleConstant;
 import com.essaid.owlcl.command.module.ModuleVocab;
 import com.essaid.owlcl.command.module.Util;
-import com.essaid.owlcl.core.util.OntologyLoadingDescriptor;
 import com.essaid.owlcl.core.util.OwlclConstants;
 import com.essaid.owlcl.core.util.OwlclUtil;
 
@@ -42,7 +39,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   public static AbstractModuleConfiguration getExistingInstance(Path directoryPath,
       OWLOntologyManager configManager, OWLOntologyManager sourceManager,
-      OWLOntology sourceOntology, OWLReasoner sourceReasoner) {
+      OWLOntology sourceOntology, OWLReasoner sourceReasoner, boolean allowMissingImports) {
     if (directoryPath == null || !directoryPath.toFile().isDirectory() || configManager == null
         || sourceManager == null)
     {
@@ -134,7 +131,8 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     }
 
     OWLOntology configOntology = OwlclUtil.createOntology(
-        IRI.create(iriPrefix + name + ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX), configManager);
+        IRI.create(iriPrefix + name + ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX),
+        configManager);
     configManager.setOntologyDocumentIRI(configOntology,
         IRI.create(new File(directory, name + ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX)));
     File versionFile = new File(directory, "V-1");
@@ -266,7 +264,8 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     }
     //
     // // check legacy
-    File legacyFile = new File(getDirectory().toFile(), getName() + ModuleConstant.MODULE_LEGACY_IRI_SUFFIX);
+    File legacyFile = new File(getDirectory().toFile(), getName()
+        + ModuleConstant.MODULE_LEGACY_IRI_SUFFIX);
     if (!legacyFile.exists())
     {
       OWLOntology legacyOntology = OwlclUtil.createOntology(getLegacyIri(), configMan);
@@ -286,7 +285,8 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     }
     //
     // // check source
-    File sourcesFile = new File(getDirectory().toFile(), getName() + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
+    File sourcesFile = new File(getDirectory().toFile(), getName()
+        + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
     if (!sourcesFile.exists())
     {
       OWLOntology sourcesOntology = OwlclUtil
@@ -414,7 +414,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     if (i.hasNext())
     {
       List<String> builderNames = new ArrayList<String>();
-      for (String name : i.next().getValue().toString().split(","))
+      for (String name : ((OWLLiteral) i.next().getValue()).getLiteral().split(","))
       {
         builderNames.add(name.trim());
       }
@@ -450,7 +450,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
     if (i.hasNext())
     {
       List<String> builderNames = new ArrayList<String>();
-      for (String name : i.next().getValue().toString().split(","))
+      for (String name : ((OWLLiteral) i.next().getValue()).getLiteral().split(","))
       {
         builderNames.add(name.trim());
       }
@@ -486,7 +486,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_classified_filename.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString();
+      return ((OWLLiteral) i.next().getValue()).getLiteral();
     } else
     {
       return null;
@@ -519,7 +519,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_unclassified_filename.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString();
+      return  ((OWLLiteral) i.next().getValue()).getLiteral();
     } else
     {
       return null;
@@ -550,7 +550,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_classified_iri.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return IRI.create(i.next().getValue().toString());
+      return IRI.create(((OWLLiteral) i.next().getValue()).getLiteral());
     } else
     {
       return null;
@@ -583,7 +583,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_unclassified_iri.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return IRI.create(i.next().getValue().toString());
+      return IRI.create(((OWLLiteral) i.next().getValue()).getLiteral());
     } else
     {
       return null;
@@ -619,7 +619,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         .iterator();
     while (i.hasNext())
     {
-      iris.add(IRI.create(i.next().getValue().toString()));
+      iris.add(IRI.create(((OWLLiteral) i.next().getValue()).getLiteral()));
     }
     return iris;
   }
@@ -682,7 +682,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_is_classified.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString().equalsIgnoreCase("true");
+      return ((OWLLiteral) i.next().getValue()).getLiteral().equalsIgnoreCase("true");
     } else
     {
       return null;
@@ -715,7 +715,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_is_unclassified.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString().equalsIgnoreCase("true");
+      return ((OWLLiteral) i.next().getValue()).getLiteral().equalsIgnoreCase("true");
     } else
     {
       return null;
@@ -748,7 +748,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_classified_addlegacy.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString().equalsIgnoreCase("true");
+      return ((OWLLiteral) i.next().getValue()).getLiteral().equalsIgnoreCase("true");
     } else
     {
       return null;
@@ -781,7 +781,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_classified_cleanlegacy.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString().equalsIgnoreCase("true");
+      return ((OWLLiteral) i.next().getValue()).getLiteral().equalsIgnoreCase("true");
     } else
     {
       return null;
@@ -814,7 +814,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_unclassified_addlegacy.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString().equalsIgnoreCase("true");
+      return ((OWLLiteral) i.next().getValue()).getLiteral().equalsIgnoreCase("true");
     } else
     {
       return null;
@@ -847,7 +847,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
         ModuleVocab.module_unclassified_cleanlegacy.getAP(), false).iterator();
     if (i.hasNext())
     {
-      return i.next().getValue().toString().equalsIgnoreCase("true");
+      return ((OWLLiteral) i.next().getValue()).getLiteral().equalsIgnoreCase("true");
     } else
     {
       return null;
@@ -900,7 +900,8 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   @Override
   public IRI getLegacyIri() {
-    return IRI.create(this.getIriPrefix() + this.getName() + ModuleConstant.MODULE_LEGACY_IRI_SUFFIX);
+    return IRI.create(this.getIriPrefix() + this.getName()
+        + ModuleConstant.MODULE_LEGACY_IRI_SUFFIX);
   }
 
   @Override
@@ -910,8 +911,8 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   @Override
   public IRI getLegacyRemovedIri() {
-    return IRI
-        .create(this.getIriPrefix() + this.getName() + ModuleConstant.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
+    return IRI.create(this.getIriPrefix() + this.getName()
+        + ModuleConstant.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
   }
 
   @Override
@@ -921,7 +922,8 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
   @Override
   public IRI getSourceConfigurationIri() {
-    return IRI.create(this.getIriPrefix() + this.getName() + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
+    return IRI.create(this.getIriPrefix() + this.getName()
+        + ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
   }
 
   @Override

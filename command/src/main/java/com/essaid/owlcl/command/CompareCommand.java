@@ -266,7 +266,7 @@ public class CompareCommand extends AbstractCommand {
   public Object call() throws Exception {
     configure();
 
-    report = reportFactory.createReport(reportName, reportDirectory, this);
+    report = reportFactory.createReport(reportName, reportDirectory.toPath(), this);
 
     if (fromIriSet ^ toIriSet)
     {

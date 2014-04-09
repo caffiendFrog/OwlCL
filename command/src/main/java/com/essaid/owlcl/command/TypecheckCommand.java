@@ -202,7 +202,7 @@ public class TypecheckCommand extends AbstractCommand {
   @Override
   public Object call() throws Exception {
 
-    report = reportFactory.createReport(reportName, reportDirectory, this);
+    report = reportFactory.createReport(reportName, reportDirectory.toPath(), this);
     ontologyFiles = new OntologyFiles(files, !noSubDir);
 
     for (Entry<File, IRI> entry : ontologyFiles.getLocalOntologyFiles(null).entrySet())

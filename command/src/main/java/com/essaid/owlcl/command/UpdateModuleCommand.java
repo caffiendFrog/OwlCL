@@ -1,43 +1,21 @@
 package com.essaid.owlcl.command;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.coode.owlapi.rdfxml.parser.IRIProvider;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.AddImport;
-import org.semanticweb.owlapi.model.AddOntologyAnnotation;
-import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotation;
-import org.semanticweb.owlapi.model.OWLDataFactory;
-import org.semanticweb.owlapi.model.OWLImportsDeclaration;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.model.OWLOntologyStorageException;
-import org.semanticweb.owlapi.model.RemoveImport;
-import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.essaid.owlcl.command.module.ModuleVocab;
-import com.essaid.owlcl.command.module.Owlcl;
 import com.essaid.owlcl.command.module.Util;
-import com.essaid.owlcl.command.module.config.IModuleConfig;
 import com.essaid.owlcl.command.module.config.IModuleConfigInternal;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.util.IReportFactory;
-import com.essaid.owlcl.core.util.OwlclUtil;
 import com.essaid.owlcl.core.util.Report;
-import com.essaid.owlcl.core.util.RuntimeOntologyLoadingException;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -135,7 +113,7 @@ public class UpdateModuleCommand extends AbstractCommand {
     getLogger().info("Starting module update");
     getLogger().info("\tdirectory: " + directory.getAbsolutePath());
     getLogger().info("\troot: " + root);
-    report = reportFactory.createReport("ModuleUpdates.txt", getMain().getJobDirectory(), this);
+    report = reportFactory.createReport("ModuleUpdates.txt", getMain().getJobDirectory().toPath(), this);
 
     if (!root)
     {

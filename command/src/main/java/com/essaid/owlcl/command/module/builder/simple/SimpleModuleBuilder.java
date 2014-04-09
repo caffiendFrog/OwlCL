@@ -10,13 +10,19 @@ public class SimpleModuleBuilder extends AbstractSimpleModuleBuilder {
 
   @Override
   public void build(IModule module, boolean inferred) {
-    System.out.println("Is inferred: "+ inferred);
+    System.out.println("Is inferred: " + inferred);
     System.out.println("building from simple module builder");
   }
 
   @Override
   public void buildFinished(IModule module) {
     System.out.println("finished from simple module builder");
+  }
+
+  @Override
+  public void initialize() {
+    // TODO Auto-generated method stub
+
   }
 
 }

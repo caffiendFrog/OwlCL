@@ -42,6 +42,13 @@ public interface IModule {
 
   IModuleConfig getModuleConfiguration();
 
+  /**
+   * This returns the generated ontology with only the builders' output. If the
+   * "final" version is already called, this ontology will be the same as the
+   * final.
+   * 
+   * @return
+   */
   OWLOntology getBuildUnclassified();
 
   OWLOntology getFinalUnclassified();
@@ -134,9 +141,9 @@ public interface IModule {
 
   void saveClassifiedModule();
 
-  void saveUnclassifiedModule(Path fielOrDirectory);
+//  void saveUnclassifiedModule(Path fielOrDirectory);
 
-  void saveClassifiedModule(Path fielOrDirectory);
+//  void saveClassifiedModule(Path fielOrDirectory);
 
   com.essaid.owlcl.core.util.Report getReportUnclassified();
 
@@ -145,6 +152,10 @@ public interface IModule {
   void dispose();
 
   OWLDataFactory getDataFactory();
+
+  Path getOutputUnclassified();
+
+  Path getOutputClassified();
 
   // ================================================================================
   // for builders

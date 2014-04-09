@@ -15,9 +15,15 @@ import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 
 import com.essaid.owlcl.command.module.IModule;
 import com.essaid.owlcl.command.module.Util;
+import com.essaid.owlcl.core.util.IReportFactory;
 import com.essaid.owlcl.core.util.OwlclUtil;
+import com.essaid.owlcl.core.util.Report;
+import com.google.inject.Inject;
 
 public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
+
+  @Inject
+  private IReportFactory reportFactory;
 
   public SimpleInferredModuleBuilder(IModule simeplModule) {
     super(simeplModule);
@@ -265,7 +271,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
     }
     if (!removedAxioms.contains(axiom))
     {
-      module.addAxiomClassified(axiom);
+      module.addAxiomClassified(axiom, this);
     }
   }
 
@@ -277,9 +283,10 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   Set<OWLAxiom> removedAxioms = new HashSet<OWLAxiom>();
+  private Report report;
 
   private void removeAxiom(OWLAxiom axiom) {
-    module.removeAxiomClassified(axiom);
+    module.removeAxiomClassified(axiom, this);
     removedAxioms.add(axiom);
   }
 
@@ -299,6 +306,12 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   @Override
   public void buildFinished(IModule module) {
     // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void initialize() {
+    this.report = reportFactory.createReport("SimpleInferredBuilder.txt", null, this);
 
   }
 

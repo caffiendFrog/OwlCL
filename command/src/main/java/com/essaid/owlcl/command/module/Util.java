@@ -136,7 +136,7 @@ public class Util {
     if (version == 1)
     {
       config = ModuleConfigurationV1.getExistingInstance(directory, configMan, sourceMan,
-          sourceOntology, sourceReasoner);
+          sourceOntology, sourceReasoner, false);
 
     }
     return config;
