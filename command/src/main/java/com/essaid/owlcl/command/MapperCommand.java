@@ -18,9 +18,9 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.essaid.owlcl.command.mapping.DefaultMapping;
+import com.essaid.owlcl.command.mapping.DefaultMappings;
 import com.essaid.owlcl.command.mapping.Mapper;
-import com.essaid.owlcl.command.mapping.Mapping;
+import com.essaid.owlcl.command.mapping.IMappings;
 import com.essaid.owlcl.core.OwlclCommand;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.IriConverter;
@@ -38,7 +38,7 @@ public class MapperCommand extends AbstractCommand {
   // ================================================================================
 
   @Parameter(names = "-fromIris", description = "The IRIs to map from. If not set, all "
-      + "possible mappings will be applied.", converter = IriConverter.class)
+      + "possible mappings will be applied.", converter = IriConverter.class, variableArity = true)
   public void setIris(List<IRI> iris) {
     this.iris = iris;
     this.irisSet = true;
@@ -59,7 +59,8 @@ public class MapperCommand extends AbstractCommand {
   // The IRI prefixs to map
   // ================================================================================
 
-  @Parameter(names = "-iriPrefixes", description = "The IRI prefixes to find IRIs to map.")
+  @Parameter(names = "-iriPrefixes", description = "The IRI prefixes to find IRIs to map.",
+      variableArity = true)
   public void setPrefixes(List<String> prefixes) {
     this.prefixes = prefixes;
     this.prefixesSet = true;
@@ -80,7 +81,8 @@ public class MapperCommand extends AbstractCommand {
   // IRI patterns
   // ================================================================================
 
-  @Parameter(names = "-iriPatterns", description = "Regex patterns for finding IRIs to map.")
+  @Parameter(names = "-iriPatterns", description = "Regex patterns for finding IRIs to map.",
+      variableArity = true)
   public void setPatterns(List<String> patterns) {
     this.patterns = patterns;
     this.patternsSet = true;
@@ -101,31 +103,30 @@ public class MapperCommand extends AbstractCommand {
   // Transitive mapping?
   // ================================================================================
 
-  @Parameter(names = "-transitive", arity = 1,
-      description = "If a mapping iriA -> iriB -> iriC exists "
-          + "should iriA be mapped to iriC (transitive to a final IRI). True by default.")
-  public void setMapTransitively(boolean mapTransitively) {
-    this.mapTransitively = mapTransitively;
-    this.mapTransitivelySet = true;
+  @Parameter(names = "-notTransitive", description = "If a mapping iriA -> iriB -> iriC exists "
+      + "should iriA be mapped to iriC (transitive to a final IRI). Transitive by default.")
+  public void setNoTransitive(boolean notTransitive) {
+    this.notTransitive = notTransitive;
+    this.notTransitiveSet = true;
   }
 
-  public boolean isMapTransitively() {
-    return mapTransitively;
+  public boolean isNotTransitive() {
+    return notTransitive;
   }
 
-  public boolean isMapTransitivelySet() {
-    return mapTransitivelySet;
+  public boolean isNotTransitiveSet() {
+    return notTransitiveSet;
   }
 
-  private boolean mapTransitively = true;
-  private boolean mapTransitivelySet = false;
+  private boolean notTransitive;
+  private boolean notTransitiveSet;
 
   // ================================================================================
   // The ontology IRIs that have the mapping definitions
   // ================================================================================
 
   @Parameter(names = "-mapIris", description = "The IRIs for the  OWL files that "
-      + "define the mappings. ", converter = IriConverter.class)
+      + "define the mappings. ", converter = IriConverter.class, variableArity = true)
   public void setMappingIris(List<IRI> mappingIris) {
     this.mappingIris = mappingIris;
     this.mappingIrisSet = true;
@@ -147,7 +148,7 @@ public class MapperCommand extends AbstractCommand {
   // ================================================================================
 
   @Parameter(names = "-mapFiles", description = "The paths to mapping files and/or folders.",
-      converter = CanonicalFileConverter.class)
+      converter = CanonicalFileConverter.class, variableArity = true)
   public void setMappingFiles(List<File> mappingFiles) {
     this.mappingFiles = mappingFiles;
     this.mappingFilesSet = true;
@@ -279,9 +280,9 @@ public class MapperCommand extends AbstractCommand {
   @Override
   protected void doInitialize() {
     // TODO Auto-generated method stub
-    
+
   }
-  
+
   @Override
   protected void addCommandActions(List<String> actionsList) {
     actionsList.add(Action.map.name());
@@ -290,7 +291,7 @@ public class MapperCommand extends AbstractCommand {
   OntologyFiles ontologyFilesFinder;
   OWLOntologyManager man;
   OntologyFiles mappingFilesFinder;
-  Mapping mapping;
+  IMappings mapping;
 
   public void run() {
     man = getMain().getNewBaseManager();
@@ -309,7 +310,7 @@ public class MapperCommand extends AbstractCommand {
       OwlclUtil.getOrLoadOntology(iri, man);
     }
 
-    DefaultMapping defaultMapping = new DefaultMapping();
+    DefaultMappings defaultMapping = new DefaultMappings();
     mappingFilesFinder = new OntologyFiles(mappingFiles, false);
     for (IRI iri : mappingIris)
     {
@@ -369,56 +370,37 @@ public class MapperCommand extends AbstractCommand {
 
       @Override
       public void execute(MapperCommand command) {
-        Mapper mapper = new Mapper(command.mapping);
-        if (!command.irisSet && !command.prefixesSet && !command.patternsSet)
-        {
-          // this means map all possible IRIs
-          for (IRI iri : command.mapping.getForwardMappedIris())
-          {
-            mapIri(iri, command, mapper);
-          }
-
-        } else
-        {
-          // iris
-          for (IRI iri : command.iris)
-          {
-            mapIri(iri, command, mapper);
-          }
-          // prefixes
-          for (String prefix : command.prefixes)
-          {
-            for (IRI ontologyIri : command.ontologyIris)
-            {
-              mapper.forwardMapPrefix(prefix, command.mapTransitively,
-                  command.man.getOntology(ontologyIri), true);
-            }
-            for (IRI ontologyIri : command.ontologyFilesFinder.getLocalOntologyFiles(null).values())
-            {
-              mapper.forwardMapPrefix(prefix, command.mapTransitively,
-                  command.man.getOntology(ontologyIri), true);
-            }
-
-          }
-          // patterns
-          for (String pattern : command.patterns)
-          {
-            for (IRI ontologyIri : command.ontologyIris)
-            {
-
-              mapper.forwardMapPattern(pattern, command.mapTransitively,
-                  command.man.getOntology(ontologyIri), true);
-            }
-            for (IRI ontologyIri : command.ontologyFilesFinder.getLocalOntologyFiles(null).values())
-            {
-              mapper.forwardMapPattern(pattern, command.mapTransitively,
-                  command.man.getOntology(ontologyIri), true);
-            }
-          }
-        }
+        /*
+         * Mapper mapper = new Mapper(command.mapping); if (!command.irisSet &&
+         * !command.prefixesSet && !command.patternsSet) { // this means map all
+         * possible IRIs for (IRI iri : command.mapping.getForwardMappedIris())
+         * { mapIri(iri, command, mapper); }
+         * 
+         * } else {
+         * 
+         * // iris for (IRI iri : command.iris) { mapIri(iri, command, mapper);
+         * } // prefixes for (String prefix : command.prefixes) { for (IRI
+         * ontologyIri : command.ontologyIris) { mapper.forwardMapPrefix(prefix,
+         * command.mapTransitively, command.man.getOntology(ontologyIri), true);
+         * } for (IRI ontologyIri :
+         * command.ontologyFilesFinder.getLocalOntologyFiles(null).values()) {
+         * mapper.forwardMapPrefix(prefix, command.mapTransitively,
+         * command.man.getOntology(ontologyIri), true); }
+         * 
+         * } // patterns for (String pattern : command.patterns) { for (IRI
+         * ontologyIri : command.ontologyIris) {
+         * 
+         * mapper.forwardMapPattern(pattern, command.mapTransitively,
+         * command.man.getOntology(ontologyIri), true); } for (IRI ontologyIri :
+         * command.ontologyFilesFinder.getLocalOntologyFiles(null).values()) {
+         * mapper.forwardMapPattern(pattern, command.mapTransitively,
+         * command.man.getOntology(ontologyIri), true); } } }
+         */
       }
 
       private void mapIri(IRI iri, MapperCommand command, Mapper mapper) {
+      /*
+        
         for (IRI ontologyIri : command.ontologyIris)
         {
           mapper.forwardMap(iri, command.mapTransitively, command.man.getOntology(ontologyIri),
@@ -429,6 +411,7 @@ public class MapperCommand extends AbstractCommand {
           mapper.forwardMap(iri, command.mapTransitively, command.man.getOntology(ontologyIri),
               true);
         }
+        */
       }
     };
 

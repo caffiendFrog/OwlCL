@@ -7,4 +7,11 @@
     <relativePath>../parent</relativePath>
   </parent>
   <artifactId>tmp</artifactId>
+  <dependencies>
+    <dependency>
+      <groupId>com.essaid.owlcl</groupId>
+      <artifactId>core</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
 </project>

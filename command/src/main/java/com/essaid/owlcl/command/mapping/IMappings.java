@@ -8,7 +8,7 @@ import org.semanticweb.owlapi.model.IRI;
  * @author Shahim Essaid
  * 
  */
-public interface Mapping {
+public interface IMappings {
 
 	Set<IRI> getForwardMappedIris();
 
@@ -21,9 +21,9 @@ public interface Mapping {
 	 *         null, look for forward mappings to this IRI and see why those
 	 *         mappings are cyclical.
 	 */
-	IRI hasForwardMappingCycle(IRI iri);
+	Set<IRI> hasForwardMappingCycle(IRI iri);
 
-	IRI hasBackwardMappingCycle(IRI iri);
+	Set<IRI> hasBackwardMappingCycle(IRI iri);
 
 	Set<IRI> getForwardMappings(IRI iri);
 

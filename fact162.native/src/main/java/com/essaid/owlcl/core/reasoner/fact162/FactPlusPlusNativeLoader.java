@@ -33,18 +33,18 @@ public class FactPlusPlusNativeLoader implements IInitializable {
       throw new IllegalStateException("Could not find native library path for Fact++");
     }
 
-    String libPath = manager.getNativeResourcePrefix("fact162") + libName;
+    String libPath = manager.getNativeResourcePrefix("fact162");
 
     // for Daniela's CentOS build server
     String qualifiers = System.getProperty(IOwlclManager.OWLCL_ARCH_QUALIFIERS_PROPERTY);
     if (qualifiers != null && qualifiers.contains("glibc2.2"))
     {
-      libPath += "-glibc2.2";
+      libPath += "glibc2.2/";
     }
 
     ClassLoader cl = this.getClass().getClassLoader();
 
-    InputStream is = cl.getResourceAsStream(libPath);
+    InputStream is = cl.getResourceAsStream(libPath + libName);
 
     manager.loadNativeLibrary(is, libName);
 
