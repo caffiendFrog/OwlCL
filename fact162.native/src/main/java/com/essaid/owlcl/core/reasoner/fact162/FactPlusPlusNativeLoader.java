@@ -19,7 +19,7 @@ public class FactPlusPlusNativeLoader implements IInitializable {
     if (manager.isLinux())
     {
       libName = "libFaCTPlusPlusJNI.so";
-      System.out.println("============= linux fact library");
+//      System.out.println("============= linux fact library");
     } else if (manager.isWindows())
     {
       libName = "FaCTPlusPlusJNI.dll";

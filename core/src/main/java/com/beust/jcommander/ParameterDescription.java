@@ -137,6 +137,7 @@ public class ParameterDescription {
     {
       if (parameter != null)
       {
+       // System.out.println("Parameter: "+parameter.getClass()+" "+jCommander.getProgramName());
         validateDefaultValues(parameter.names());
       }
     }
@@ -406,7 +407,7 @@ public class ParameterDescription {
   public Class<?> getType() {
     if (setter != null)
     {
-      System.out.println("=============== GETTING TYPE FOR: "+ setter.getName());
+//      System.out.println("=============== GETTING TYPE FOR: "+ setter.getName());
       return setter.getParameterTypes()[0];
     } else
     {

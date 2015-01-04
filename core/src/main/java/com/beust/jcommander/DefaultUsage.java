@@ -125,8 +125,8 @@ public class DefaultUsage {
             "Default: " + (pd.password() ? "********" : displayedDef));
       }
       out.append("\n");
-      System.out.println();
-      System.out.println("ParamDesc: " + out.toString());
+//      System.out.println();
+//      System.out.println("ParamDesc: " + out.toString());
     }
 
     //
@@ -149,8 +149,8 @@ public class DefaultUsage {
         // Options for this command
         usage(jc, progName.getName(), out, "      ");
         out.append("\n");
-        System.out.println();
-        System.out.println("Command: " + out.toString());
+//        System.out.println();
+//        System.out.println("Command: " + out.toString());
       }
     }
   }

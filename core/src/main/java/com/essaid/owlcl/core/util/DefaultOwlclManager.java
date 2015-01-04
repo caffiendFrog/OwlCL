@@ -359,7 +359,7 @@ public class DefaultOwlclManager implements IOwlclManager {
   }
 
   private void addFileToClasspath(File file, ClassLoader urlcl, Method addURL) {
-    System.out.println("Adding file " + file);
+//    System.out.println("Adding file " + file);
     if (file.getPath().endsWith(".jar") || file.isDirectory())
     {
       URL fileUrl;

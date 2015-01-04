@@ -220,6 +220,7 @@ public class EroCommand extends AbstractCommand {
     {
       this.moduleBaseDirectory = new File(getMain().getProject(), "module");
     }
+    this.moduleBaseDirectory.mkdirs();
 
     if (!isEroOutputClassifiedSet())
     {

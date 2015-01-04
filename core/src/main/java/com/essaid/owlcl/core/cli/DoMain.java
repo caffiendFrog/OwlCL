@@ -1,6 +1,8 @@
 package com.essaid.owlcl.core.cli;
 
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.beust.jcommander.DefaultUsage;
 import com.essaid.owlcl.core.IOwlclCommandFactory;
@@ -16,11 +18,14 @@ import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.assistedinject.AssistedInject;
 import com.google.inject.name.Names;
 
 public class DoMain {
 
   static void run(final DefaultOwlclManager dm, String[] args) {
+    
+    Logger.getLogger(AssistedInject.class.getName()).setLevel(Level.SEVERE);
 
     Injector injector = Guice.createInjector(new OwlclCoreGModule(), new AbstractModule() {
 
