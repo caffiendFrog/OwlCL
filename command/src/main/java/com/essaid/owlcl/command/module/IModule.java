@@ -49,11 +49,11 @@ public interface IModule {
    * 
    * @return
    */
-  OWLOntology getBuildUnclassified();
+  OWLOntology getBuildersUnclassified();
 
   OWLOntology getFinalUnclassified();
 
-  OWLOntology getBuildClassified();
+  OWLOntology getBuildersClassified();
 
   OWLOntology getFinalClassified();
 

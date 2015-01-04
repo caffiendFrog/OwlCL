@@ -7,9 +7,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -22,7 +23,13 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.protege.xmlcatalog.XMLCatalog;
 import org.protege.xmlcatalog.entry.UriEntry;
 import org.protege.xmlcatalog.write.XMLCatalogWriter;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.io.FileDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.util.AutoIRIMapper;
 
 import com.beust.jcommander.Parameter;
@@ -44,46 +51,91 @@ public class CatalogCommand extends AbstractCommand {
   // The top directory to catalog from
   // ================================================================================
 
-  @Parameter(names = "-directory", description = "The top directory to start cataloging from.",
+  @Parameter(names = "-target",
+      description = "The top directory to start cataloging from.",
       converter = CanonicalFileConverter.class,
       validateValueWith = DirectoryExistsValueValidator.class)
-  public void setDirectory(File directory) {
-    this.directory = directory;
-    this.directorySet = true;
+  public void setTargetDirectory(File directory) {
+    this.targetDirectory = directory;
+    this.targetDirectorySet = true;
   }
 
-  public File getDirectory() {
-    return directory;
+  public File getTargetDirectory() {
+    return targetDirectory;
   }
 
-  public boolean isDirectorySet() {
-    return directorySet;
+  public boolean isTargetDirectorySet() {
+    return targetDirectorySet;
   }
 
-  private File directory;
-  private boolean directorySet;
+  private File targetDirectory;
+  private boolean targetDirectorySet;
 
   // ================================================================================
   // Do subdirectories?
   // ================================================================================
 
-  @Parameter(names = "-noSubs", description = "Set to false if you only want the specified "
+  @Parameter(names = "-noTargetSubs", description = "Set to false if you only want the specified "
       + "directory cataloged without doing the sub directories.")
-  public void setNoSubs(boolean noSubs) {
-    this.noSubs = noSubs;
-    this.noSubsSet = true;
+  public void setNoTargetSubs(boolean noSubs) {
+    this.noTargetSubs = noSubs;
+    this.noTargetSubsSet = true;
   }
 
-  public boolean isNoSubs() {
-    return noSubs;
+  public boolean isNoTargetSubs() {
+    return noTargetSubs;
   }
 
-  public boolean isNoSubsSet() {
-    return noSubsSet;
+  public boolean isNoTargetSubsSet() {
+    return noTargetSubsSet;
   }
 
-  private boolean noSubs = false;
-  private boolean noSubsSet;
+  private boolean noTargetSubs = false;
+  private boolean noTargetSubsSet;
+
+  // ================================================================================
+  // source files/folders
+  // ================================================================================
+
+  @Parameter(names = "-sources",
+      description = "The source files/directories to consider in the catalog.",
+      converter = CanonicalFileConverter.class, variableArity = true)
+  public void setSourceFiles(List<File> sourceFiles) {
+    this.sourceFiles = sourceFiles;
+    this.sourceFilesSet = true;
+  }
+
+  public List<File> getSourceFiles() {
+    return sourceFiles;
+  }
+
+  public boolean isSourceFilesSet() {
+    return sourceFilesSet;
+  }
+
+  private List<File> sourceFiles = new ArrayList<File>();
+  private boolean sourceFilesSet = false;
+
+  // ================================================================================
+  // source subs
+  // ================================================================================
+
+  @Parameter(names = "-noSourceSubs", description = "Don't consider source sub directories.")
+  public void setNoSourceSubs(boolean noSourceSubs) {
+    this.noSourceSubs = noSourceSubs;
+    this.noSourceSubsSet = true;
+  }
+
+  public boolean isNoSourceSubs() {
+    return noSourceSubs;
+  }
+
+  public boolean isNoSourceSubsSet() {
+    return noSourceSubsSet;
+  }
+
+  private boolean noSourceSubs = false;
+  private boolean noSourceSubsSet = false;
 
   // ================================================================================
   // Which directories to catalog, all or just *.owl ones
@@ -136,9 +188,14 @@ public class CatalogCommand extends AbstractCommand {
   // ================================================================================
   protected void configure() {
 
-    if (!directorySet)
+    if (!targetDirectorySet)
     {
-      directory = getMain().getProject();
+      targetDirectory = getMain().getProject();
+    }
+
+    if (!sourceFilesSet)
+    {
+      sourceFiles.add(getMain().getProject());
     }
 
   }
@@ -179,13 +236,42 @@ public class CatalogCommand extends AbstractCommand {
       @Override
       public void execute(CatalogCommand command) {
         command.getLogger().info("Creating catalogs.");
-        AutoIRIMapper mapper = new AutoIRIMapper(command.getDirectory(), !command.noSubs);
 
-        File topDirectory = command.getDirectory();
+        Map<IRI, IRI> ontologyToDocumentMap = new HashMap<IRI, IRI>();
+
+        for (File file : command.getSourceFiles())
+        {
+          if (file.isDirectory())
+          {
+            AutoIRIMapper mapper = new AutoIRIMapper(file, !command.noTargetSubs);
+            for (IRI oIri : mapper.getOntologyIRIs())
+            {
+              ontologyToDocumentMap.put(oIri, mapper.getDocumentIRI(oIri));
+            }
+          } else
+          {
+            OWLOntologyManager man = OWLManager.createOWLOntologyManager();
+            OWLOntologyLoaderConfiguration lc = new OWLOntologyLoaderConfiguration();
+            lc = lc.setFollowRedirects(false);
+            lc = lc.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+            IRI oIri = null;
+            try
+            {
+              oIri = man.loadOntologyFromOntologyDocument(new FileDocumentSource(file), lc)
+                  .getOntologyID().getOntologyIRI();
+            } catch (OWLOntologyCreationException e)
+            {
+              throw new RuntimeException("Failed to load source file: " + file, e);
+            }
+            ontologyToDocumentMap.put(oIri, IRI.create(file));
+          }
+        }
+
+        File topDirectory = command.getTargetDirectory();
 
         // for all directories
         for (File d : FileUtils.listFilesAndDirs(topDirectory, DirectoryFileFilter.INSTANCE,
-            command.isNoSubs() ? null : TrueFileFilter.INSTANCE))
+            command.isNoTargetSubs() ? null : TrueFileFilter.INSTANCE))
         {
 
           // if we have any owl files
@@ -206,10 +292,9 @@ public class CatalogCommand extends AbstractCommand {
             {
               Path directoryPath = Paths.get(d.toURI());
               XMLCatalog catalog = new XMLCatalog(directoryPath.toUri());
-              Set<IRI> iris = new TreeSet<IRI>(mapper.getOntologyIRIs());
-              for (IRI iri : iris)
+              for (IRI iri : ontologyToDocumentMap.keySet())
               {
-                Path iriPath = Paths.get(mapper.getDocumentIRI(iri).toURI());
+                Path iriPath = Paths.get(ontologyToDocumentMap.get(iri).toURI());
 
                 UriEntry entry = new UriEntry("User Entered Import Resolution", catalog,
                     iri.toString(), new URI(null, directoryPath.relativize(iriPath).toString(),

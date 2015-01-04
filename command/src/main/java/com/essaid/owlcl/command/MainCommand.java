@@ -14,14 +14,12 @@ import java.util.Properties;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.slf4j.Logger;
 
 import com.beust.jcommander.Command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.internal.Nullable;
 import com.essaid.owlcl.core.IOwlclManager;
 import com.essaid.owlcl.core.OwlclCommand;
-import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.DirectoryExistsValueValidator;
 import com.essaid.owlcl.core.cli.util.FileListValueValidator;
@@ -94,7 +92,7 @@ public class MainCommand extends AbstractCommand {
   public static final String LOG_LEVEL_PROPERTY = "log.level";
   public static final String DETAILS_PROPERTY = "details";
 
-  public static final String COMMAND_PROPERTIES_FILE_NAME = "owlcl-command.properties";
+  public static final String COMMAND_PROPERTIES_FILE_NAME = "owlcl.properties";
 
   // ================================================================================
   // Working directory
@@ -175,7 +173,8 @@ public class MainCommand extends AbstractCommand {
   @Parameter(names = "-ontologyFiles", converter = CanonicalFileConverter.class,
       validateValueWith = FileListValueValidator.class,
       description = "The files/directories that are considered "
-          + "to be the ontology files for this project/command. See import files.")
+          + "to be the ontology files for this project/command. See import files.",
+      variableArity = true)
   public void setOntologyFiles(List<File> ontologyFiles) {
     this.ontologyFiles = ontologyFiles;
     this.ontologyFilesSet = true;
@@ -223,7 +222,8 @@ public class MainCommand extends AbstractCommand {
       converter = CanonicalFileConverter.class,
       validateValueWith = FileListValueValidator.class,
       description = "The files that are considered to "
-          + "be external imports. e.i. used by the ontology files but not under the control of this ontology project.")
+          + "be external imports. e.i. used by the ontology files but not under the control of this ontology project.",
+      variableArity = true)
   public void setImportFiles(List<File> importFiles) {
     this.importFiles = importFiles;
     this.importFilesSet = true;

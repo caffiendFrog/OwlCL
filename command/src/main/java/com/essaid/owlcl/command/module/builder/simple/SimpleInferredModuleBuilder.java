@@ -138,14 +138,14 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
         for (OWLClass sub : subs)
         {
           OWLSubClassOfAxiom subAxiom = df.getOWLSubClassOfAxiom(sub, c);
-          if (module.getBuildUnclassified().containsAxiom(subAxiom))
+          if (module.getBuildersUnclassified().containsAxiom(subAxiom))
           {
             removeAxiom(subAxiom);
             ;
             for (OWLClass supr : module.getModuleConfiguration().getSourceReasoner()
                 .getSuperClasses(c, true).getFlattened())
             {
-              if (module.getBuildUnclassified().containsClassInSignature(supr.getIRI()))
+              if (module.getBuildersUnclassified().containsClassInSignature(supr.getIRI()))
               {
                 addAxiom(df.getOWLSubClassOfAxiom(sub, supr));
               }
@@ -179,7 +179,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   public void addClosureToBfo() {
-    for (OWLEntity entity : module.getBuildUnclassified().getSignature())
+    for (OWLEntity entity : module.getBuildersUnclassified().getSignature())
     {
       Set<OWLEntity> supers = OwlclUtil.getSupers(entity, true, module.getModuleConfiguration()
           .getSourceReasoner());
@@ -216,7 +216,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 
   public void addAnnotations() {
     Set<OWLEntity> entitiesToAnnotate = new HashSet<OWLEntity>();
-    entitiesToAnnotate.addAll(module.getBuildUnclassified().getSignature());
+    entitiesToAnnotate.addAll(module.getBuildersUnclassified().getSignature());
 
     Set<OWLEntity> annotatedEntities = new HashSet<OWLEntity>();
 
@@ -246,7 +246,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   public void typeAllEntities() {
-    for (OWLEntity e : module.getBuildUnclassified().getSignature())
+    for (OWLEntity e : module.getBuildersUnclassified().getSignature())
     {
       addAxiom(df.getOWLDeclarationAxiom(e));
     }

@@ -2,9 +2,11 @@ package com.essaid.owlcl.command.guice;
 
 import static com.essaid.owlcl.command.AbstractCommand.*;
 
+import com.essaid.owlcl.command.AnnotateCommand;
 import com.essaid.owlcl.command.CatalogCommand;
 import com.essaid.owlcl.command.CompareCommand;
 import com.essaid.owlcl.command.EroCommand;
+import com.essaid.owlcl.command.MergeCommand;
 import com.essaid.owlcl.command.ModuleCommand;
 import com.essaid.owlcl.command.MainCommand;
 import com.essaid.owlcl.command.MapperCommand;
@@ -64,14 +66,20 @@ public class CommandGModule extends AbstractModule implements OwlclGuiceModule {
     GuiceUtils.installCommandFactory(binder(), ValidateIriCommand.class, VALIDATE);
     GuiceUtils.installTopCommand(topCommandFactories, VALIDATE);
 
+    GuiceUtils.installCommandFactory(binder(), AnnotateCommand.class, ANNOTATE);
+    GuiceUtils.installTopCommand(topCommandFactories, ANNOTATE);
+
+    GuiceUtils.installCommandFactory(binder(), MergeCommand.class, MERGE);
+    GuiceUtils.installTopCommand(topCommandFactories, MERGE);
+
     // module related
 
     bind(ModuleBuilderManager.class).in(Scopes.SINGLETON);
     ;
 
-    Multibinder<IModuleBuilderFactory> builderFactories = Multibinder.<IModuleBuilderFactory> newSetBinder(
-        binder(), IModuleBuilderFactory.class);
-    
+    Multibinder<IModuleBuilderFactory> builderFactories = Multibinder
+        .<IModuleBuilderFactory> newSetBinder(binder(), IModuleBuilderFactory.class);
+
     builderFactories.addBinding().to(SimpleInferredModuleBuilderFactory.class);
     builderFactories.addBinding().to(SimpleModuleBuilderFactory.class);
 

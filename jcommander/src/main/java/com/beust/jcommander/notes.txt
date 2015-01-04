@@ -1,0 +1,24 @@
+one argument at a time
+	check if there is a command
+	if it "looks like" an option and null command
+		look for the description (should exist for known options)
+			found a description
+				is password?
+				variable arity?
+					process variable arity and save the increment
+				boolean and arity -1?
+					set true
+				process fixed arity
+				is help?
+			no description
+				allow unknown?
+					save the arg and all following until next option
+				throw unknown option exception
+	no commands?
+		get the main description's list, convert, set assigned, add, ...
+	should be command, if no command and validate, throw error
+	save the command's name, and the argument it was found with
+	ask the command to continue the parsing (this is were we can come back and continue to another command.)
+	mark that a command was found.
+	add the increment to i to know what's the next arg.
+					

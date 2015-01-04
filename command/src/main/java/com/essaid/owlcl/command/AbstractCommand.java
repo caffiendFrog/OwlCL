@@ -24,6 +24,8 @@ public abstract class AbstractCommand extends OwlclCommand implements ILoggerOwn
   public static final String TYPECHECK = "owlcl.command.typecheck";
   public static final String UPDATE_MODULE = "owlcl.command.updateModule";
   public static final String VALIDATE = "owlcl.command.validate";
+  public static final String ANNOTATE = "owlcl.command.annotate";
+  public static final String MERGE = "owlcl.command.merge";
 
   // ================================================================================
   // Actions

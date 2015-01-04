@@ -14,6 +14,7 @@
     <module>../core</module>
     <module>../command</module>
     <module>../fact162.native</module>
+<!--     <module>../jcommander</module> -->
   </modules>
 
 </project>

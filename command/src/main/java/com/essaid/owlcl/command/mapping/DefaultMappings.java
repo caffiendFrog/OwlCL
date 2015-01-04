@@ -16,7 +16,7 @@ import com.essaid.owlcl.core.util.OwlclUtil;
 
 public class DefaultMappings implements IMappings {
 
-  private OWLAnnotationProperty property = com.essaid.owlcl.core.util.OwlclVocab.iri_mapps_to
+  private OWLAnnotationProperty mappingProperty = com.essaid.owlcl.core.util.OwlclVocab.iri_mapps_to
       .getAP();
 
   private Map<IRI, Set<IRI>> forwardMap = new HashMap<IRI, Set<IRI>>();
@@ -52,7 +52,7 @@ public class DefaultMappings implements IMappings {
 
   public void addMappingOntology(OWLOntology ontology) {
     for (OWLAnnotationAssertionAxiom aaa : OwlclUtil.getAnnotationAssertionAxioms(ontology,
-        property, true))
+        mappingProperty, true))
     {
       OWLAnnotationSubject subject = aaa.getSubject();
       if (subject instanceof IRI)
@@ -101,6 +101,7 @@ public class DefaultMappings implements IMappings {
     Set<IRI> transitiveIris = new HashSet<IRI>();
     Set<IRI> leafIris = new HashSet<IRI>();
     findForwardCycle(iri, transitiveIris, leafIris);
+    leafIris.remove(iri);
     return leafIris;
   }
 
@@ -117,6 +118,7 @@ public class DefaultMappings implements IMappings {
     Set<IRI> transitiveIris = new HashSet<IRI>();
     Set<IRI> leafIris = new HashSet<IRI>();
     findBackwardCycles(iri, transitiveIris, leafIris);
+    leafIris.remove(iri);
     return leafIris;
   }
 
@@ -124,7 +126,7 @@ public class DefaultMappings implements IMappings {
     // if we have seen the IRI return, should not happen but just in case
     if (!transitiveIris.add(iri))
     {
-      return null;
+      return new HashSet<IRI>();
     }
 
     boolean foundPathForward = false;

@@ -69,17 +69,17 @@
         </exclusion>
       </exclusions>
     </dependency>
-    
+
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>2.4</version>
     </dependency>
-    <dependency>
-      <groupId>com.beust</groupId>
-      <artifactId>jcommander</artifactId>
-      <version>1.36-SNAPSHOT</version>
-    </dependency>
+<!--     <dependency> -->
+<!--       <groupId>com.essaid.owlcl</groupId> -->
+<!--       <artifactId>jcommander</artifactId> -->
+<!--       <version>${owlcl.version}</version> -->
+<!--     </dependency> -->
     <dependency>
       <groupId>net.sourceforge.owlapi</groupId>
       <artifactId>owlapi-apibinding</artifactId>
@@ -105,11 +105,11 @@
       <artifactId>guice-assistedinject</artifactId>
       <version>${guice.version}</version>
     </dependency>
-<!--     <dependency> -->
-<!--       <groupId>fact-plus-plus</groupId> -->
-<!--       <artifactId>fact-plus-plus</artifactId> -->
-<!--       <version>1.6.2</version> -->
-<!--     </dependency> -->
+    <!-- <dependency> -->
+    <!-- <groupId>fact-plus-plus</groupId> -->
+    <!-- <artifactId>fact-plus-plus</artifactId> -->
+    <!-- <version>1.6.2</version> -->
+    <!-- </dependency> -->
   </dependencies>
   <parent>
     <groupId>com.essaid.owlcl</groupId>

@@ -17,6 +17,11 @@
       <outputDirectory>/</outputDirectory>
     </file>
     <file>
+      <source>../jcommander/target/jcommander-${owlcl.version}.jar</source>
+      <destName>jcommander.jar</destName>
+      <outputDirectory>/owlcl/jcommander</outputDirectory>
+    </file>
+    <file>
       <source>../command/target/command-${owlcl.version}.jar</source>
       <outputDirectory>/owlcl/command</outputDirectory>
     </file>

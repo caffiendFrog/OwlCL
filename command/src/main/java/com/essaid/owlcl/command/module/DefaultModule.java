@@ -75,10 +75,10 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   private IModuleConfig moduleConfiguration;
 
   private boolean disposed;
-
-  private boolean generated;
-
-  private boolean saved;
+  //
+  // private boolean generated;
+  //
+  // private boolean saved;
 
   private boolean finalUnclassified;
 
@@ -98,8 +98,14 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
     try
     {
-      Files.createDirectories(outputClassified);
-      Files.createDirectories(outputUnclassified);
+      if (this.outputUnclassified != null)
+      {
+        Files.createDirectories(outputUnclassified);
+      }
+      if (this.outputClassified != null)
+      {
+        Files.createDirectories(outputClassified);
+      }
     } catch (IOException e)
     {
       throw new RuntimeException("Error creating module's output directories", e);
@@ -126,7 +132,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   }
 
   @Override
-  public OWLOntology getBuildUnclassified() {
+  public OWLOntology getBuildersUnclassified() {
     if (unclassifiedModule == null)
     {
       logger.info("Generating unclassified module for: " + getModuleConfiguration().getName());
@@ -166,7 +172,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
     if (!finalUnclassified)
     {
       finalUnclassified = true;
-      getBuildUnclassified();
+      getBuildersUnclassified();
       addAnnotationsUnclassified(moduleConfiguration.getIncludeOntology().getAnnotations(), null);
       addAxiomsUnclassified(OwlclUtil.getAxioms(moduleConfiguration.getIncludeOntology(), true),
           null);
@@ -184,7 +190,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   }
 
   @Override
-  public OWLOntology getBuildClassified() {
+  public OWLOntology getBuildersClassified() {
 
     if (classifiedModule == null)
     {
@@ -232,9 +238,13 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
     if (!finalClassified)
     {
       finalClassified = true;
-      getBuildClassified();
+      getBuildersClassified();
+      
       addAnnotationsClassified(moduleConfiguration.getIncludeOntology().getAnnotations(), null);
       addAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getIncludeOntology(), true), null);
+      
+      removeAnnotationsClassified(moduleConfiguration.getExcludeOntology().getAnnotations(),
+          null);
       removeAxiomsClassified(OwlclUtil.getAxioms(moduleConfiguration.getExcludeOntology(), true),
           null);
 
@@ -383,11 +393,17 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
   public void saveModule() {
     saveUnclassifiedModule();
     saveClassifiedModule();
-
   }
 
   @Override
   public void saveUnclassifiedModule() {
+
+    if (outputUnclassified == null)
+    {
+      logger.warn("Output directory for unclassified module " + getModuleConfiguration().getName()
+          + " is null, skipping save and all imports.");
+      return;
+    }
 
     getFinalUnclassified();
 
@@ -433,6 +449,13 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void saveClassifiedModule() {
+
+    if (outputClassified == null)
+    {
+      logger.warn("Output directory for classified module " + getModuleConfiguration().getName()
+          + " is null, skipping save and all imports.");
+      return;
+    }
 
     getFinalClassified();
 
@@ -655,11 +678,17 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
   @Override
   public void initialize() {
-    this.reportClassified = reportFactory.createReport(getModuleConfiguration()
-        .getClassifiedFileName() + ".report", outputClassified, this);
+    if (outputClassified != null)
+    {
+      this.reportClassified = reportFactory.createReport(getModuleConfiguration()
+          .getClassifiedFileName() + ".report", outputClassified, this);
+    }
 
-    this.reportUnclassified = reportFactory.createReport(getModuleConfiguration()
-        .getUnclassifiedFileName() + ".report", outputUnclassified, this);
+    if (outputUnclassified != null)
+    {
+      this.reportUnclassified = reportFactory.createReport(getModuleConfiguration()
+          .getUnclassifiedFileName() + ".report", outputUnclassified, this);
+    }
   }
 
   @Override

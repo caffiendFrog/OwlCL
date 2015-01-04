@@ -37,7 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
 @Parameters(commandNames = "compare",
-    commandDescription = "Shows a axiom diff summary between files or directories. ")
+    commandDescription = "Shows a axiom diff summary between files or directories.")
 public class CompareCommand extends AbstractCommand {
 
   // ================================================================================
@@ -45,7 +45,7 @@ public class CompareCommand extends AbstractCommand {
   // ================================================================================
 
   @Parameter(names = "-fromFiles", description = "Starting/from files or directories.",
-      converter = CanonicalFileConverter.class)
+      converter = CanonicalFileConverter.class, variableArity = true)
   public void setFromFiles(List<File> fromFiles) {
     this.fromFiles = fromFiles;
     this.fromFilesSet = true;
@@ -89,7 +89,7 @@ public class CompareCommand extends AbstractCommand {
   // ================================================================================
 
   @Parameter(names = "-toFiles", description = "The to/end files or directories for the diff.",
-      converter = CanonicalFileConverter.class)
+      converter = CanonicalFileConverter.class, variableArity = true)
   public void setToFiles(List<File> tofiles) {
     this.toFiles = tofiles;
     this.toFilesSet = true;
@@ -149,6 +149,48 @@ public class CompareCommand extends AbstractCommand {
 
   private boolean noSubDir = false;
   private boolean noSubDirSet;
+
+  // ================================================================================
+  // Don't report removed
+  // ================================================================================
+
+  @Parameter(names = "-noRemoved", description = "Don't report removed items.")
+  public void setNoRemoved(boolean noRemoved) {
+    this.noRemoved = noRemoved;
+    this.noRemovedSet = true;
+  }
+
+  public boolean isNoRemoved() {
+    return noRemoved;
+  }
+
+  public boolean isNoRemovedSet() {
+    return noRemovedSet;
+  }
+
+  private boolean noRemoved;
+  private boolean noRemovedSet;
+
+  // ================================================================================
+  // Don't report added
+  // ================================================================================
+
+  @Parameter(names = "-noAdded", description = "Don't report added items.")
+  public void setNoAdded(boolean noAdded) {
+    this.noAdded = noAdded;
+    this.noAddedSet = true;
+  }
+
+  public boolean isNoAdded() {
+    return noAdded;
+  }
+
+  public boolean isNoAddedSet() {
+    return noAddedSet;
+  }
+
+  private boolean noAdded;
+  private boolean noAddedSet;
 
   // ================================================================================
   // ReportName
@@ -273,7 +315,7 @@ public class CompareCommand extends AbstractCommand {
       throw new IllegalStateException("Called with one IRI set but not the other.");
     }
 
-    fromOntologyFiles = new OntologyFiles(fromFiles, noSubDir, new HashSet<File>());
+    fromOntologyFiles = new OntologyFiles(fromFiles, ! noSubDir, new HashSet<File>());
     fromManager = getMain().getNewBaseManager();
     fromOntologyFiles.setupManager(fromManager, null);
     if (fromIri != null)
@@ -304,7 +346,7 @@ public class CompareCommand extends AbstractCommand {
       }
     }
 
-    toOntologyFiles = new OntologyFiles(toFiles, noSubDir);
+    toOntologyFiles = new OntologyFiles(toFiles, ! noSubDir);
     toManager = getMain().getNewBaseManager();
     toOntologyFiles.setupManager(toManager, null);
     if (toIri != null)
@@ -574,31 +616,37 @@ public class CompareCommand extends AbstractCommand {
         command.report.info("============================");
         command.report.info("");
 
-        for (OWLOntology o : command.onlyFromOntologies)
+        if (!command.isNoRemoved())
         {
-
-          command.report.info("");
-          command.report.info("- " + o.getOntologyID().getOntologyIRI());
-          int count = 0;
-          for (OWLAnnotation a : o.getAnnotations())
+          for (OWLOntology o : command.onlyFromOntologies)
           {
-            command.report.detail("\t-" + a);
-            ++count;
+
+            command.report.info("");
+            command.report.info("- " + o.getOntologyID().getOntologyIRI());
+            int count = 0;
+            for (OWLAnnotation a : o.getAnnotations())
+            {
+              command.report.detail("\t-" + a);
+              ++count;
+            }
+            command.report.info("\tCounts: -" + count + " +0");
           }
-          command.report.info("\tCounts: -" + count + " +0");
         }
 
-        for (OWLOntology o : command.onlyToOntologies)
+        if (!command.isNoAdded())
         {
-          command.report.info("");
-          command.report.info("+ " + o.getOntologyID().getOntologyIRI());
-          int count = 0;
-          for (OWLAnnotation a : o.getAnnotations())
+          for (OWLOntology o : command.onlyToOntologies)
           {
-            command.report.detail("\t+" + a);
-            ++count;
+            command.report.info("");
+            command.report.info("+ " + o.getOntologyID().getOntologyIRI());
+            int count = 0;
+            for (OWLAnnotation a : o.getAnnotations())
+            {
+              command.report.detail("\t+" + a);
+              ++count;
+            }
+            command.report.info("\tCounts: -0 " + "+" + count);
           }
-          command.report.info("\tCounts: -0 " + "+" + count);
         }
 
         for (OWLOntology from : command.bothFromOntologies)
@@ -612,7 +660,10 @@ public class CompareCommand extends AbstractCommand {
           {
             if (!to.getAnnotations().contains(a))
             {
-              command.report.detail("\t-" + a);
+              if (!command.isNoRemoved())
+              {
+                command.report.detail("\t-" + a);
+              }
               ++removed;
             }
           }
@@ -621,7 +672,10 @@ public class CompareCommand extends AbstractCommand {
           {
             if (!from.getAnnotations().contains(a))
             {
-              command.report.detail("\t+" + a);
+              if (!command.isNoAdded())
+              {
+                command.report.detail("\t+" + a);
+              }
               ++added;
             }
           }
@@ -640,33 +694,40 @@ public class CompareCommand extends AbstractCommand {
         command.report.info("==========================================");
         command.report.info("");
 
-        for (OWLOntology from : command.onlyFromOntologies)
+        if (!command.isNoRemoved())
         {
-          command.report.info("");
-          command.report.info("- " + from.getOntologyID().getOntologyIRI());
-          int removed = 0;
-          Set<OWLAxiom> axioms = new TreeSet<OWLAxiom>(from.getAxioms());
-          for (OWLAxiom a : axioms)
+          for (OWLOntology from : command.onlyFromOntologies)
           {
-            command.report.detail("\t-" + a);
-            ++removed;
+            command.report.info("");
+            command.report.info("- " + from.getOntologyID().getOntologyIRI());
+            int removed = 0;
+            Set<OWLAxiom> axioms = new TreeSet<OWLAxiom>(from.getAxioms());
+            for (OWLAxiom a : axioms)
+            {
+              command.report.detail("\t-" + a);
+              ++removed;
+            }
+            command.report.info("\tCounts: -" + removed + " +0");
           }
-          command.report.info("\tCounts: -" + removed + " +0");
+
         }
 
-        for (OWLOntology to : command.onlyToOntologies)
+        if (!command.isNoAdded())
         {
-          command.report.info("");
-          command.report.info("+ " + to.getOntologyID().getOntologyIRI());
-          int added = 0;
-
-          Set<OWLAxiom> axioms = new TreeSet<OWLAxiom>(to.getAxioms());
-          for (OWLAxiom a : axioms)
+          for (OWLOntology to : command.onlyToOntologies)
           {
-            command.report.detail("\t+" + a);
-            ++added;
+            command.report.info("");
+            command.report.info("+ " + to.getOntologyID().getOntologyIRI());
+            int added = 0;
+
+            Set<OWLAxiom> axioms = new TreeSet<OWLAxiom>(to.getAxioms());
+            for (OWLAxiom a : axioms)
+            {
+              command.report.detail("\t+" + a);
+              ++added;
+            }
+            command.report.info("\tCounts: -0" + " +" + added);
           }
-          command.report.info("\tCounts: -0" + " +" + added);
         }
 
         for (OWLOntology bothFrom : command.bothFromOntologies)
@@ -682,7 +743,10 @@ public class CompareCommand extends AbstractCommand {
           {
             if (!bothTo.containsAxiom(a))
             {
-              command.report.detail("\t-" + a);
+              if (!command.isNoRemoved())
+              {
+                command.report.detail("\t-" + a);
+              }
               ++removed;
             }
           }
@@ -692,7 +756,10 @@ public class CompareCommand extends AbstractCommand {
           {
             if (!bothFrom.containsAxiom(a))
             {
-              command.report.detail("\t+" + a);
+              if (!command.isNoAdded())
+              {
+                command.report.detail("\t+" + a);
+              }
               ++added;
             }
           }
@@ -725,14 +792,20 @@ public class CompareCommand extends AbstractCommand {
         {
           if (!toEntities.remove(e))
           {
-            command.report.detail("- " + e.getEntityType() + " " + e);
+            if (!command.isNoRemoved())
+            {
+              command.report.detail("- " + e.getEntityType() + " " + e);
+            }
             ++removed;
           }
         }
 
         for (OWLEntity e : toEntities)
         {
-          command.report.detail("+ " + e.getEntityType() + " " + e);
+          if (!command.isNoAdded())
+          {
+            command.report.detail("+ " + e.getEntityType() + " " + e);
+          }
           ++added;
         }
 
@@ -762,14 +835,20 @@ public class CompareCommand extends AbstractCommand {
         {
           if (!toAxioms.remove(a))
           {
-            command.report.detail("- " + a);
+            if (!command.isNoRemoved())
+            {
+              command.report.detail("- " + a);
+            }
             ++removed;
           }
         }
 
         for (OWLAxiom a : toAxioms)
         {
-          command.report.detail("+ " + a);
+          if (!command.isNoAdded())
+          {
+            command.report.detail("+ " + a);
+          }
           ++added;
         }
         command.report.info("counts: -" + removed + " +" + added);

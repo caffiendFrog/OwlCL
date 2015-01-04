@@ -1,5 +1,6 @@
 package com.essaid.owlcl.command.mapping;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,20 +32,20 @@ public class Mapper {
   public List<OWLOntologyChange> forwardMap(IRI iri, boolean transitiveMapping,
       OWLOntology ontology, boolean ontologyClosure) {
 
-    IRI newIri = getForwardIri(iri, transitiveMapping);
+    IRI newIri = getForwardIri(iri, transitiveMapping).iterator().next();
 
     return map(iri, newIri, ontology, ontologyClosure);
   }
 
   public List<OWLOntologyChange> backwardMap(IRI iri, boolean transitiveMapping,
       OWLOntology ontology, boolean ontologyClosure) {
-    IRI newIri = getBackwardIri(iri, transitiveMapping);
+    IRI newIri = getBackwardIri(iri, transitiveMapping).iterator().next();
 
     return map(iri, newIri, ontology, ontologyClosure);
 
   }
 
-  private List<OWLOntologyChange> map(IRI iri, IRI newIri, OWLOntology ontology,
+  public List<OWLOntologyChange> map(IRI iri, IRI newIri, OWLOntology ontology,
       boolean ontologyClosure) {
     Set<OWLOntology> ontologies = null;
     if (ontologyClosure)
@@ -58,11 +59,11 @@ public class Mapper {
     OWLEntityRenamer oer = new OWLEntityRenamer(ontology.getOWLOntologyManager(), ontologies);
 
     List<OWLOntologyChange> changes = oer.changeIRI(iri, newIri);
-    ontology.getOWLOntologyManager().applyChanges(changes);
+    // ontology.getOWLOntologyManager().applyChanges(changes);
     return changes;
   }
 
-  private IRI getForwardIri(IRI iri, boolean transitive) {
+  public Set<IRI> getForwardIri(IRI iri, boolean transitive) {
     Set<IRI> iris = null;
     if (transitive)
     {
@@ -71,18 +72,10 @@ public class Mapper {
     {
       iris = mapping.getForwardMappings(iri);
     }
-    if (iris == null)
-    {
-      throw new MapperException("No forward mappings found for IRI: " + iri);
-    }
-    if (iris.size() != 1)
-    {
-      throw new MapperException("Forwards mappings for IRI " + iri + " were not 1.");
-    }
-    return iris.iterator().next();
+    return iris;
   }
 
-  private IRI getBackwardIri(IRI iri, boolean transitiveMapping) {
+  public Set<IRI> getBackwardIri(IRI iri, boolean transitiveMapping) {
     Set<IRI> iris = null;
     if (transitiveMapping)
     {
@@ -91,49 +84,33 @@ public class Mapper {
     {
       iris = mapping.getBackwardMappings(iri);
     }
-    if (iris == null)
-    {
-      throw new MapperException("No backward mappings found for IRI: " + iri);
-    }
-    if (iris.size() != 1)
-    {
-      throw new MapperException("Backward mappings for IRI " + iri + " were not 1.");
-    }
-    return iris.iterator().next();
+
+    return iris;
   }
 
-  public List<OWLOntologyChange> forwardMap(String iri, boolean transitiveMapping,
+  public List<OWLOntologyChange> forwardMapPrefix(String iriPrefix, boolean transitiveMapping,
       OWLOntology ontology, boolean ontologyClosure) {
-    return forwardMap(IRI.create(iri), transitiveMapping, ontology, ontologyClosure);
 
-  }
-
-  public List<OWLOntologyChange> backwardMap(String iri, boolean transitiveMapping,
-      OWLOntology ontology, boolean ontologyClosure) {
-    return backwardMap(IRI.create(iri), transitiveMapping, ontology, ontologyClosure);
-
-  }
-
-  public void forwardMapPrefix(String iriPrefix, boolean transitiveMapping, OWLOntology ontology,
-      boolean ontologyClosure) {
-
+    List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
     for (IRI iri : getPatternIris(iriPrefix + ".*", ontology, ontologyClosure))
     {
-      forwardMap(iri, transitiveMapping, ontology, ontologyClosure);
+      changes.addAll(forwardMap(iri, transitiveMapping, ontology, ontologyClosure));
     }
 
+    return changes;
   }
 
-  public void backwardMapPrefix(String iriPrefix, boolean transitiveMapping, OWLOntology ontology,
-      boolean ontologyClosure) {
+  public List<OWLOntologyChange> backwardMapPrefix(String iriPrefix, boolean transitiveMapping,
+      OWLOntology ontology, boolean ontologyClosure) {
+    List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
     for (IRI iri : getPatternIris(iriPrefix + ".*", ontology, ontologyClosure))
     {
-      backwardMap(iri, transitiveMapping, ontology, ontologyClosure);
+      changes.addAll(backwardMap(iri, transitiveMapping, ontology, ontologyClosure));
     }
-
+    return changes;
   }
 
-  private Set<IRI> getPatternIris(String pattern, OWLOntology ontology, boolean ontologyClosure) {
+  public Set<IRI> getPatternIris(String pattern, OWLOntology ontology, boolean ontologyClosure) {
     Set<IRI> iris = new HashSet<IRI>();
     for (OWLAxiom a : OwlclUtil.getAxioms(ontology, ontologyClosure))
     {
@@ -197,21 +174,23 @@ public class Mapper {
 
   }
 
-  public void forwardMapPattern(String pattern, boolean transitiveMapping, OWLOntology ontology,
-      boolean ontologyClosure) {
+  public List<OWLOntologyChange> forwardMapPattern(String pattern, boolean transitiveMapping,
+      OWLOntology ontology, boolean ontologyClosure) {
+    List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
     for (IRI iri : getPatternIris(pattern, ontology, ontologyClosure))
     {
-      forwardMap(iri, transitiveMapping, ontology, ontologyClosure);
+      changes.addAll(forwardMap(iri, transitiveMapping, ontology, ontologyClosure));
     }
-
+    return changes;
   }
 
-  public void backwardMapPattern(String pattern, boolean transitiveMapping, OWLOntology ontology,
-      boolean ontologyClosure) {
+  public List<OWLOntologyChange> backwardMapPattern(String pattern, boolean transitiveMapping,
+      OWLOntology ontology, boolean ontologyClosure) {
+    List<OWLOntologyChange> changes = new ArrayList<OWLOntologyChange>();
     for (IRI iri : getPatternIris(pattern, ontology, ontologyClosure))
     {
-      backwardMap(iri, transitiveMapping, ontology, ontologyClosure);
+      changes.addAll(backwardMap(iri, transitiveMapping, ontology, ontologyClosure));
     }
+    return changes;
   }
-
 }

@@ -1,11 +1,13 @@
 package com.essaid.owlcl.command;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.semanticweb.owlapi.model.IRI;
@@ -15,18 +17,21 @@ import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyChangeListener;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.slf4j.Logger;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.essaid.owlcl.command.mapping.DefaultMappings;
 import com.essaid.owlcl.command.mapping.Mapper;
-import com.essaid.owlcl.command.mapping.IMappings;
 import com.essaid.owlcl.core.OwlclCommand;
+import com.essaid.owlcl.core.annotation.InjectLogger;
 import com.essaid.owlcl.core.cli.util.CanonicalFileConverter;
 import com.essaid.owlcl.core.cli.util.IriConverter;
 import com.essaid.owlcl.core.cli.util.ManualIriMapping;
+import com.essaid.owlcl.core.util.IReportFactory;
 import com.essaid.owlcl.core.util.OntologyFiles;
 import com.essaid.owlcl.core.util.OwlclUtil;
+import com.essaid.owlcl.core.util.Report;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -52,7 +57,7 @@ public class MapperCommand extends AbstractCommand {
     return irisSet;
   }
 
-  private List<IRI> iris = null;
+  private List<IRI> iris = new ArrayList<IRI>();
   private boolean irisSet = false;
 
   // ================================================================================
@@ -74,7 +79,7 @@ public class MapperCommand extends AbstractCommand {
     return prefixesSet;
   }
 
-  private List<String> prefixes = null;
+  private List<String> prefixes = new ArrayList<String>();
   private boolean prefixesSet = false;
 
   // ================================================================================
@@ -96,7 +101,7 @@ public class MapperCommand extends AbstractCommand {
     return patternsSet;
   }
 
-  private List<String> patterns = null;
+  private List<String> patterns = new ArrayList<String>();
   private boolean patternsSet = false;
 
   // ================================================================================
@@ -125,7 +130,7 @@ public class MapperCommand extends AbstractCommand {
   // The ontology IRIs that have the mapping definitions
   // ================================================================================
 
-  @Parameter(names = "-mapIris", description = "The IRIs for the  OWL files that "
+  @Parameter(names = "-mappingFileIris", description = "The IRIs for the  OWL files that "
       + "define the mappings. ", converter = IriConverter.class, variableArity = true)
   public void setMappingIris(List<IRI> mappingIris) {
     this.mappingIris = mappingIris;
@@ -140,7 +145,7 @@ public class MapperCommand extends AbstractCommand {
     return mappingIrisSet;
   }
 
-  private List<IRI> mappingIris = null;
+  private List<IRI> mappingIris = new ArrayList<IRI>();
   private boolean mappingIrisSet = false;
 
   // ================================================================================
@@ -171,7 +176,8 @@ public class MapperCommand extends AbstractCommand {
 
   @Parameter(names = "-mappings",
       description = "Manual mappings in the form of someIri => someOtherIri. "
-          + "There has to be at least one white space before and after the => ")
+          + "There has to be at least one white space before and after the => ",
+      variableArity = true)
   public void setManualMappings(List<ManualIriMapping> manualMappings) {
     this.manualMappings = manualMappings;
     this.manualMappingsSet = true;
@@ -195,7 +201,7 @@ public class MapperCommand extends AbstractCommand {
   @Parameter(names = "-ontologyIris",
       description = "The IRIs of ontologies that will be modified. "
           + "If not set, all OWL files in any specified folders will be mapped.",
-      converter = IriConverter.class)
+      converter = IriConverter.class, variableArity = true)
   public void setOntologyIris(List<IRI> ontologyIris) {
     this.ontologyIris = ontologyIris;
     this.ontologyIrisSet = true;
@@ -211,6 +217,27 @@ public class MapperCommand extends AbstractCommand {
 
   private List<IRI> ontologyIris = new ArrayList<IRI>();
   private boolean ontologyIrisSet = false;
+
+  // ================================================================================
+  // also map imports?
+  // ================================================================================
+
+  public void setNoMapImports() {
+    this.noMapImports = true;
+    this.noMapImportsSet = true;
+
+  }
+
+  public boolean isNoMapImports() {
+    return this.noMapImports;
+  }
+
+  public boolean isNoMapImportsSet() {
+    return this.noMapImportsSet;
+  }
+
+  private boolean noMapImports;
+  private boolean noMapImportsSet;
 
   // ================================================================================
   // The files and/or folders for the OWL files that will be mapped.
@@ -240,24 +267,24 @@ public class MapperCommand extends AbstractCommand {
   // ontology subfiles
   // ================================================================================
 
-  @Parameter(names = "-ontologySubFiles", arity = 1,
+  @Parameter(names = "-noSubFiles",
       description = "If a file from the -ontologyFiles is a directory, "
           + "should subdirectories be considered? True by default.")
-  public void setOntologySubFiles(boolean ontologySubFiles) {
-    this.ontologySubFiles = ontologySubFiles;
-    this.ontologySubFilesSet = true;
+  public void setNoSubFiles(boolean ontologySubFiles) {
+    this.noSubFiles = ontologySubFiles;
+    this.noSubFilesSet = true;
   }
 
-  public boolean isOntologySubFiles() {
-    return ontologySubFiles;
+  public boolean isNoSubFiles() {
+    return noSubFiles;
   }
 
-  public boolean isOntologySubFilesSet() {
-    return ontologySubFilesSet;
+  public boolean isNoSubFilesSet() {
+    return noSubFilesSet;
   }
 
-  private boolean ontologySubFiles = true;
-  private boolean ontologySubFilesSet = false;
+  private boolean noSubFiles = false;
+  private boolean noSubFilesSet = false;
 
   // ================================================================================
   // Initialization
@@ -265,11 +292,43 @@ public class MapperCommand extends AbstractCommand {
 
   protected void configure() {
 
+    MainCommand main = getMain();
+
+    if (!isManualMappingsSet())
+    {
+      if (main.getProject() != null)
+      {
+        this.mappingFiles.add(main.getProject());
+      }
+    }
+
+    if (!isOntologyFilesSet())
+    {
+      if (main.getProject() != null)
+      {
+        this.ontologyFiles.add(getMain().getProject());
+      }
+    }
+
+    if (!isMappingFilesSet())
+    {
+      if (main.getProject() != null)
+      {
+        mappingFiles.add(getMain().getProject());
+      }
+    }
+
   }
 
   // ================================================================================
   // Implementation
   // ================================================================================
+
+  @InjectLogger
+  private Logger logger;
+
+  @Inject
+  IReportFactory reportFactory;
 
   @Inject
   public MapperCommand(@Assisted OwlclCommand main) {
@@ -279,57 +338,94 @@ public class MapperCommand extends AbstractCommand {
 
   @Override
   protected void doInitialize() {
-    // TODO Auto-generated method stub
-
+    mappedReport = reportFactory.createReport("MappedIrisReport", getMain().getJobDirectory()
+        .toPath(), this);
   }
 
   @Override
   protected void addCommandActions(List<String> actionsList) {
-    actionsList.add(Action.map.name());
+    // actionsList.add(Action.map.name());
   }
 
   OntologyFiles ontologyFilesFinder;
-  OWLOntologyManager man;
+  OWLOntologyManager ontologyManager;
   OntologyFiles mappingFilesFinder;
-  IMappings mapping;
+  private Mapper mapper;
 
-  public void run() {
-    man = getMain().getNewBaseManager();
+  private Report mappedReport;
 
-    ontologyFilesFinder = new OntologyFiles(ontologyFiles, ontologySubFiles);
+  private Map<IRI, IRI> appliedMappings = new HashMap<IRI, IRI>();
 
-    Map<File, Exception> exceptions = new HashMap<File, Exception>();
-    ontologyFilesFinder.setupManager(man, exceptions);
-
-    for (IRI iri : ontologyIris)
+  private void map(IRI fromIri, OWLOntology ontology) {
+    Set<IRI> newIris = mapper.getForwardIri(fromIri, !notTransitive);
+    if (newIris == null || newIris.size() != 1)
     {
-      OwlclUtil.getOrLoadOntology(iri, man);
+      logger.warn(
+          "Mapping for IRI {} skipped becuase mappings are null, 0,  mulitiple. Mappings: ",
+          newIris == null ? "null" : newIris.size());
+      return;
     }
-    for (IRI iri : ontologyFilesFinder.getLocalOntologyFiles(exceptions).values())
+
+    IRI newIri = newIris.iterator().next();
+    List<OWLOntologyChange> changes = mapper.map(fromIri, newIri, ontology, !noMapImports);
+
+    changes = ontologyManager.applyChanges(changes);
+    if (changes.size() > 0)
     {
-      OwlclUtil.getOrLoadOntology(iri, man);
+      mappedReport.info(fromIri.toString() + "," + newIri);
+      for (OWLOntologyChange c : changes)
+      {
+        mappedReport.detail("\t" + c.toString());
+      }
+      mappedReport.detail("");
+      logger.info("IRI {} was mapped to {} with {} ontology changes.", fromIri, newIri,
+          changes.size());
+      IRI toIri = appliedMappings.get(fromIri);
+      if (toIri == null)
+      {
+        appliedMappings.put(fromIri, newIri);
+
+      } else
+      {
+        if (!toIri.equals(newIri))
+        {
+          throw new IllegalStateException("IRI mappings are not consistent.\n" + "The IRI "
+              + fromIri + " was mapped to " + toIri + " while now being mapped to " + newIri);
+        }
+      }
     }
+  }
+
+  @Override
+  public Object call() throws Exception {
+    configure();
+
+    ontologyManager = getMain().getNewBaseManager();
+
+    ontologyFilesFinder = new OntologyFiles(ontologyFiles, !noSubFiles);
+    ontologyFilesFinder.setupManager(ontologyManager, null);
 
     DefaultMappings defaultMapping = new DefaultMappings();
+    OWLOntologyManager mappingManager = getMain().getNewBaseManager();
     mappingFilesFinder = new OntologyFiles(mappingFiles, false);
+    mappingFilesFinder.setupManager(mappingManager, null);
+
     for (IRI iri : mappingIris)
     {
-      OwlclUtil.getOrLoadOntology(iri, man);
-      defaultMapping.addMappingOntologies(man.getOntology(iri).getImportsClosure());
+      defaultMapping.addMappingOntologies(OwlclUtil.getOrLoadOntology(iri, mappingManager)
+          .getImportsClosure());
     }
-    for (IRI iri : mappingFilesFinder.getLocalOntologyFiles(exceptions).values())
-    {
-      OwlclUtil.getOrLoadOntology(iri, man);
-      defaultMapping.addMappingOntologies(man.getOntology(iri).getImportsClosure());
-    }
+
     for (ManualIriMapping mm : manualMappings)
     {
       defaultMapping.addMapping(mm.fromIri, mm.toIri);
     }
-    mapping = defaultMapping;
 
+    // do mapping
+
+    // watch for ontology changes to only save changed ones
     final Set<OWLOntology> changed = new HashSet<OWLOntology>();
-    man.addOntologyChangeListener(new OWLOntologyChangeListener() {
+    ontologyManager.addOntologyChangeListener(new OWLOntologyChangeListener() {
 
       @Override
       public void ontologiesChanged(List<? extends OWLOntologyChange> changes) throws OWLException {
@@ -337,21 +433,68 @@ public class MapperCommand extends AbstractCommand {
         {
           changed.add(c.getOntology());
         }
-
       }
     });
 
-    // do the actions.
-    for (String acion : getAllActions())
+    mapper = new Mapper(defaultMapping);
+
+    Set<IRI> ontologyIrisToMap = new HashSet<IRI>();
+    if (ontologyIris.size() > 0)
     {
-      Action.valueOf(acion).execute(this);
+      ontologyIrisToMap.addAll(ontologyIris);
+    } else
+    {
+      ontologyIrisToMap.addAll(ontologyFilesFinder.getLocalOntologyFiles(null).values());
     }
 
+    boolean mappAll = false;
+    if (iris.size() == 0 && prefixes.size() == 0 && patterns.size() == 0)
+    {
+      mappAll = true;
+    }
+
+    for (IRI iri : ontologyIrisToMap)
+    {
+      OWLOntology o = OwlclUtil.getOrLoadOntology(iri, ontologyManager);
+
+      if (mappAll)
+      {
+        for (IRI mappedIri : defaultMapping.getBackwardMappedIris())
+        {
+          map(mappedIri, o);
+        }
+      } else
+      {
+        // do specific IRIs
+        for (IRI mappedIri : iris)
+        {
+          map(mappedIri, o);
+        }
+
+        for (String prefix : prefixes)
+        {
+          for (IRI mappedIri : mapper.getPatternIris(prefix + ".*", o, !noMapImports))
+          {
+            map(mappedIri, o);
+          }
+        }
+
+        for (String pattern : patterns)
+        {
+          for (IRI mappedIri : mapper.getPatternIris(pattern, o, !noMapImports))
+          {
+            map(mappedIri, o);
+          }
+        }
+      }
+    }
+
+    // save
     for (OWLOntology o : changed)
     {
       try
       {
-        man.saveOntology(o);
+        ontologyManager.saveOntology(o);
       } catch (OWLOntologyStorageException e)
       {
         throw new RuntimeException(
@@ -359,68 +502,15 @@ public class MapperCommand extends AbstractCommand {
       }
     }
 
-  }
+    FileWriter writer = new FileWriter(new File(getMain().getJobDirectory(), "AppliedMappings.txt"));
+    for (Entry<IRI, IRI> e : appliedMappings.entrySet())
+    {
+      writer.write(e.getKey().toString() + "," + e.getValue() + "\n");
+    }
+    writer.close();
 
-  // ================================================================================
-  // Actions
-  // ================================================================================
+    mappedReport.finish();
 
-  enum Action {
-    map {
-
-      @Override
-      public void execute(MapperCommand command) {
-        /*
-         * Mapper mapper = new Mapper(command.mapping); if (!command.irisSet &&
-         * !command.prefixesSet && !command.patternsSet) { // this means map all
-         * possible IRIs for (IRI iri : command.mapping.getForwardMappedIris())
-         * { mapIri(iri, command, mapper); }
-         * 
-         * } else {
-         * 
-         * // iris for (IRI iri : command.iris) { mapIri(iri, command, mapper);
-         * } // prefixes for (String prefix : command.prefixes) { for (IRI
-         * ontologyIri : command.ontologyIris) { mapper.forwardMapPrefix(prefix,
-         * command.mapTransitively, command.man.getOntology(ontologyIri), true);
-         * } for (IRI ontologyIri :
-         * command.ontologyFilesFinder.getLocalOntologyFiles(null).values()) {
-         * mapper.forwardMapPrefix(prefix, command.mapTransitively,
-         * command.man.getOntology(ontologyIri), true); }
-         * 
-         * } // patterns for (String pattern : command.patterns) { for (IRI
-         * ontologyIri : command.ontologyIris) {
-         * 
-         * mapper.forwardMapPattern(pattern, command.mapTransitively,
-         * command.man.getOntology(ontologyIri), true); } for (IRI ontologyIri :
-         * command.ontologyFilesFinder.getLocalOntologyFiles(null).values()) {
-         * mapper.forwardMapPattern(pattern, command.mapTransitively,
-         * command.man.getOntology(ontologyIri), true); } } }
-         */
-      }
-
-      private void mapIri(IRI iri, MapperCommand command, Mapper mapper) {
-      /*
-        
-        for (IRI ontologyIri : command.ontologyIris)
-        {
-          mapper.forwardMap(iri, command.mapTransitively, command.man.getOntology(ontologyIri),
-              true);
-        }
-        for (IRI ontologyIri : command.ontologyFilesFinder.getLocalOntologyFiles(null).values())
-        {
-          mapper.forwardMap(iri, command.mapTransitively, command.man.getOntology(ontologyIri),
-              true);
-        }
-        */
-      }
-    };
-
-    abstract public void execute(MapperCommand command);
-  }
-
-  @Override
-  public Object call() throws Exception {
-    // TODO Auto-generated method stub
     return null;
   }
 
