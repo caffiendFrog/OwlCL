@@ -123,7 +123,7 @@ public class DefaultOwlclManager implements IOwlclManager {
 		try {
 			currentDirectory = new File(System.getProperty("user.dir"))
 					.getCanonicalFile();
-			System.out.println("CURRENT DIRECTORY IS: " + currentDirectory);
+			// System.out.println("CURRENT DIRECTORY IS: " + currentDirectory);
 		} catch (IOException e) {
 			throw new RuntimeException("Error getting current directory.", e);
 		}
@@ -135,7 +135,7 @@ public class DefaultOwlclManager implements IOwlclManager {
 			if (!homeDirectory.exists()) {
 				homeDirectory.mkdirs();
 			}
-			System.out.println("HOME DIRECTORY IS: " + homeDirectory);
+			// System.out.println("HOME DIRECTORY IS: " + homeDirectory);
 		} catch (IOException e) {
 			throw new RuntimeException("Error getting home directory.", e);
 		}
@@ -169,8 +169,8 @@ public class DefaultOwlclManager implements IOwlclManager {
 		} else {
 			workDirectory = currentDirectory;
 		}
-		
-		System.out.println("Work DIRECTORY IS: " + workDirectory);
+
+		// System.out.println("Work DIRECTORY IS: " + workDirectory);
 
 		workExtDirectory = new File(workDirectory, IOwlclManager.OWLCL_EXT_DIR);
 
@@ -201,10 +201,18 @@ public class DefaultOwlclManager implements IOwlclManager {
 			}
 		} else {
 			try {
-				this.outputDirectory = new File(this.workDirectory.getParent(),
-						this.workDirectory.getName() + "_"
-								+ IOwlclManager.OWLCL_OUTPUT_DIR_NAME)
-						.getCanonicalFile();
+				// make the default output directory under the OwlCL home
+				// directory
+				Path workPath = this.workDirectory.toPath();
+				Path relativeWorkPath = workPath.subpath(0,
+						workPath.getNameCount());
+				this.outputDirectory = new File(homeDirectory, "output/"
+						+ relativeWorkPath.toString()).getCanonicalFile();;
+
+//				this.outputDirectory = new File(this.workDirectory.getParent(),
+//						this.workDirectory.getName() + "_"
+//								+ IOwlclManager.OWLCL_OUTPUT_DIR_NAME)
+//						.getCanonicalFile();
 			} catch (IOException e) {
 				throw new RuntimeException(
 						"Error getting canonical output directory for path: "
@@ -317,7 +325,7 @@ public class DefaultOwlclManager implements IOwlclManager {
 					}
 				}
 			}
-			if (workExtDirectory.exists()) {
+			if (workExtDirectory.exists() && workExtDirectory.isDirectory()) {
 				for (File file : workExtDirectory.listFiles()) {
 					addFileToClasspath(file, systemLoader, addUrlMethod);
 					// look one directory deep for addition jar files

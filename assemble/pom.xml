@@ -49,7 +49,7 @@
 									value="${project.basedir}/../distribution/assemble-${project.version}-main"></property>
 								<property name="owlcl.dist"
 									value="${project.basedir}/../distribution/${project.version}"></property>
-								<echoproperties></echoproperties>
+								<!-- <echoproperties></echoproperties> -->
 
 								<delete dir="${owlcl.dist.old}" quiet="false" verbose="true"></delete>
 								<delete dir="${owlcl.dist}" quiet="false" verbose="true"></delete>
@@ -75,6 +75,7 @@
 								<copy todir="${owlcl.dist}">
 									<fileset dir="${owlcl.assemble}"></fileset>
 								</copy>
+								<chmod file="${owlcl.dist}/owlcl.sh" perm="755"></chmod>
 							</target>
 						</configuration>
 					</execution>
