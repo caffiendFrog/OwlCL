@@ -1,51 +1,59 @@
-<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
 
-  <id>main</id>
-  <baseDirectory>assembly</baseDirectory>
-  <includeBaseDirectory>false</includeBaseDirectory>
-  <formats>
-    <format>dir</format>
-  </formats>
+	<id>main</id>
+	<baseDirectory>assembly</baseDirectory>
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<formats>
+		<format>dir</format>
+	</formats>
 
 
-  <!-- add entry for artifact and then copy runtime dependencies in the fileSets section -->
-  <files>
-    <file>
-      <source>../core/target/core-${owlcl.version}.jar</source>
-      <destName>owlcl.jar</destName>
-      <outputDirectory>/</outputDirectory>
-    </file>
-    <file>
-      <source>../jcommander/target/jcommander-${owlcl.version}.jar</source>
-      <destName>jcommander.jar</destName>
-      <outputDirectory>/owlcl/jcommander</outputDirectory>
-    </file>
-    <file>
-      <source>../command/target/command-${owlcl.version}.jar</source>
-      <outputDirectory>/owlcl/command</outputDirectory>
-    </file>
-    <file>
-      <source>../fact162.native/target/fact162.native-${owlcl.version}.jar</source>
-      <outputDirectory>/owlcl/fact162</outputDirectory>
-    </file>
-  </files>
+	<!-- add entry for artifact and then copy runtime dependencies in the fileSets 
+		section -->
+	<files>
+		<file>
+			<source>../core/target/core-${owlcl.version}.jar</source>
+			<destName>owlcl.jar</destName>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>../core/scripts/owlcl.sh</source>
+			<fileMode>0755</fileMode>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>../core/scripts/owlcl.bat</source>
+			<fileMode>0755</fileMode>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>../command/target/command-${owlcl.version}.jar</source>
+			<outputDirectory>/owlcl/command</outputDirectory>
+		</file>
+		<file>
+			<source>../fact162.native/target/fact162.native-${owlcl.version}.jar</source>
+			<outputDirectory>/owlcl/fact162</outputDirectory>
+		</file>
+	</files>
 
-  <fileSets>
-    <fileSet>
-      <directory>../core/assemble.dependencies</directory>
-      <outputDirectory>/owlcl/core</outputDirectory>
-      <includes></includes>
-    </fileSet>
-    <fileSet>
-      <directory>../command/assemble.dependencies</directory>
-      <outputDirectory>/owlcl/command</outputDirectory>
-      <includes></includes>
-    </fileSet>
-    <fileSet>
-      <directory>../fact162.native/assemble.dependencies</directory>
-      <outputDirectory>/owlcl/fact162</outputDirectory>
-      <includes></includes>
-    </fileSet>
-  </fileSets>
+	<fileSets>
+		<fileSet>
+			<directory>../core/assemble.dependencies</directory>
+			<outputDirectory>/owlcl/core</outputDirectory>
+			<includes></includes>
+		</fileSet>
+		<fileSet>
+			<directory>../command/assemble.dependencies</directory>
+			<outputDirectory>/owlcl/command</outputDirectory>
+			<includes></includes>
+		</fileSet>
+		<fileSet>
+			<directory>../fact162.native/assemble.dependencies</directory>
+			<outputDirectory>/owlcl/fact162</outputDirectory>
+			<includes></includes>
+		</fileSet>
+	</fileSets>
 </assembly>
