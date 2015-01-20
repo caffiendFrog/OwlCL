@@ -138,14 +138,14 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
         for (OWLClass sub : subs)
         {
           OWLSubClassOfAxiom subAxiom = df.getOWLSubClassOfAxiom(sub, c);
-          if (module.getBuildersUnclassified().containsAxiom(subAxiom))
+          if (module.getBuildersClassified().containsAxiom(subAxiom))
           {
             removeAxiom(subAxiom);
             ;
             for (OWLClass supr : module.getModuleConfiguration().getSourceReasoner()
                 .getSuperClasses(c, true).getFlattened())
             {
-              if (module.getBuildersUnclassified().containsClassInSignature(supr.getIRI()))
+              if (module.getBuildersClassified().containsClassInSignature(supr.getIRI()))
               {
                 addAxiom(df.getOWLSubClassOfAxiom(sub, supr));
               }
@@ -216,7 +216,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 
   public void addAnnotations() {
     Set<OWLEntity> entitiesToAnnotate = new HashSet<OWLEntity>();
-    entitiesToAnnotate.addAll(module.getBuildersUnclassified().getSignature());
+    entitiesToAnnotate.addAll(module.getBuildersClassified().getSignature());
 
     Set<OWLEntity> annotatedEntities = new HashSet<OWLEntity>();
 
@@ -246,7 +246,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   public void typeAllEntities() {
-    for (OWLEntity e : module.getBuildersUnclassified().getSignature())
+    for (OWLEntity e : module.getBuildersClassified().getSignature())
     {
       addAxiom(df.getOWLDeclarationAxiom(e));
     }
