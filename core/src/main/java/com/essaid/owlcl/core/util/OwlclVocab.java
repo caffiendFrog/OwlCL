@@ -5,7 +5,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 
 public enum OwlclVocab {
-  iri_mapps_to(com.essaid.owlcl.core.util.OwlclConstants.IRI_MAPPES_TO);
+  iri_mapps_to(com.essaid.owlcl.core.util.OwlclConstants.IRI_MAPS_TO);
   ;
 
   private String vocab;

@@ -20,7 +20,8 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
 @Parameters(commandNames = "updateModule",
-    commandDescription = "Updates one or more module directories.")
+    commandDescription = "Updates one or more module directories. An update is applying changes for "
+    		+ " for how modules are defined and structured. Think new schema.")
 public class UpdateModuleCommand extends AbstractCommand {
 
   // ================================================================================

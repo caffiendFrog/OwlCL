@@ -207,12 +207,14 @@ public class DefaultOwlclManager implements IOwlclManager {
 				Path relativeWorkPath = workPath.subpath(0,
 						workPath.getNameCount());
 				this.outputDirectory = new File(homeDirectory, "output/"
-						+ relativeWorkPath.toString()).getCanonicalFile();;
+						+ relativeWorkPath.toString()).getCanonicalFile();
+				;
 
-//				this.outputDirectory = new File(this.workDirectory.getParent(),
-//						this.workDirectory.getName() + "_"
-//								+ IOwlclManager.OWLCL_OUTPUT_DIR_NAME)
-//						.getCanonicalFile();
+				// this.outputDirectory = new
+				// File(this.workDirectory.getParent(),
+				// this.workDirectory.getName() + "_"
+				// + IOwlclManager.OWLCL_OUTPUT_DIR_NAME)
+				// .getCanonicalFile();
 			} catch (IOException e) {
 				throw new RuntimeException(
 						"Error getting canonical output directory for path: "
@@ -547,6 +549,8 @@ public class DefaultOwlclManager implements IOwlclManager {
 	private String osName = System.getProperty("os.name");
 	private String osArch = System.getProperty("os.arch");
 
+	private File jobDirectory;
+
 	@Override
 	public boolean isWindows() {
 		return osName.toLowerCase().startsWith("windows");
@@ -575,6 +579,16 @@ public class DefaultOwlclManager implements IOwlclManager {
 	@Override
 	public File getOutputDirectory() {
 		return outputDirectory;
+	}
+
+	@Override
+	public File getJobDirectory(String string) {
+		if (this.jobDirectory == null) {
+			jobDirectory = new File(getOutputDirectory(), string);
+			jobDirectory.mkdirs();
+		}
+
+		return jobDirectory;
 	}
 
 	//

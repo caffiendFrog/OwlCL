@@ -142,7 +142,7 @@ public class ModuleCommand extends AbstractCommand {
   // do reasoned
   // ================================================================================
 
-  @Parameter(names = "-classified", arity = 1,
+  @Parameter(names = "-classified",
       description = "Set the module to generate the classified version. "
           + "Use it to overrides the default module configuration if needed."
           + "Ignore the shown default on the command line, the default is what "
@@ -298,7 +298,7 @@ public class ModuleCommand extends AbstractCommand {
     super(main);
   }
 
-  Set<ModuleCommand> imports = new HashSet<ModuleCommand>();
+//  Set<ModuleCommand> imports = new HashSet<ModuleCommand>();
 
   protected void doInitialize() {
     configure();
@@ -358,7 +358,7 @@ public class ModuleCommand extends AbstractCommand {
 
     if (unclassifiedSet)
     {
-      module.setClassified(unclassified);
+      module.setUnclassified(unclassified);
     }
 
     if (addLegacyUnclassifiedSet)

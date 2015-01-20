@@ -10,72 +10,76 @@ import org.semanticweb.owlapi.reasoner.OWLReasoner;
 
 public interface IModuleConfig {
 
-  int CURRENT_VERSION = 1;
+	int CURRENT_VERSION = 1;
 
-  String getName();
+	String getName();
 
-  String getIriPrefix();
+	String getIriPrefix();
 
-  Path getDirectory();
+	Path getDirectory();
 
-  IRI getConfigurationIri();
+	IRI getConfigurationIri();
 
-  OWLOntology getConfigurationOntology();
-  
-  Set<IRI> getSourceIris();
+	OWLOntology getConfigurationOntology();
 
-  IRI getTopIri();
+	Set<IRI> getSourceIris();
 
-  OWLOntology getTopOntology();
+	IRI getTopIri();
 
-  Set<IRI> getExcludedSourceIris();
+	OWLOntology getTopOntology();
 
-  IRI getIncludeIri();
+	Set<IRI> getExcludedSourceIris();
 
-  OWLOntology getIncludeOntology();
+	IRI getIncludeIri();
 
-  IRI getExcludeIri();
+	OWLOntology getIncludeOntology();
 
-  OWLOntology getExcludeOntology();
+	IRI getExcludeIri();
 
-  IRI getSourceConfigurationIri();
+	OWLOntology getExcludeOntology();
 
-  OWLOntology getSourceConfigurationOntology();
+	IRI getSourceConfigurationIri();
 
-  IRI getLegacyIri();
+	OWLOntology getSourceConfigurationOntology();
 
-  OWLOntology getLegacyOntology();
+	IRI getLegacyIri();
 
-  IRI getLegacyRemovedIri();
+	OWLOntology getLegacyOntology();
 
-  OWLOntology getLegacyRemovedOntology();
+	IRI getLegacyRemovedIri();
 
-  OWLOntology getSourceOntology();
+	OWLOntology getLegacyRemovedOntology();
 
-  OWLReasoner getSourceReasoner();
+	OWLOntology getSourceOntology();
 
-  List<String> getUnclassifiedBuilderNames();
+	OWLReasoner getSourceReasoner();
 
-  List<String> getClassifiedBuilderNames();
+	List<String> getUnclassifiedBuilderNames();
 
-  boolean isUnclassified();
+	List<String> getClassifiedBuilderNames();
 
-  boolean isClassified();
+	boolean isUnclassified();
 
-  boolean isClassifiedAddlegacy();
+	boolean isClassified();
 
-  boolean isUnclassifiedAddlegacy();
+	boolean isClassifiedAddlegacy();
 
-  boolean isUnclassifiedCleanLegacy();
+	boolean isUnclassifiedAddlegacy();
 
-  boolean isClassifiedCleanLegacy();
+	boolean isUnclassifiedCleanLegacy();
 
-  IRI getUnclassifiedIri();
+	boolean isClassifiedCleanLegacy();
 
-  String getUnclassifiedFileName();
+	IRI getUnclassifiedIri();
 
-  IRI getClassifiedIri();
+	String getUnclassifiedFileName();
 
-  String getClassifiedFileName();
+	IRI getClassifiedIri();
+
+	String getClassifiedFileName();
+
+	Set<IRI> getClassifiedImportIris();
+
+	Set<IRI> getUnclassifiedImportIris();
 
 }

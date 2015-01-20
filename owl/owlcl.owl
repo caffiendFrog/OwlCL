@@ -25,7 +25,7 @@
 
     <!-- http://owl.essaid.com/owlcl/owlcl_iri_mappes_to -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_iri_mappes_to">
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_iri_maps_to">
         <rdfs:comment>An annotation property that says the subject&apos;s IRI (the left side in the tools code) mappes to the object&apos;s IRI (the right side). The object has to be an IRI, not a string with an IRI value. Mappings can be transitive (but without cycles), i.e.  A mappes to B and B mappes to C, the tools will realize that A is mapped to C but will not check for cycles (which will probably cause an exception at runtime). Also, the inverse mapping is implied and the tools allow the user to apply the mapping in a forward or backward direction.</rdfs:comment>
     </owl:AnnotationProperty>
     
@@ -57,6 +57,9 @@
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_cleanlegacy"/>
     
 
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_import_iri"/>
+
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_import_iri"/>
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_classified_filename -->
 

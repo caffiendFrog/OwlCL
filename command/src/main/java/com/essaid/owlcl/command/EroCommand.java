@@ -24,15 +24,17 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.assistedinject.Assisted;
 
-@Parameters(commandNames = { "ero" }, commandDescription = "Creates the ERO modules.")
+@Parameters(commandNames = { "ero" },
+		commandDescription = "Creates the ERO modules.")
 public class EroCommand extends AbstractCommand {
 
 	// ================================================================================
 	// Module base directory to allow module files to be outside the project
 	// ================================================================================
 
-	@Parameter(names = "-modulesBaseDir", description = "The base directory where module directories"
-			+ " are located", converter = CanonicalFileConverter.class
+	@Parameter(names = "-modulesBaseDir",
+			description = "The base directory where module directories"
+					+ " are located", converter = CanonicalFileConverter.class
 	// ,validateValueWith = DirectoryExistsValueValidator.class
 	)
 	public void setModuleBaseDirectory(File moduleBaseDirectory) {
@@ -55,9 +57,11 @@ public class EroCommand extends AbstractCommand {
 	// If any legacy files should be cleaned from the axioms the module is now
 	// generating.
 	// ================================================================================
-	@Parameter(names = "-cleanLegacy", description = "Will clean the legacy ERO files from any axioms the module is "
-			+ "generating. To enable this, simply add the option without a value "
-			+ "(i.e. -cleanLegacy without \"true\" as an option value)")
+	@Parameter(
+			names = "-cleanLegacy",
+			description = "Will clean the legacy ERO files from any axioms the module is "
+					+ "generating. To enable this, simply add the option without a value "
+					+ "(i.e. -cleanLegacy without \"true\" as an option value)")
 	public void setCleanLegacy(boolean cleanLegacy) {
 		this.cleanLegacy = cleanLegacy;
 		this.cleanLegacySet = true;
@@ -77,7 +81,9 @@ public class EroCommand extends AbstractCommand {
 	// ================================================================================
 	// If legacy content should be added to the module.
 	// ================================================================================
-	@Parameter(names = "-addLegacy", description = "Will add the legacy ERO content to the generated module. ")
+	@Parameter(
+			names = "-addLegacy",
+			description = "Will add the legacy ERO content to the generated module. ")
 	public void setAddLegacy(boolean addLegacy) {
 		this.addLegacy = addLegacy;
 		this.addLegacySet = true;
@@ -98,8 +104,9 @@ public class EroCommand extends AbstractCommand {
 	// Output directory unclassified
 	// ================================================================================
 
-	@Parameter(names = "-outputUnclassified", description = "The directory where the unclassified modules will "
-			+ "be saved.")
+	@Parameter(names = "-outputUnclassified",
+			description = "The directory where the unclassified modules will "
+					+ "be saved.")
 	public void setEroOutputUnclassified(File eroOutput) {
 		this.eroOutputUnclassified = eroOutput;
 		this.eroOutputUnclassifiedSet = true;
@@ -120,8 +127,9 @@ public class EroCommand extends AbstractCommand {
 	// Output directory classified
 	// ================================================================================
 
-	@Parameter(names = "-outputClassified", description = "The directory where the generate modules will "
-			+ "be saved.")
+	@Parameter(names = "-outputClassified",
+			description = "The directory where the generate modules will "
+					+ "be saved.")
 	public void setEroOutputClassified(File eroOutput) {
 		this.eroOutputClassified = eroOutput;
 		this.eroOutputClassifiedSet = true;
@@ -142,7 +150,11 @@ public class EroCommand extends AbstractCommand {
 	// Directory of reference run for diff report.
 	// ================================================================================
 
-	@Parameter(names = "-previousUnclassified", description = "The previous unclassified version's directory for the diff report", converter = CanonicalFileConverter.class, validateValueWith = DirectoryExistsValueValidator.class)
+	@Parameter(
+			names = "-previousUnclassified",
+			description = "The previous unclassified version's directory for the diff report",
+			converter = CanonicalFileConverter.class,
+			validateValueWith = DirectoryExistsValueValidator.class)
 	public void setPreviousUnclassifiedDirectory(File previousDirectory) {
 		this.previousUnclassifiedDirectory = previousDirectory;
 		this.previousUnclassifiedDirectorySet = true;
@@ -163,7 +175,11 @@ public class EroCommand extends AbstractCommand {
 	// Directory of reference run for diff report.
 	// ================================================================================
 
-	@Parameter(names = "-previousClassified", description = "The previous classified version's directory for the diff report", converter = CanonicalFileConverter.class, validateValueWith = DirectoryExistsValueValidator.class)
+	@Parameter(
+			names = "-previousClassified",
+			description = "The previous classified version's directory for the diff report",
+			converter = CanonicalFileConverter.class,
+			validateValueWith = DirectoryExistsValueValidator.class)
 	public void setPreviousClassifiedDirectory(File previousDirectory) {
 		this.previousClassifiedDirectory = previousDirectory;
 		this.previousClassifiedDirectorySet = true;
@@ -266,11 +282,11 @@ public class EroCommand extends AbstractCommand {
 		// ================================================================================
 		// eaglei
 		// ================================================================================
+	
+		DefaultModule eaglei = configModule(ModuleNames.EAGLEI, "core");
 
 		DefaultModule eagleiExtended = configModule(
 				ModuleNames.EAGLEI_EXTENDED, "core");
-
-		DefaultModule eaglei = configModule(ModuleNames.EAGLEI, "core");
 		eagleiExtended.importModuleIntoUnclassified(eaglei, false);
 		eagleiExtended.importModuleIntoClassified(eaglei, true);
 

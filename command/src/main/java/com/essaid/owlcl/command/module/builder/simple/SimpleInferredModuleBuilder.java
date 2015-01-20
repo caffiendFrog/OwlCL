@@ -67,7 +67,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
     removeExcludeSubs();
 
     report.info("Adding parents to BFO: ");
-    addClosureToBfo();
+    //addClosureToBfo();
 
     report.info("Adding annotations: ");
     addAnnotations();
@@ -179,7 +179,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
   }
 
   public void addClosureToBfo() {
-    for (OWLEntity entity : module.getBuildersUnclassified().getSignature())
+    for (OWLEntity entity : module.getBuildersClassified().getSignature())
     {
       Set<OWLEntity> supers = OwlclUtil.getSupers(entity, true, module.getModuleConfiguration()
           .getSourceReasoner());
@@ -311,8 +311,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 
   @Override
   public void initialize() {
-    this.report = reportFactory.createReport("SimpleInferredBuilder.txt", null, this);
-
+    this.report = module.getReportClassified();
   }
 
 }

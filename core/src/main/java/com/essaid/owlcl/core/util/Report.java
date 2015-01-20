@@ -2,7 +2,9 @@ package com.essaid.owlcl.core.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.slf4j.Logger;
@@ -18,9 +20,14 @@ public class Report {
   private Logger logger;
 
   @Inject
-  public Report(@Assisted String name, @Assisted Path directory, @Assisted ILoggerOwner loggerOwner) {
+	public Report(@Assisted String name, @Assisted Path directory,
+			@Assisted ILoggerOwner loggerOwner) throws IOException {
     this.logger = loggerOwner.getLogger();
 
+    if(!Files.exists(directory)){
+    	Files.createDirectories(directory);
+    }
+    
     try
     {
       pw = new PrintWriter(new File(directory.toFile(), name + ".txt"));
