@@ -18,8 +18,8 @@
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.essaid.owlcl.core.cli.Main"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-ontologyFiles &#10;/home/shahim/svn/open.med.harvard.edu/eagle-i-dev/datamodel/trunk/src/isf/ontology&#10;/home/shahim/svn/open.med.harvard.edu/eagle-i-dev/datamodel/trunk/src/isf/module&#10;-jobName&#10;eaglei-module&#10;module&#10;-name&#10;eaglei&#10;-classified&#10;-directory&#10;/home/shahim/svn/open.med.harvard.edu/eagle-i-dev/datamodel/trunk/src/isf/module/eaglei&#10;-outputClassified&#10;${project_loc}/eaglei-work/modules/core"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-ontologyFiles &#10;/home/shahim/svn/open.med.harvard.edu/eagle-i-dev/datamodel/trunk/src/isf/ontology&#10;/home/shahim/svn/open.med.harvard.edu/eagle-i-dev/datamodel/trunk/src/isf/module&#10;-jobName&#10;eaglei-module&#10;module&#10;-name&#10;eaglei&#10;-classified&#10;-cleanLegacyClassified&#10;-directory&#10;/home/shahim/svn/open.med.harvard.edu/eagle-i-dev/datamodel/trunk/src/isf/module/eaglei&#10;-outputClassified&#10;${project_loc}/eaglei-work/modules/core"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="owlcl.command"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dowlcl.work.dir=${project_loc}/eaglei-work/workDirectory&#10;-Dowlcl.output.dir=${project_loc}/eaglei-work/outputDirectory"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dowlcl.work.dir=${project_loc}/eaglei-work/workDirectory&#10;-Dowlcl.output.dir=${project_loc}/eaglei-work/outputDirectory&#10;-Xmx4069m"/>
 </launchConfiguration>

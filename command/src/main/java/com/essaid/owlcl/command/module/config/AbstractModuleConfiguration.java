@@ -438,4 +438,7 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
     return sb.toString();
   }
 
+  public void setSourceReasoner(OWLReasoner reasoner){
+	  this.sourceReasoner = reasoner;
+  }
 }

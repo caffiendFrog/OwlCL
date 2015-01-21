@@ -7,6 +7,7 @@ import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import com.essaid.owlcl.command.module.builder.IModuleBuilder;
 import com.essaid.owlcl.command.module.config.IModuleConfig;
@@ -135,7 +136,7 @@ public interface IModule {
   // Utility
   // ================================================================================
 
-  void saveModule();
+  void saveModule() throws OWLOntologyStorageException;
 
   void saveUnclassifiedModule();
 

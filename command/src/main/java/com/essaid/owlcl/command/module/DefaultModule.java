@@ -15,14 +15,18 @@ import java.util.Set;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.FileDocumentTarget;
 import org.semanticweb.owlapi.io.RDFXMLOntologyFormat;
+import org.semanticweb.owlapi.model.AddAxiom;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AddOntologyAnnotation;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
@@ -350,7 +354,33 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 
 	@Override
 	public void cleanLegacyClassified() {
-		// TODO
+		OWLOntologyManager removeMan = moduleConfiguration
+				.getLegacyRemovedOntology().getOWLOntologyManager();
+
+		for (OWLOntology o : moduleConfiguration.getLegacyOntology()
+				.getImportsClosure()) {
+			OWLOntologyManager man = o.getOWLOntologyManager();
+			// System.out.println("Cleaning ontology: " + o.getOntologyID());
+
+			List<OWLOntologyChange> changes = man.removeAxioms(o,
+					getFinalClassified().getAxioms());
+
+			for (OWLOntologyChange change : changes) {
+
+				if (change.getAxiom() instanceof OWLDeclarationAxiom) {
+					OWLDeclarationAxiom da = (OWLDeclarationAxiom) change
+							.getAxiom();
+					OWLEntity entity = da.getEntity();
+					if (o.containsEntityInSignature(entity.getIRI())) {
+						man.addAxiom(o, da);
+					}
+				}
+
+				removeMan.applyChange(new AddAxiom(moduleConfiguration
+						.getLegacyRemovedOntology(), change.getAxiom()));
+			}
+
+		}
 	}
 
 	@Override
@@ -414,15 +444,31 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 	// ================================================================================
 
 	@Override
-	public void saveModule() {
+	public void saveModule() throws OWLOntologyStorageException {
 		saveUnclassifiedModule();
 		saveClassifiedModule();
+
+		moduleConfiguration.getSourceReasoner().dispose();
+		moduleConfiguration.setSourceReasoner(null);
+		if (isCleanLegacyClassified()) {
+			cleanLegacyClassified();
+			OWLOntologyManager man = moduleConfiguration.getLegacyOntology()
+					.getOWLOntologyManager();
+			for (OWLOntology o : moduleConfiguration.getLegacyOntology()
+					.getImportsClosure()) {
+				man.saveOntology(o);
+			}
+
+			man.saveOntology(moduleConfiguration.getLegacyRemovedOntology());
+		} else {
+			// System.out.println("IS NOT CLEAN LEGACY");
+		}
 	}
 
 	@Override
 	public void saveUnclassifiedModule() {
-		
-		if(! isUnclassified()){
+
+		if (!isUnclassified()) {
 			return;
 		}
 
@@ -480,10 +526,10 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 	@Override
 	public void saveClassifiedModule() {
 
-		if(! isClassified()){
+		if (!isClassified()) {
 			return;
 		}
-		
+
 		if (outputClassified == null) {
 			logger.warn("Output directory for classified module "
 					+ getModuleConfiguration().getName()
@@ -492,6 +538,8 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 		}
 
 		getFinalClassified();
+
+		// do any module object imports in addition to the annotation ones.
 
 		for (Entry<IModule, Boolean> entry : classifiedImports.entrySet()) {
 			IModule module = entry.getKey();

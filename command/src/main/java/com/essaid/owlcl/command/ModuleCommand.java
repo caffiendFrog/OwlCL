@@ -371,6 +371,10 @@ public class ModuleCommand extends AbstractCommand {
       module.setAddLegacyClassified(addLegacyClassified);
     }
 
+    if(cleanLegacyClassifiedSet){
+    	module.setCleanLegacyClassified(cleanLegacyClassified);
+    }
+    
     module.saveModule();
     
     // if (addLegacySet)

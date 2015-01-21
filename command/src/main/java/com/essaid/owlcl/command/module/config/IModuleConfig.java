@@ -81,5 +81,7 @@ public interface IModuleConfig {
 	Set<IRI> getClassifiedImportIris();
 
 	Set<IRI> getUnclassifiedImportIris();
+	
+	void setSourceReasoner(OWLReasoner reasoner);
 
 }
