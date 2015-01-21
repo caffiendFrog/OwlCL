@@ -14,6 +14,7 @@ import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLDataFactory;
+import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
@@ -105,6 +106,7 @@ public abstract class AbstractModuleConfiguration implements IModuleConfigIntern
       public void ontologiesChanged(List<? extends OWLOntologyChange> changes) throws OWLException {
         for (OWLOntologyChange c : changes)
         {
+
           changedOntologies.add(c.getOntology());
         }
       }

@@ -24,9 +24,11 @@ import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLDataFactory;
 import org.semanticweb.owlapi.model.OWLDeclarationAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLException;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
+import org.semanticweb.owlapi.model.OWLOntologyChangeListener;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.RemoveOntologyAnnotation;
@@ -218,6 +220,8 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 			classifiedModule = OwlclUtil.createOntology(
 					this.moduleConfiguration.getClassifiedIri(),
 					classifiedManager);
+			
+
 			for (String builderName : this.moduleConfiguration
 					.getClassifiedBuilderNames()) {
 				reportClassified.info("Doing builder name: " + builderName);

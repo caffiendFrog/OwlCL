@@ -967,7 +967,11 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 	}
 
 	public OWLOntology getSourceOntology() {
+
+		// TODO cleanup
+
 		if (sourceOntology == null) {
+			IRI iri = IRI.create("http://purl.obolibrary.org/obo/ERO_0000944");
 			sourceOntology = OwlclUtil.createOntology(
 					IRI.create("http://owlcl/merged-source"),
 					getSourcesManager());
@@ -981,6 +985,9 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 							id.getIRI(), getSourcesManager());
 
 					for (OWLOntology o : source.getImportsClosure()) {
+						if (o.containsEntityInSignature(iri, false)) {
+							System.out.println("Debug");
+						}
 						if (!excludes.contains(o.getOntologyID()
 								.getOntologyIRI())) {
 							getSourcesManager().addAxioms(sourceOntology,
