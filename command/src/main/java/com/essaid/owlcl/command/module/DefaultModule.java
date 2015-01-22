@@ -1,6 +1,8 @@
 package com.essaid.owlcl.command.module;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -220,7 +222,6 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 			classifiedModule = OwlclUtil.createOntology(
 					this.moduleConfiguration.getClassifiedIri(),
 					classifiedManager);
-			
 
 			for (String builderName : this.moduleConfiguration
 					.getClassifiedBuilderNames()) {
@@ -570,15 +571,21 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 		}
 
 		String fileName = getModuleConfiguration().getClassifiedFileName();
-		RDFXMLOntologyFormat of = new RDFXMLOntologyFormat();
+//		RDFXMLOntologyFormat of = new RDFXMLOntologyFormat();
 		try {
-			classifiedManager.saveOntology(classifiedModule, of,
-					new FileDocumentTarget(new File(outputClassified.toFile(),
+			classifiedManager.saveOntology(classifiedModule,
+					new FileOutputStream(new File(outputClassified.toFile(),
 							fileName)));
+//			classifiedManager.saveOntology(classifiedModule, of,
+//					new FileDocumentTarget(new File(outputClassified.toFile(),
+//							fileName)));
 		} catch (OWLOntologyStorageException e) {
 			throw new RuntimeException(
 					"Error savign classified module to file: "
 							+ outputClassified.toAbsolutePath(), e);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}
