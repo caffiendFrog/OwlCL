@@ -10,44 +10,46 @@ import com.google.inject.Singleton;
 @Singleton
 public class FactPlusPlusNativeLoader implements IInitializable {
 
-  @Inject
-  IOwlclManager manager;
+	@Inject
+	IOwlclManager manager;
 
-  @Override
-  public void initialize() {
-    String libName = null;
-    if (manager.isLinux())
-    {
-      libName = "libFaCTPlusPlusJNI.so";
-//      System.out.println("============= linux fact library");
-    } else if (manager.isWindows())
-    {
-      libName = "FaCTPlusPlusJNI.dll";
-    } else if (manager.isMacOs())
-    {
-      libName = "libFaCTPlusPlusJNI.jnilib";
-    }
+	@Override
+	public void initialize() {
+		String libName = null;
+		if (manager.isLinux()) {
+			libName = "libFaCTPlusPlusJNI.so";
+			// System.out.println("============= linux fact library");
+		} else if (manager.isWindows()) {
+			libName = "FaCTPlusPlusJNI.dll";
+		} else if (manager.isMacOs()) {
+			libName = "libFaCTPlusPlusJNI.jnilib";
+		}
 
-    if (libName == null)
-    {
-      throw new IllegalStateException("Could not find native library path for Fact++");
-    }
+		if (libName == null) {
+			throw new IllegalStateException(
+					"Could not find native library path for Fact++");
+		}
 
-    String libPath = manager.getNativeResourcePrefix("fact162");
+		String libPath = manager.getNativeResourcePrefix("fact162");
 
-    // for Daniela's CentOS build server
-    String qualifiers = System.getProperty(IOwlclManager.OWLCL_ARCH_QUALIFIERS_PROPERTY);
-    if (qualifiers != null && qualifiers.contains("glibc2.2"))
-    {
-      libPath += "glibc2.2/";
-    }
+		// for Daniela's CentOS build server
+		String qualifiers = System
+				.getProperty(IOwlclManager.OWLCL_ARCH_QUALIFIERS_PROPERTY);
+		if (qualifiers == null) {
+			qualifiers = System
+					.getenv(IOwlclManager.OWLCL_ARCH_QUALIFIERS_PROPERTY
+							.toUpperCase().replaceAll("[.]", "_"));
+		}
+		if (qualifiers != null && qualifiers.contains("glibc2.2")) {
+			libPath += "glibc2.2/";
+		}
 
-    ClassLoader cl = this.getClass().getClassLoader();
+		ClassLoader cl = this.getClass().getClassLoader();
 
-    InputStream is = cl.getResourceAsStream(libPath + libName);
+		InputStream is = cl.getResourceAsStream(libPath + libName);
 
-    manager.loadNativeLibrary(is, libName);
+		manager.loadNativeLibrary(is, libName);
 
-  }
+	}
 
 }

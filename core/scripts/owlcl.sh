@@ -18,6 +18,11 @@ fi
 
 echo OwlCL Java is: ${JAVA}
 
+
+if [[ ! -n $OWLCL_OPTS ]]
+	then
 OWLCL_OPTS="-Xmx1024m"
+fi
+
 
 "${JAVA}" ${OWLCL_OPTS} -jar "${OWLCL_DIR}"/owlcl.jar  "$@"
