@@ -68,7 +68,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
 		removeExcludeSubs();
 
 		report.info("Adding parents to BFO: ");
-		// addClosureToBfo();
+		addClosureToBfo();
 
 		report.info("Adding annotations: ");
 		addAnnotations();
