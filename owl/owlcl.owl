@@ -91,7 +91,11 @@
     <!-- http://owl.essaid.com/owlcl/owlcl_module_exclude_parent -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_exclude_parent">
-        <rdfs:comment>Use this annotation on a class to not include the annotated class (and its parents) when finding the parent closure of already included classes. This basically means &quot;Don&apos;t follow the parent path, starting from this class&quot;.</rdfs:comment>
+        <rdfs:comment>This annotation is meant to prevent pulling the class in (and all its parents) while doing a superclass closure on the already included classes. 
+
+However, if this class is already indicrectly included (by an axiom reference to the class) by some of the included axioms, this annotation will not work since the class is not a &quot;parent&quot; anymore. Rather, it is an &quot;included&quot; class, and the annotation will not work. To fix this situation, at least for now, when this annotation is used on a class, any axiom that is being included in the built module is first checked to see if its signature contains a class annotated with this annotation. The axiom is not included if it references a class annotated with this property.  (this is actually done at the IRI level so it also applies to properties.)
+
+When an axiom is excluded based on its signautre, an INFO level log entry is made (by the tool in the log file) so that this can be easily noticed and corrected as needed.</rdfs:comment>
     </owl:AnnotationProperty>
     
 
