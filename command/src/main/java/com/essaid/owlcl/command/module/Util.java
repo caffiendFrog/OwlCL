@@ -49,6 +49,13 @@ public class Util {
     return OwlclUtil.getAnnotationAssertionAxioms(configurationOntology,
         MBSimpleVocab.exclude.getAP(), includeImports);
   }
+  
+  public static Set<OWLAnnotationAssertionAxiom> getExcludeParentAxioms(
+      OWLOntology configurationOntology, boolean includeImports) {
+    
+    return OwlclUtil.getAnnotationAssertionAxioms(configurationOntology,
+        MBSimpleVocab.exclude_parent.getAP(), includeImports);
+  }
 
   public static Set<OWLAnnotationAssertionAxiom> getExcludeSubsAxioms(
       OWLOntology configurationOntology, boolean includeImports) {
@@ -87,6 +94,13 @@ public class Util {
         includeImports);
     return getSubjectEntities(configurationOntology, sourceOntology, includeImports, axioms);
   }
+  
+  public static Set<IRI> getExcludeParentIris(OWLOntology configurationOntology,
+      OWLOntology sourceOntology, boolean includeImports) {
+    Set<OWLAnnotationAssertionAxiom> axioms = getExcludeParentAxioms(configurationOntology,
+        includeImports);
+    return getSubjectIris(axioms);
+  }
 
   private static Set<OWLEntity> getSubjectEntities(OWLOntology configurationOntology,
       OWLOntology sourceOntology, boolean includeImports, Set<OWLAnnotationAssertionAxiom> axioms) {
@@ -98,6 +112,18 @@ public class Util {
       {
         subject = (IRI) a.getSubject();
         entities.addAll(sourceOntology.getEntitiesInSignature(subject, includeImports));
+      }
+    }
+    return entities;
+  }
+  
+  private static Set<IRI> getSubjectIris(Set<OWLAnnotationAssertionAxiom> axioms) {
+    Set<IRI> entities = new HashSet<IRI>();
+    IRI subject;
+    for (OWLAnnotationAssertionAxiom a : axioms) {
+      if (a.getSubject() instanceof IRI) {
+        subject = (IRI) a.getSubject();
+        entities.add(subject);
       }
     }
     return entities;

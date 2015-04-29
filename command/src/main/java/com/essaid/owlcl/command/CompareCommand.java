@@ -22,6 +22,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -836,7 +837,7 @@ public class CompareCommand extends AbstractCommand {
 				for (OWLEntity e : toEntities) {
 					if (!command.isNoAdded()) {
 						e.accept(tor);
-						command.report.detail("- ");
+						command.report.detail("+ ");
 						command.report.detail("+ " + e.getEntityType() + " "
 								+ e);
 						command.report.detail("+ " + e.getEntityType() + " "
@@ -860,11 +861,68 @@ public class CompareCommand extends AbstractCommand {
 				command.report.info("=================================");
 				command.report.info("");
 
-				Set<OWLAxiom> fromAxioms = new TreeSet<OWLAxiom>(
+				Set<OWLAxiom> fromAxiomsTmp = new TreeSet<OWLAxiom>(
 						OwlclUtil.getAxioms(command.fromOntology, true));
-				Set<OWLAxiom> toAxioms = new TreeSet<OWLAxiom>(
+				Set<OWLAxiom> fromAxioms = new TreeSet<OWLAxiom>();
+				for (OWLAxiom axiom : fromAxiomsTmp) {
+					if (axiom instanceof OWLAnnotationAssertionAxiom) {
+						OWLAnnotationAssertionAxiom aaa = (OWLAnnotationAssertionAxiom) axiom;
+						if (aaa.getAnnotation().getValue() instanceof OWLLiteral) {
+							OWLLiteral l = (OWLLiteral) aaa.getAnnotation()
+									.getValue();
+							String string = l.getLiteral();
+							fromAxioms
+									.add(OWLManager
+											.getOWLDataFactory()
+											.getOWLAnnotationAssertionAxiom(
+													aaa.getSubject(),
+													OWLManager
+															.getOWLDataFactory()
+															.getOWLAnnotation(
+																	aaa.getProperty(),
+																	OWLManager
+																			.getOWLDataFactory()
+																			.getOWLLiteral(
+																					string))));
+						} else {
+							fromAxioms.add(axiom);
+						}
+					} else {
+						fromAxioms.add(axiom);
+					}
+				}
+
+				Set<OWLAxiom> toAxiomsTemp = new TreeSet<OWLAxiom>(
 						OwlclUtil.getAxioms(command.toOntology, true));
 
+				Set<OWLAxiom> toAxioms = new TreeSet<OWLAxiom>();
+				for (OWLAxiom axiom : toAxiomsTemp) {
+					if (axiom instanceof OWLAnnotationAssertionAxiom) {
+						OWLAnnotationAssertionAxiom aaa = (OWLAnnotationAssertionAxiom) axiom;
+						if (aaa.getAnnotation().getValue() instanceof OWLLiteral) {
+							OWLLiteral l = (OWLLiteral) aaa.getAnnotation()
+									.getValue();
+							String string = l.getLiteral();
+							toAxioms
+									.add(OWLManager
+											.getOWLDataFactory()
+											.getOWLAnnotationAssertionAxiom(
+													aaa.getSubject(),
+													OWLManager
+															.getOWLDataFactory()
+															.getOWLAnnotation(
+																	aaa.getProperty(),
+																	OWLManager
+																			.getOWLDataFactory()
+																			.getOWLLiteral(
+																					string))));
+						} else {
+							toAxioms.add(axiom);
+						}
+					} else {
+						toAxioms.add(axiom);
+					}
+				}
 				int removed = 0;
 				int added = 0;
 
@@ -908,7 +966,7 @@ public class CompareCommand extends AbstractCommand {
 				for (OWLAxiom a : toAxioms) {
 					if (!command.isNoAdded()) {
 						a.accept(tor);
-						command.report.detail("- ");
+						command.report.detail("+ ");
 						command.report.detail("+ " + a);
 						command.report.detail("+ "
 								+ tosw.getBuffer().toString());

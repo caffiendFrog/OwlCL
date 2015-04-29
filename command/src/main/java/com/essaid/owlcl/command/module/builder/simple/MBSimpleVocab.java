@@ -7,7 +7,7 @@ import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import com.essaid.owlcl.command.module.ModuleConstant;
 
 public enum MBSimpleVocab {
-  exclude(ModuleConstant.OWLCL_MODULE_EXCLUDE), exclude_subs(ModuleConstant.OWLCL_MODULE_EXCLUDE_SUBS), include(ModuleConstant.OWLCL_MODULE_INCLUDE), include_subs(
+  exclude(ModuleConstant.OWLCL_MODULE_EXCLUDE), exclude_parent(ModuleConstant.OWLCL_MODULE_EXCLUDE_PARENT), exclude_subs(ModuleConstant.OWLCL_MODULE_EXCLUDE_SUBS), include(ModuleConstant.OWLCL_MODULE_INCLUDE), include_subs(
       ModuleConstant.OWLCL_MODULE_INCLUDE_SUBS), include_instances(ModuleConstant.OWLCL_MODULE_INCLUDE_INSTANCES);
 
   private String vocab;

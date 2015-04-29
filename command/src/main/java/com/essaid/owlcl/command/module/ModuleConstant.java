@@ -6,6 +6,8 @@ public class ModuleConstant {
 
 	public static final String OWLCL_MODULE_EXCLUDE = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX
 			+ "module_exclude";
+	public static final String OWLCL_MODULE_EXCLUDE_PARENT = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX
+	    + "module_exclude";
 	public static final String OWLCL_MODULE_EXCLUDE_SUBS = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX
 			+ "module_exclude_subs";
 	public static final String OWLCL_MODULE_INCLUDE = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX

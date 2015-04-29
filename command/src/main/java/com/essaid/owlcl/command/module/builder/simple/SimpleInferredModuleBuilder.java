@@ -174,7 +174,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
     public void addClosureToBfo() {
         for (OWLEntity entity : module.getBuildersClassified().getSignature()) {
             Set<OWLEntity> supers = OwlclUtil.getSupers(entity, true, module.getModuleConfiguration()
-                    .getSourceReasoner());
+                    .getSourceReasoner(), Util.getExcludeParentIris(module.getModuleConfiguration().getConfigurationOntology(), module.getModuleConfiguration().getSourceConfigurationOntology(), true));
             for (final OWLEntity supr : supers) {
                 // if (!supr.getIRI().toString().contains("BFO_")) {
                 Set<OWLAxiom> axioms = getDefiningAxioms(supr, module.getModuleConfiguration().getSourceOntology(),
