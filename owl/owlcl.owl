@@ -103,7 +103,7 @@ When an axiom is excluded based on its signautre, an INFO level log entry is mad
     <!-- http://owl.essaid.com/owlcl/owlcl_module_exclude_subs -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_exclude_subs">
-        <rdfs:comment>An annotation property that is used to mark entities that should be excluded from a module file, along with the subs. Any children will be removed.</rdfs:comment>
+        <rdfs:comment>An annotation property that is used to mark entities that should have their descentants excluded from a module file. To also exclude the class itself also add the exclude annotation.</rdfs:comment>
     </owl:AnnotationProperty>
     
 
@@ -111,7 +111,13 @@ When an axiom is excluded based on its signautre, an INFO level log entry is mad
     <!-- http://owl.essaid.com/owlcl/owlcl_module_include -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_include">
-        <rdfs:comment>An annotation property that is used to mark entities that should be included in a module file.</rdfs:comment>
+        <rdfs:comment>An annotation property that is used to mark entities that should be included in a module file.
+
+This should cause all the logical axioms that define the IRI of the entity to be included in the module, These axioms are the declaration, and any axioms like sub, equivalent, disjoint, etc. Also, all annotations on the entity will be included. 
+
+Axioms that simply reference the annotated entity (i.e. the axioms that define some other entity, and refer to this annotated entity when they do that, will not be included.) will not be included. For example, if A is annotated, and B is sub of A (i.e. B references A in its definition), the axiom B sub A will not be included. However, keep in mind that if B disjoint with A, it also means that A is disjoint with B, and this axiom is part of the definition of A, and it will be included.
+
+In addition to the above axioms, the tool will later include the superclass closure of the annotated entity unless the &quot;exclude_parent&quot; annotatin is used on one or more paths to the root. See that annotation for more detail.</rdfs:comment>
     </owl:AnnotationProperty>
     
 

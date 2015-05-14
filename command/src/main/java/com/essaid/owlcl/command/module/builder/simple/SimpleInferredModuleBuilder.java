@@ -187,6 +187,7 @@ public class SimpleInferredModuleBuilder extends AbstractSimpleModuleBuilder {
       entityiesClosure.addAll(OwlclUtil.getSubs(entity, true, module.getModuleConfiguration()
           .getSourceReasoner()));
     }
+    entityiesClosure.removeAll(entities);
     // report.info("Excluding class closure: " + entityiesClosure);
     for (OWLEntity entity : entityiesClosure) {
       removeAxiom(df.getOWLDeclarationAxiom(entity));
