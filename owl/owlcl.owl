@@ -26,7 +26,9 @@
     <!-- http://owl.essaid.com/owlcl/owlcl_iri_maps_to -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_iri_maps_to">
-        <rdfs:comment>An annotation property that says the subject&apos;s IRI (the left side in the tools code) mappes to the object&apos;s IRI (the right side). The object has to be an IRI, not a string with an IRI value. Mappings can be transitive (but without cycles), i.e.  A mappes to B and B mappes to C, the tools will realize that A is mapped to C but will not check for cycles (which will probably cause an exception at runtime). Also, the inverse mapping is implied and the tools allow the user to apply the mapping in a forward or backward direction.</rdfs:comment>
+        <rdfs:comment>Do not use for the time being.
+
+An annotation property that says the subject&apos;s IRI (the left side in the tools code) mappes to the object&apos;s IRI (the right side). The object has to be an IRI, not a string with an IRI value. Mappings can be transitive (but without cycles), i.e.  A mappes to B and B mappes to C, the tools will realize that A is mapped to C but will not check for cycles (which will probably cause an exception at runtime). Also, the inverse mapping is implied and the tools allow the user to apply the mapping in a forward or backward direction.</rdfs:comment>
     </owl:AnnotationProperty>
     
 
@@ -42,19 +44,25 @@
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_classified_addlegacy -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_addlegacy"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_addlegacy">
+        <rdfs:comment>This is a marker annotation that is equivalent to the command line option. Adding this annotation to the ontology instance in the module&apos;s configuration file is the same as sepcifying the command line option.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_classified_builders -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_builders"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_builders">
+        <rdfs:comment>This annotation is not fully implemented yet. It holds a list of names for &quot;builders&quot; that should be applied while building the classified version of the module. A builder is an object that is able to contribute axioms to the generated module. For now, the only builder is the one that contributes axioms based on the other annotations. Later, other types might be implemented. This annotation basically traslates to a sequence of actions for building the module. See an example use in the eagle-i modules.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_classified_cleanlegacy -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_cleanlegacy"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_cleanlegacy">
+        <rdfs:comment>See the &quot;addlegacy&quot; annotation. this is another way for specifying the command line option in a similar way as the &quot;addlegacy&quot; annotation.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
@@ -68,7 +76,9 @@
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_classified_import_iri -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_import_iri"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_classified_import_iri">
+        <rdfs:comment>Use this annotation on the ontology instance, in the configuration file, to indicate that the IRI (entered as a string value) should be added as an import statement in the generated module. This annotation is for the classified version of the module.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
@@ -83,7 +93,7 @@
     <!-- http://owl.essaid.com/owlcl/owlcl_module_exclude -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_exclude">
-        <rdfs:comment>An annotation property that is used to mark entities that should be excluded from a module file. Any children will be moved up.</rdfs:comment>
+        <rdfs:comment>An annotation property that is used to mark entities that should be excluded from a module file. Any children of the excluded class will be moved to be children of the excluded&apos;s parent.</rdfs:comment>
     </owl:AnnotationProperty>
     
 
@@ -115,30 +125,34 @@ When an axiom is excluded based on its signautre, an INFO level log entry is mad
 
 This should cause all the logical axioms that define the IRI of the entity to be included in the module, These axioms are the declaration, and any axioms like sub, equivalent, disjoint, etc. Also, all annotations on the entity will be included. 
 
-Axioms that simply reference the annotated entity (i.e. the axioms that define some other entity, and refer to this annotated entity when they do that, will not be included.) will not be included. For example, if A is annotated, and B is sub of A (i.e. B references A in its definition), the axiom B sub A will not be included. However, keep in mind that if B disjoint with A, it also means that A is disjoint with B, and this axiom is part of the definition of A, and it will be included.
+Axioms that simply reference the annotated entity (i.e. the axioms that define some other entity, and refer to this annotated entity) will not be included. For example, if A is annotated, and B is sub of A (i.e. B references A in its definition), the axiom &quot;B sub A&quot; will not be included. However, keep in mind that if B is disjoint with A, it also means that A is disjoint with B, and this axiom is part of the definition of A, and it will be included.
 
-In addition to the above axioms, the tool will later include the superclass closure of the annotated entity unless the &quot;exclude_parent&quot; annotatin is used on one or more paths to the root. See that annotation for more detail.</rdfs:comment>
+In addition to the above axioms, the tool will later include the superclass closure of all included entities, and any entities referenced in the included axioms, unless the &quot;exclude_parent&quot; annotatin is used on one or more paths to the root. See that annotation for more detail.</rdfs:comment>
     </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_include_instances -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_include_instances"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_include_instances">
+        <rdfs:comment>This annotation enables the inclusion of class instances. If the source ontology has instances, annotate the class and the instances will be included.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_include_subs -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_include_subs">
-        <rdfs:comment>An annotation property that is used to mark entities that should be included in a module file along with all their subs.</rdfs:comment>
+        <rdfs:comment>An annotation property that is used to mark entities that should be included in a module file, along with all their subs.</rdfs:comment>
     </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_is_classified -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_is_classified"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_is_classified">
+        <rdfs:comment>A &quot;true&quot; or &quot;false&quot; value to indicate if, by default, the classified version should be generated. It can be used with the is_unclassified annotation</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
@@ -152,46 +166,56 @@ In addition to the above axioms, the tool will later include the superclass clos
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_source_exclude -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_source_exclude"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_source_exclude">
+        <rdfs:comment>An annotation that holds an IRI. The source ontology with that IRI will have it&apos;s axioms excluded from being considered while building the module.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_unclassified_addlegacy -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_addlegacy"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_addlegacy">
+        <rdfs:comment>See the classified version of this annotation.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_unclassified_builders -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_builders">
-        <rdfs:comment>The name(s) of the module builder to use for this build.</rdfs:comment>
+        <rdfs:comment>See the classified version of this annotation.</rdfs:comment>
     </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_unclassified_cleanlegacy -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_cleanlegacy"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_cleanlegacy">
+        <rdfs:comment>See the classified version of this annotation.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_unclassified_filename -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_filename"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_filename">
+        <rdfs:comment>See the classified version of this annotation.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_unclassified_import_iri -->
 
-    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_import_iri"/>
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_import_iri">
+        <rdfs:comment>See the classified version of this annotation.</rdfs:comment>
+    </owl:AnnotationProperty>
     
 
 
     <!-- http://owl.essaid.com/owlcl/owlcl_module_unclassified_iri -->
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_iri">
-        <rdfs:comment>Specifies the IRI of the unclassified version of the generated module.</rdfs:comment>
+        <rdfs:comment>See the classified version of this annotation.</rdfs:comment>
     </owl:AnnotationProperty>
 </rdf:RDF>
 
