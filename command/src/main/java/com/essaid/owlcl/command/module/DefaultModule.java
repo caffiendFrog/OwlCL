@@ -605,12 +605,11 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 	// ================================================================================
 
 	@Override
-	public void addAnnotationUnclassified(OWLAnnotation annotation,
-			IModuleBuilder builder) {
-
-		unclassifiedManager.applyChange(new AddOntologyAnnotation(
-				unclassifiedModule, annotation));
-
+	public void addAnnotationUnclassified(OWLAnnotation annotation, IModuleBuilder builder) {
+		if (isUnclassified()) {
+			unclassifiedManager
+					.applyChange(new AddOntologyAnnotation(unclassifiedModule, annotation));
+		}
 	}
 
 	@Override
@@ -641,11 +640,10 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 	// inferred versions
 
 	@Override
-	public void addAnnotationClassified(OWLAnnotation annotation,
-			IModuleBuilder builder) {
-		classifiedManager.applyChange(new AddOntologyAnnotation(
-				classifiedModule, annotation));
-
+	public void addAnnotationClassified(OWLAnnotation annotation, IModuleBuilder builder) {
+		if (isClassified()) {
+			classifiedManager.applyChange(new AddOntologyAnnotation(classifiedModule, annotation));
+		}
 	}
 
 	@Override
