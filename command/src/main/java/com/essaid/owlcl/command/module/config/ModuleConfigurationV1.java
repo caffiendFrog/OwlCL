@@ -134,7 +134,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 
 		OWLOntology configOntology = OwlclUtil.createOntology(
 				IRI.create(iriPrefix + name
-						+ ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX),
+						+ ModuleConstant.MODULE_CONFIGURATION_IRI_SUFFIX),null,
 				configManager);
 		configManager.setOntologyDocumentIRI(
 				configOntology,
@@ -240,7 +240,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 				+ ModuleConstant.MODULE_INCLUDE_IRI_SUFFIX);
 		if (!includeFile.exists()) {
 			OWLOntology includeOntology = OwlclUtil.createOntology(
-					getIncludeIri(), configMan);
+					getIncludeIri(), null, configMan);
 			configMan.setOntologyDocumentIRI(includeOntology,
 					IRI.create(includeFile));
 			saveOntology(includeOntology);
@@ -252,7 +252,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 				+ ModuleConstant.MODULE_EXCLUDE_IRI_SUFFIX);
 		if (!excludeFile.exists()) {
 			OWLOntology excludeOntology = OwlclUtil.createOntology(
-					getExcludeIri(), configMan);
+					getExcludeIri(), null, configMan);
 			configMan.setOntologyDocumentIRI(excludeOntology,
 					IRI.create(excludeFile));
 			saveOntology(excludeOntology);
@@ -263,7 +263,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 				+ ModuleConstant.MODULE_LEGACY_IRI_SUFFIX);
 		if (!legacyFile.exists()) {
 			OWLOntology legacyOntology = OwlclUtil.createOntology(
-					getLegacyIri(), configMan);
+					getLegacyIri(), null, configMan);
 			configMan.setOntologyDocumentIRI(legacyOntology,
 					IRI.create(legacyFile));
 			saveOntology(legacyOntology);
@@ -274,7 +274,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 				+ ModuleConstant.MODULE_LEGACY_REMOVED_IRI_SUFFIX);
 		if (!legacyRemovedFile.exists()) {
 			OWLOntology legacyRemovedOntology = OwlclUtil.createOntology(
-					getLegacyRemovedIri(), configMan);
+					getLegacyRemovedIri(), null, configMan);
 			configMan.setOntologyDocumentIRI(legacyRemovedOntology,
 					IRI.create(legacyRemovedFile));
 			saveOntology(legacyRemovedOntology);
@@ -285,7 +285,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 				+ ModuleConstant.MODULE_SOURCE_IRI_SUFFIX);
 		if (!sourcesFile.exists()) {
 			OWLOntology sourcesOntology = OwlclUtil.createOntology(
-					getSourceConfigurationIri(), configMan);
+					getSourceConfigurationIri(), null, configMan);
 			configMan.setOntologyDocumentIRI(sourcesOntology,
 					IRI.create(sourcesFile));
 			saveOntology(sourcesOntology);
@@ -298,7 +298,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 				+ ModuleConstant.MODULE_TOP_IRI_SUFFIX);
 		OWLOntology topOntology;
 		if (!file.exists()) {
-			topOntology = OwlclUtil.createOntology(getTopIri(), configMan);
+			topOntology = OwlclUtil.createOntology(getTopIri(), null, configMan);
 			configMan.setOntologyDocumentIRI(topOntology, IRI.create(file));
 
 		} else {
@@ -604,6 +604,38 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 		saveOntology(co);
 	}
 
+	// ================================================================================
+	// Version IRI
+	// ================================================================================
+
+	@Override
+	public IRI getVersionIriStated() {
+		Iterator<OWLAnnotation> i = getAnnotations(getConfigurationOntology(),
+				ModuleVocab.module_version_iri.getAP(), false).iterator();
+		if (i.hasNext()) {
+			return IRI.create(((OWLLiteral) i.next().getValue()).getLiteral());
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public IRI getVersionIri() {
+		return getVersionIriStated();
+
+	}
+
+	@Override
+	public void setVersionIri(IRI iri) {
+		OWLOntology co = getConfigurationOntology();
+		removeAnnotations(co, ModuleVocab.module_version_iri.getAP());
+		configMan.applyChange(new AddOntologyAnnotation(co, configDf
+				.getOWLAnnotation(ModuleVocab.module_version_iri.getAP(),
+						configDf.getOWLLiteral(iri.toString()))));
+		saveOntology(co);
+	}
+
+	
 	// ================================================================================
 	// excluded source iris
 	// ================================================================================
@@ -973,7 +1005,7 @@ public class ModuleConfigurationV1 extends AbstractModuleConfiguration {
 		if (sourceOntology == null) {
 			IRI iri = IRI.create("http://purl.obolibrary.org/obo/ERO_0000944");
 			sourceOntology = OwlclUtil.createOntology(
-					IRI.create("http://owlcl/merged-source"),
+					IRI.create("http://owlcl/merged-source"),null,
 					getSourcesManager());
 			Set<IRI> excludes = getExcludedSourceIris();
 			for (OWLImportsDeclaration id : getSourceConfigurationOntology()

@@ -149,7 +149,7 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 			List<IModuleBuilder> builders = new ArrayList<IModuleBuilder>();
 			unclassifiedModule = OwlclUtil.createOntology(
 					this.moduleConfiguration.getUnclassifiedIri(),
-					unclassifiedManager);
+					this.moduleConfiguration.getVersionIri(), unclassifiedManager);
 			for (String builderName : this.moduleConfiguration
 					.getUnclassifiedBuilderNames()) {
 				reportUnclassified.info("Doing builder name: " + builderName);
@@ -219,9 +219,8 @@ public class DefaultModule implements IModule, IInitializable, ILoggerOwner {
 			logger.info("Generating classified module for: "
 					+ getModuleConfiguration().getName());
 			List<IModuleBuilder> builders = new ArrayList<IModuleBuilder>();
-			classifiedModule = OwlclUtil.createOntology(
-					this.moduleConfiguration.getClassifiedIri(),
-					classifiedManager);
+			classifiedModule = OwlclUtil.createOntology(this.moduleConfiguration.getClassifiedIri(),
+					this.moduleConfiguration.getVersionIri(), classifiedManager);
 
 			for (String builderName : this.moduleConfiguration
 					.getClassifiedBuilderNames()) {

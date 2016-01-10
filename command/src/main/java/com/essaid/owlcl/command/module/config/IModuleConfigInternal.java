@@ -16,6 +16,10 @@ public interface IModuleConfigInternal extends IModuleConfig {
   IRI getClassifiedIriStated();
 
   void setClassifiedIri(IRI iri);
+  
+  IRI getVersionIriStated();
+  
+  void setVersionIri(IRI iri);
 
   String getClassifiedFilenameStated();
 

@@ -71,6 +71,8 @@ public interface IModuleConfig {
 	boolean isClassifiedCleanLegacy();
 
 	IRI getUnclassifiedIri();
+	
+	IRI getVersionIri();
 
 	String getUnclassifiedFileName();
 

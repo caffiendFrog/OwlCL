@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <rdf:RDF xmlns="https://raw.github.com/ShahimEssaid/OwlCL/master/owl/owlcl.owl#"
      xml:base="https://raw.github.com/ShahimEssaid/OwlCL/master/owl/owlcl.owl"
-     xmlns:arg="http://owl.essaid.com/owlcl/owlcl_"
-     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-     xmlns:owlcl="http://owl.essaid.com/"
-     xmlns:owl="http://www.w3.org/2002/07/owl#"
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:owlcl2="http://owl.essaid.com/owlcl/">
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:arg="http://owl.essaid.com/owlcl/owlcl_"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owlcl2="http://owl.essaid.com/owlcl/"
+     xmlns:owlcl="http://owl.essaid.com/">
     <owl:Ontology rdf:about="https://raw.github.com/ShahimEssaid/OwlCL/master/owl/owlcl.owl"/>
     
 
@@ -216,6 +216,14 @@ In addition to the above axioms, the tool will later include the superclass clos
 
     <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_unclassified_iri">
         <rdfs:comment>See the classified version of this annotation.</rdfs:comment>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://owl.essaid.com/owlcl/owlcl_module_version_iri -->
+
+    <owl:AnnotationProperty rdf:about="http://owl.essaid.com/owlcl/owlcl_module_version_iri">
+        <rdfs:comment>Use this in the *-module-configuration file as an ontology annotation to specify the version IRI of the generated files.</rdfs:comment>
     </owl:AnnotationProperty>
 </rdf:RDF>
 

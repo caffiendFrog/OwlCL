@@ -29,6 +29,8 @@ public class ModuleConstant {
 			+ "module_unclassified_iri";
 	static final String MODULE_CLASSIFIED_IRI = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX
 			+ "module_classified_iri";
+	static final String MODULE_VERSION_IRI = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX
+			+ "module_version_iri";
 	static final String MODULE_UNCLASSIFIED_FILENAME = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX
 			+ "module_unclassified_filename";
 	static final String MODULE_CLASSIFIED_FILENAME = OwlclConstants.OWLCL_ENTITY_IRI_PREFIX

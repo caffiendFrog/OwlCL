@@ -17,6 +17,8 @@ public enum ModuleVocab {
 	module_unclassified_iri(ModuleConstant.MODULE_UNCLASSIFIED_IRI),
 
 	module_classified_iri(ModuleConstant.MODULE_CLASSIFIED_IRI),
+	
+	module_version_iri(ModuleConstant.MODULE_VERSION_IRI),
 
 	module_source_exclude(ModuleConstant.MODULE_SOURCE_EXCLUDE),
 

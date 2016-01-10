@@ -43,6 +43,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.FreshEntitiesException;
@@ -729,13 +730,15 @@ public class OwlclUtil {
     return o;
   }
 
-  static public OWLOntology createOntology(IRI iri, OWLOntologyManager man)
+  static public OWLOntology createOntology(IRI iri, IRI versionIri, OWLOntologyManager man)
       throws RuntimeOntologyLoadingException {
 
     OWLOntology o = null;
-
+    OWLOntologyID id = new OWLOntologyID(iri, versionIri);
+    
     try {
-      o = man.createOntology(iri);
+      o = man.createOntology(id);
+      
     } catch (OWLOntologyCreationException e) {
       throw new RuntimeOntologyLoadingException("Faild to createOntology for IRI: " + iri, e);
     }
@@ -754,14 +757,14 @@ public class OwlclUtil {
    * @param man
    * @return
    */
-  static public OWLOntology getOrLoadOrCreateOntology(IRI iri, OWLOntologyManager man)
+  static public OWLOntology getOrLoadOrCreateOntology(IRI iri, IRI versionIri, OWLOntologyManager man)
       throws RuntimeOntologyLoadingException {
     OWLOntology o = null;
     try {
       o = getOrLoadOntology(iri, man);
     } catch (RuntimeOntologyLoadingException e1) {
       if (e1.isIriMapping()) {
-        o = createOntology(iri, man);
+        o = createOntology(iri, versionIri, man);
       } else {
         throw e1;
       }
