@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<rdf:RDF xmlns="https://raw.github.com/ShahimEssaid/OwlCL/master/owl/owlcl.owl#"
-     xml:base="https://raw.github.com/ShahimEssaid/OwlCL/master/owl/owlcl.owl"
+<rdf:RDF xmlns="https://raw.githubusercontent.com/caffiendFrog/OwlCL/master/owl/owlcl.owl#"
+     xml:base="https://raw.githubusercontent.com/caffiendFrog/OwlCL/master/owl/owlcl.owl"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:arg="http://owl.essaid.com/owlcl/owlcl_"
@@ -8,7 +8,7 @@
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:owlcl2="http://owl.essaid.com/owlcl/"
      xmlns:owlcl="http://owl.essaid.com/">
-    <owl:Ontology rdf:about="https://raw.github.com/ShahimEssaid/OwlCL/master/owl/owlcl.owl"/>
+    <owl:Ontology rdf:about="https://raw.githubusercontent.com/caffiendFrog/OwlCL/master/owl/owlcl.owl"/>
     
 
 
